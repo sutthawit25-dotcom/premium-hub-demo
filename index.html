@@ -182,9 +182,10 @@
   .toast.bad{color:var(--bad)}
   .toast.info{color:var(--info)}
 
-  .secret{display:inline-flex; align-items:center; gap:5px; font-family:var(--font-la),monospace; letter-spacing:.04em}
-  .secret button{border:none; background:transparent; color:var(--faint); cursor:pointer; padding:2px; border-radius:5px}
+  .secret{display:inline-flex; align-items:center; gap:2px; font-family:var(--font-la),monospace; letter-spacing:.04em}
+  .secret button{border:none; background:transparent; color:var(--faint); cursor:pointer; padding:9px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; min-width:34px; min-height:34px}
   .secret button:hover{background:var(--bg-subtle); color:var(--ink)}
+  .secret button:active{background:var(--accent-soft); color:var(--accent)}
 
   .hero{max-width:640px}
   .pill{display:inline-flex; border:1px solid var(--border); background:var(--bg-subtle); color:var(--muted); border-radius:999px; padding:4px 11px; font-size:11.5px; font-weight:600}
@@ -483,6 +484,25 @@ function mailboxBadge(status){
   return '<span class="badge '+m[1]+'"><span class="dot"></span>'+m[0]+'</span>';
 }
 function demoTag(){ return '<span class="badge badge-demo">Demo</span>'; }
+// คัดลอกข้อความแบบรองรับเบราว์เซอร์ในแอป (เช่น LINE/Facebook) ที่บางทีปิดกั้น navigator.clipboard
+function copyToClipboard(text, done){
+  function fallback(){
+    var ok=false;
+    try{
+      var ta=document.createElement("textarea");
+      ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0"; ta.style.left="-9999px";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      ok=document.execCommand("copy");
+      document.body.removeChild(ta);
+    }catch(e){ ok=false; }
+    if(done) done(ok);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ if(done) done(true); }).catch(fallback);
+  } else {
+    fallback();
+  }
+}
 function statCard(value,label,tone){
   var color = tone==="good"?"var(--good)":tone==="info"?"var(--info)":tone==="bad"?"var(--bad)":"var(--ink)";
   return '<div class="card" style="padding:16px"><div style="font-size:22px;font-weight:800;color:'+color+'">'+value+'</div><div class="muted" style="font-size:12px;margin-top:2px">'+esc(label)+'</div></div>';
@@ -829,17 +849,24 @@ function viewAdminDashboard(){
 
 function editInlineHTML(profileId,field,value,width){
   var w = width==="100%" ? "100%" : (width||64)+"px";
-  return '<div style="display:flex;gap:4px;align-items:center">' +
-    '<input class="input" style="height:30px;font-size:12px;width:'+w+';padding:4px 6px" value="'+esc(value||"")+'" data-edit-field="'+field+'" data-edit-id="'+profileId+'">' +
-    '<button class="btn btn-outline btn-sm" style="padding:4px 7px;height:30px;flex:none" data-save-field="'+field+'" data-save-id="'+profileId+'" title="บันทึก">✓</button>' +
+  return '<div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">' +
+    '<input class="input" style="height:36px;font-size:13px;width:'+w+';padding:7px 8px;min-width:0" value="'+esc(value||"")+'" data-edit-field="'+field+'" data-edit-id="'+profileId+'">' +
+    '<button style="border:none;background:var(--bg-subtle);color:var(--muted);cursor:pointer;border-radius:7px;flex:none;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center" data-copy-field="'+field+'" data-copy-id="'+profileId+'" title="คัดลอก">'+icon('copy')+'</button>' +
+    '<button class="btn btn-primary" style="padding:0 10px;height:36px;flex:none;min-width:36px" data-save-field="'+field+'" data-save-id="'+profileId+'" title="บันทึก">✓</button>' +
   '</div>';
+}
+function copyChipHTML(value){
+  return '<span style="display:inline-flex;align-items:center;gap:0;max-width:100%">' +
+    '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(value)+'</span>' +
+    '<button style="border:none;background:transparent;color:var(--faint);cursor:pointer;padding:9px;border-radius:7px;flex:none;min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center" data-copy-text="'+esc(value)+'" title="คัดลอก">'+icon('copy')+'</button>' +
+  '</span>';
 }
 function accountsTableRows(rows){
   return rows.map(function(r){
     var p=r.profile, acc=r.account;
     return '<tr>' +
       '<td style="font-weight:600">'+esc(p.name)+'</td>' +
-      '<td class="muted" style="font-size:12px">'+esc(acc.email)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+copyChipHTML(acc.email)+'</td>' +
       '<td>'+secretHTML(acc.email.replace("@","@pw-"), acc.pass)+'</td>' +
       '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60")+'</td>' +
       '<td>'+statusBadge(r.status)+'</td>' +
@@ -858,7 +885,7 @@ function accountsCardsHTML(rows){
     return '<div style="padding:14px;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+'</div>'+statusBadge(r.status)+'</div>' +
       '<div class="grid grid-2" style="font-size:11.5px">' +
-        '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+esc(acc.email)+'</div>' +
+        '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+copyChipHTML(acc.email)+'</div>' +
         '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
         '<div class="muted">จำนวนวัน</div><div style="text-align:right">'+(r.rental?r.rental.days:"-")+'</div>' +
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
@@ -895,8 +922,7 @@ function mountSecrets(){
   document.querySelectorAll('[data-secret-copy]').forEach(function(btn){
     btn.onclick=function(){
       var wrap=document.getElementById(btn.getAttribute("data-secret-copy"));
-      try{ navigator.clipboard.writeText(wrap.getAttribute("data-real")); }catch(e){}
-      toast("คัดลอกแล้ว","good");
+      copyToClipboard(wrap.getAttribute("data-real"), function(ok){ toast(ok?"คัดลอกแล้ว":"คัดลอกไม่สำเร็จ ลองแตะค้างที่ข้อความแทน","good"); });
     };
   });
 }
@@ -972,7 +998,24 @@ function mountAdminAccounts(){
       if(p && input){ p[field]=input.value.trim(); toast((field==="pin"?"บันทึก PIN แล้ว":"บันทึกอุปกรณ์แล้ว"),"good"); render(true); }
     };
   });
+  document.querySelectorAll('[data-copy-field]').forEach(function(btn){
+    btn.onclick=function(){
+      var field=btn.getAttribute("data-copy-field"), id=btn.getAttribute("data-copy-id");
+      var input=document.querySelector('[data-edit-field="'+field+'"][data-edit-id="'+id+'"]');
+      var val=input?input.value:"";
+      if(!val){ toast("ยังไม่มีข้อมูลให้คัดลอก","info"); return; }
+      copyToClipboard(val, function(ok){ toast(ok?"คัดลอกแล้ว":"คัดลอกไม่สำเร็จ ลองแตะค้างที่ข้อความแทน","good"); });
+    };
+  });
+  mountCopyText();
   mountSecrets();
+}
+function mountCopyText(){
+  document.querySelectorAll('[data-copy-text]').forEach(function(btn){
+    btn.onclick=function(){
+      copyToClipboard(btn.getAttribute("data-copy-text"), function(ok){ toast(ok?"คัดลอกแล้ว":"คัดลอกไม่สำเร็จ ลองแตะค้างที่ข้อความแทน","good"); });
+    };
+  });
 }
 
 /* ---- modals: assign / renew / release ---- */

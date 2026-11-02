@@ -1,0 +1,1314 @@
+<title>Premium Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Design plan
+     Color: near-black/off-white neutrals + one red brand accent
+            (--bg,--surface,--border,--ink,--muted,--accent,--good,--info,--bad)
+     Type:  Noto Sans Thai for all Thai copy + Inter for latin/numerals,
+            one scale (12/13/14/16/20/26px), tabular numerals on dates/money
+     Layout: fixed left rail + topbar on desktop, slide-over drawer + topbar
+             on phone; content is cards in a 12px-gap grid that collapses
+             tables to stacked cards under 760px
+     ============================================================ */
+  :root{
+    --bg:#f6f6f7; --bg-subtle:#eeeef0; --surface:#ffffff; --surface-raised:#ffffff;
+    --border:#e3e3e8; --border-strong:#d2d2da; --ink:#17171b; --muted:#68686f; --faint:#9a9aa3;
+    --accent:#d4202c; --accent-hover:#b81824; --accent-ink:#ffffff; --accent-soft:#fdeced;
+    --good:#0f9d58; --good-bg:#e6f6ec; --good-bd:#bfe8cd;
+    --info:#2563eb; --info-bg:#e9f0fe; --info-bd:#c3d7fc;
+    --bad:#d4202c; --bad-bg:#fdeced; --bad-bd:#f6c3c6;
+    --warn:#b5790a; --warn-bg:#fbf0dc; --warn-bd:#f0d9a4;
+    --shadow:0 1px 2px rgba(20,20,24,.05),0 1px 1px rgba(20,20,24,.04);
+    --radius:14px; --radius-sm:10px;
+    --font-th:"Noto Sans Thai",ui-sans-serif,system-ui,sans-serif;
+    --font-la:"Inter",ui-sans-serif,system-ui,sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121214; --bg-subtle:#0c0c0e; --surface:#1a1a1d; --surface-raised:#1f1f23;
+      --border:#2a2a2f; --border-strong:#38383f; --ink:#f5f5f7; --muted:#a3a3ad; --faint:#717178;
+      --accent:#e5343f; --accent-hover:#f04852; --accent-ink:#ffffff; --accent-soft:#341418;
+      --good:#34c777; --good-bg:#10291c; --good-bd:#1d4a30;
+      --info:#5b8def; --info-bg:#101d33; --info-bd:#1e3458;
+      --bad:#e5343f; --bad-bg:#331316; --bad-bd:#552127;
+      --warn:#e0a940; --warn-bg:#30260f; --warn-bd:#4e3f18;
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 2px 10px rgba(0,0,0,.28);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121214; --bg-subtle:#0c0c0e; --surface:#1a1a1d; --surface-raised:#1f1f23;
+    --border:#2a2a2f; --border-strong:#38383f; --ink:#f5f5f7; --muted:#a3a3ad; --faint:#717178;
+    --accent:#e5343f; --accent-hover:#f04852; --accent-ink:#ffffff; --accent-soft:#341418;
+    --good:#34c777; --good-bg:#10291c; --good-bd:#1d4a30;
+    --info:#5b8def; --info-bg:#101d33; --info-bd:#1e3458;
+    --bad:#e5343f; --bad-bg:#331316; --bad-bd:#552127;
+    --warn:#e0a940; --warn-bg:#30260f; --warn-bd:#4e3f18;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 2px 10px rgba(0,0,0,.28);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-th),var(--font-la),system-ui,sans-serif;
+    font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    padding-left:max(0px, env(safe-area-inset-left,0px));
+    padding-right:max(0px, env(safe-area-inset-right,0px));
+  }
+  h1,h2,h3{margin:0; text-wrap:balance}
+  p{margin:0}
+  button{font-family:inherit}
+  a{color:inherit}
+  table{border-collapse:collapse}
+  ::selection{background:var(--accent); color:#fff}
+  .num{font-variant-numeric:tabular-nums}
+
+  .gutter{padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px))}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    height:38px; padding:0 14px; border-radius:var(--radius-sm); border:1px solid transparent;
+    font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:background-color .15s,border-color .15s;
+  }
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .btn-sm{height:32px; padding:0 11px; font-size:12.5px}
+  .btn-primary{background:var(--accent); color:var(--accent-ink)}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed}
+  .btn-secondary{background:var(--surface-raised); color:var(--ink); border-color:var(--border)}
+  .btn-secondary:hover{border-color:var(--border-strong)}
+  .btn-outline{background:transparent; color:var(--ink); border-color:var(--border)}
+  .btn-outline:hover{background:var(--bg-subtle)}
+  .btn-ghost{background:transparent; color:var(--muted); border-color:transparent}
+  .btn-ghost:hover{background:var(--bg-subtle); color:var(--ink)}
+
+  .field label{display:block; font-size:12.5px; font-weight:600; margin-bottom:5px}
+  .input, select.input, textarea.input{
+    width:100%; height:38px; border-radius:var(--radius-sm); border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); padding:0 11px; font:inherit; font-size:13.5px;
+  }
+  textarea.input{height:auto; padding:9px 11px}
+  .input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft)}
+  .input:disabled{color:var(--muted); background:var(--bg-subtle)}
+
+  .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid; border-radius:999px; padding:4px 10px; font-size:11.5px; font-weight:600}
+  .badge .dot{width:6px; height:6px; border-radius:999px; background:currentColor}
+  .badge-good{color:var(--good); background:var(--good-bg); border-color:var(--good-bd)}
+  .badge-info{color:var(--info); background:var(--info-bg); border-color:var(--info-bd)}
+  .badge-bad{color:var(--bad); background:var(--bad-bg); border-color:var(--bad-bd)}
+  .badge-neutral{color:var(--muted); background:var(--bg-subtle); border-color:var(--border)}
+  .badge-demo{color:var(--warn); background:var(--warn-bg); border-color:var(--warn-bd); font-size:10.5px; padding:2px 8px}
+
+  .shell{min-height:100%}
+  .topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:30; height:58px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter:blur(8px);
+  }
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--surface)}
+  .brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:14px}
+  .brand .mark{width:30px; height:30px; border-radius:9px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px}
+
+  .theme-toggle{display:inline-flex; gap:2px; border:1px solid var(--border); background:var(--bg-subtle); border-radius:999px; padding:2px}
+  .theme-toggle button{width:28px; height:28px; border-radius:999px; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer}
+  .theme-toggle button.active{background:var(--surface); color:var(--accent); box-shadow:var(--shadow); border:1px solid var(--border)}
+
+  /* admin layout */
+  .admin{display:flex; min-height:100%}
+  .rail{width:232px; flex-shrink:0; border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column}
+  .rail .brand{padding:18px 16px}
+  .rail nav{display:flex; flex-direction:column; gap:3px; padding:0 10px; flex:1}
+  .rail nav a{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); color:var(--muted); font-size:13.5px; font-weight:600; text-decoration:none}
+  .rail nav a:hover{background:var(--bg-subtle); color:var(--ink)}
+  .rail nav a.active{background:var(--accent-soft); color:var(--accent)}
+  .rail .foot{padding:10px; border-top:1px solid var(--border)}
+  .admin-main{flex:1; min-width:0}
+  .admin-content{padding:20px}
+  @media (max-width:900px){ .rail{display:none} .admin-content{padding:16px} }
+
+  .drawer-scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50}
+  .drawer{position:fixed; inset:0 auto 0 0; width:270px; background:var(--surface); z-index:51; display:flex; flex-direction:column; box-shadow:0 0 30px rgba(0,0,0,.3)}
+
+  .grid{display:grid; gap:12px}
+  .grid-2{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+  .grid-4{grid-template-columns:repeat(4,1fr)}
+  .grid-6{grid-template-columns:repeat(6,1fr)}
+  @media (max-width:900px){ .grid-6{grid-template-columns:repeat(3,1fr)} .grid-4{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:560px){ .grid-6{grid-template-columns:repeat(2,1fr)} .grid-3,.grid-4{grid-template-columns:repeat(2,1fr)} .grid-2{grid-template-columns:1fr} }
+
+  .stat{padding:14px}
+  .stat .ic{width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; background:var(--bg-subtle); color:var(--muted)}
+  .stat .v{font-size:22px; font-weight:800}
+  .stat .l{font-size:11.5px; color:var(--muted)}
+
+  table.tbl{width:100%; font-size:13px}
+  table.tbl th{text-align:left; font-size:11px; color:var(--muted); font-weight:600; padding:9px 12px; border-bottom:1px solid var(--border)}
+  table.tbl td{padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:middle}
+  table.tbl tr:last-child td{border-bottom:none}
+  .tbl-wrap{overflow-x:auto}
+  @media (max-width:860px){ .tbl-desktop{display:none} }
+  @media (min-width:861px){ .cards-mobile{display:none} }
+
+  .section-title{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:800; margin-bottom:10px}
+  .muted{color:var(--muted)}
+  .faint{color:var(--faint)}
+  .empty{border:1px dashed var(--border); border-radius:var(--radius); background:var(--bg-subtle); padding:34px 18px; text-align:center}
+  .empty .t{font-weight:700; font-size:13.5px}
+  .empty .d{color:var(--muted); font-size:12.5px; margin-top:3px}
+
+  .modal-scrim{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:60; display:flex; align-items:center; justify-content:center; padding:16px}
+  .modal{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 20px 60px rgba(0,0,0,.35); padding:20px; width:100%; max-width:480px; max-height:88vh; overflow:auto}
+  .modal h3{font-size:16px; font-weight:800}
+  .modal .sub{color:var(--muted); font-size:12.5px; margin-top:3px}
+  .modal-foot{display:flex; justify-content:flex-end; gap:8px; margin-top:16px}
+  .chiprow{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{height:32px; padding:0 11px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:12.5px; font-weight:600; cursor:pointer}
+  .chip.active{border-color:var(--accent); color:var(--accent); background:var(--accent-soft)}
+  .summary-box{border-radius:var(--radius-sm); background:var(--accent-soft); color:var(--ink); padding:10px 12px; font-size:12.5px; margin-top:4px}
+
+  .toast-host{position:fixed; top:calc(env(safe-area-inset-top,0px) + 70px); left:50%; transform:translateX(-50%); z-index:80; display:flex; flex-direction:column; gap:8px; align-items:center}
+  .toast{background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-sm); box-shadow:var(--shadow); padding:9px 14px; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px}
+  .toast.good{color:var(--good)}
+  .toast.bad{color:var(--bad)}
+  .toast.info{color:var(--info)}
+
+  .secret{display:inline-flex; align-items:center; gap:5px; font-family:var(--font-la),monospace; letter-spacing:.04em}
+  .secret button{border:none; background:transparent; color:var(--faint); cursor:pointer; padding:2px; border-radius:5px}
+  .secret button:hover{background:var(--bg-subtle); color:var(--ink)}
+
+  .hero{max-width:640px}
+  .pill{display:inline-flex; border:1px solid var(--border); background:var(--bg-subtle); color:var(--muted); border-radius:999px; padding:4px 11px; font-size:11.5px; font-weight:600}
+  .plan-tile{border:1px solid var(--border); background:var(--bg-subtle); border-radius:var(--radius-sm); padding:16px 10px; text-align:center; display:flex; flex-direction:column; gap:4px}
+  .plan-tile .price{color:var(--accent); font-weight:800; font-size:17px}
+
+  .tabs{display:inline-flex; gap:2px; border:1px solid var(--border); background:var(--bg-subtle); border-radius:var(--radius-sm); padding:3px}
+  .tabs button{height:30px; padding:0 12px; border-radius:8px; border:none; background:transparent; color:var(--muted); font-size:12.5px; font-weight:700; cursor:pointer}
+  .tabs button.active{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+
+  .otp-code{font-family:var(--font-la),monospace; font-size:36px; font-weight:800; letter-spacing:.3em; text-align:center}
+  .otp-code.expired{color:var(--faint); text-decoration:line-through}
+
+  .link-btn{background:none;border:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .link-btn:hover{color:var(--accent)}
+  [hidden]{display:none!important}
+
+  footer.site{padding:26px 0; text-align:center; color:var(--faint); font-size:11.5px; border-top:1px solid var(--border)}
+</style>
+
+<div id="app"></div>
+<div class="toast-host" id="toastHost"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------------------------------------------------------- data */
+var NOW = Date.now();
+function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
+
+var SHOP = { name:"Premium Hub", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contact:"https://line.me/ti/p/~premiumhub" };
+var PLANS = [
+  {id:"p1",name:"1 วัน",days:1,price:19},{id:"p3",name:"3 วัน",days:3,price:49},
+  {id:"p7",name:"7 วัน",days:7,price:99},{id:"p15",name:"15 วัน",days:15,price:169},
+  {id:"p30",name:"30 วัน",days:30,price:299}
+];
+var ACCOUNTS = [
+  {id:"acc-1", name:"NF - Hub A", email:"premiumhub.a@example-mail.demo", pass:"••••••••", mailbox:"mbx-1", note:"บัญชีหลักสำหรับลูกค้าแพ็กเกจ 7 วันขึ้นไป"},
+  {id:"acc-2", name:"NF - Hub B", email:"premiumhub.b@example-mail.demo", pass:"••••••••", mailbox:"mbx-2", note:""}
+];
+var CUSTOMERS = [
+  {id:"cus-1", name:"กมลวรรณ ศรีสุข", email:"kamonwan.demo@example.com", contact:"LINE: kamonwan_d", note:"ลูกค้าประจำ ต่ออายุทุกเดือน", pin:true, since:hoursFromNow(-24*50)},
+  {id:"cus-2", name:"ธนากร วงศ์ไพศาล", email:"thanakorn.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*30)},
+  {id:"cus-3", name:"ปิยะดา รุ่งเรือง", email:"piyada.demo@example.com", contact:"Tel: 08x-xxx-1234", note:"เคยขอคืนเงินครั้งหนึ่ง แจ้งเหตุผลชัดเจนแล้ว", pin:true, since:hoursFromNow(-24*20)},
+  {id:"cus-4", name:"ศุภกิจ อินทร์แก้ว", email:"supakit.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*10)},
+  {id:"cus-5", name:"วรรณพร ทองสุข", email:"wannaporn.demo@example.com", contact:"LINE: wan_ps", note:"", pin:true, since:hoursFromNow(-24*5)}
+];
+var MAILBOXES = [
+  {id:"mbx-1", email:"streambox.0a@gmail.demo", provider:"GMAIL", status:"CONNECTED", lastResult:"พบ OTP ล่าสุดเมื่อ 12 นาทีที่แล้ว (Demo)", lastAt:hoursFromNow(-0.2)},
+  {id:"mbx-2", email:"streambox.0b@hotmail.demo", provider:"OUTLOOK", status:"REFRESHING", lastResult:"ยังไม่ทดสอบ", lastAt:null},
+  {id:"mbx-3", email:"streambox.0c@outlook.demo", provider:"OUTLOOK", status:"ERROR", lastResult:"Provider error (Demo): หมดเวลาเชื่อมต่อ", lastAt:hoursFromNow(-5)}
+];
+var PROFILES = [
+  {id:"pf-1",accountId:"acc-1",name:"FH - User 1",pin:"••••",device:"สมาร์ททีวี",rentalId:"rt-1"},
+  {id:"pf-2",accountId:"acc-1",name:"FH - User 2",pin:"••••",device:"มือถือ",rentalId:"rt-2"},
+  {id:"pf-3",accountId:"acc-1",name:"FH - User 3",pin:null,device:"-",rentalId:null},
+  {id:"pf-4",accountId:"acc-1",name:"FH - User 4",pin:"••••",device:"แล็ปท็อป",rentalId:"rt-4"},
+  {id:"pf-5",accountId:"acc-1",name:"FH - User 5",pin:null,device:"-",rentalId:null},
+  {id:"pf-6",accountId:"acc-2",name:"FH - User 1",pin:"••••",device:"สมาร์ททีวี",rentalId:"rt-6"},
+  {id:"pf-7",accountId:"acc-2",name:"FH - User 2",pin:null,device:"-",rentalId:null},
+  {id:"pf-8",accountId:"acc-2",name:"FH - User 3",pin:"••••",device:"มือถือ",rentalId:"rt-8"},
+  {id:"pf-9",accountId:"acc-2",name:"FH - User 4",pin:null,device:"-",rentalId:"rt-11"},
+  {id:"pf-10",accountId:"acc-2",name:"FH - User 5",pin:"••••",device:"แท็บเล็ต",rentalId:"rt-10"}
+];
+var RENTALS = [
+  {id:"rt-1",profileId:"pf-1",customerId:"cus-1",startedAt:hoursFromNow(-24*3),expiresAt:hoursFromNow(24*4),days:7,closedAt:null},
+  {id:"rt-2",profileId:"pf-2",customerId:"cus-2",startedAt:hoursFromNow(-24*1),expiresAt:hoursFromNow(24*14),days:15,closedAt:null},
+  {id:"rt-4",profileId:"pf-4",customerId:"cus-3",startedAt:hoursFromNow(-1),expiresAt:hoursFromNow(23),days:1,closedAt:null,note:"ลูกค้าขอโปรไฟล์อุปกรณ์แล็ปท็อปโดยเฉพาะ"},
+  {id:"rt-6",profileId:"pf-6",customerId:"cus-4",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(24*20),days:30,closedAt:null},
+  {id:"rt-8",profileId:"pf-8",customerId:"cus-5",startedAt:hoursFromNow(-24*6.7),expiresAt:hoursFromNow(5),days:7,closedAt:null},
+  {id:"rt-10",profileId:"pf-10",customerId:"cus-1",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(-24*3),days:7,closedAt:null},
+  {id:"rt-11",profileId:"pf-9",customerId:"cus-3",startedAt:hoursFromNow(-24*9),expiresAt:hoursFromNow(-2),days:7,closedAt:null},
+  {id:"rt-h1",profileId:"pf-3",customerId:"cus-2",startedAt:hoursFromNow(-24*40),expiresAt:hoursFromNow(-24*33),days:7,closedAt:hoursFromNow(-24*32)},
+  {id:"rt-h2",profileId:"pf-5",customerId:"cus-5",startedAt:hoursFromNow(-24*20),expiresAt:hoursFromNow(-24*17),days:3,closedAt:hoursFromNow(-24*16.5)}
+];
+var RENEWALS = [
+  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,actor:"admin@premiumhub.demo",at:hoursFromNow(-24*3)},
+  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
+];
+var ACTIVITY = [
+  {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
+  {id:"al-2",type:"RENEWED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub B)",detail:"ต่ออายุเพิ่ม 15 วัน จาก 5 วันที่เหลือ",at:hoursFromNow(-24*3)},
+  {id:"al-3",type:"OTP_REQUESTED",actor:"kamonwan.demo@example.com",target:"FH - User 1 (NF - Hub A)",detail:"ลูกค้าขอรหัสเดโม่",at:hoursFromNow(-0.2)},
+  {id:"al-4",type:"EXPIRED",actor:"system",target:"FH - User 5 (NF - Hub A)",detail:"รายการหมดเวลาอัตโนมัติตามเวลาเซิร์ฟเวอร์",at:hoursFromNow(-24*3)},
+  {id:"al-5",type:"RELEASED",actor:"admin@premiumhub.demo",target:"FH - User 3 (NF - Hub A)",detail:"คืนโปรไฟล์เป็นว่างหลังหมดเวลา",at:hoursFromNow(-24*32)},
+  {id:"al-6",type:"SECRET_VIEWED",actor:"admin@premiumhub.demo",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
+  {id:"al-7",type:"ACCOUNT_UPDATED",actor:"admin@premiumhub.demo",target:"NF - Hub B",detail:"แก้ไขหมายเหตุบัญชี",at:hoursFromNow(-24*6)}
+];
+var DEMO_ACC = { customer:{email:"kamonwan.demo@example.com",pass:"DemoCustomer#2026"}, admin:{email:"admin@premiumhub.demo",pass:"DemoAdmin#2026"} };
+var SESSION_CUSTOMER = "cus-1";
+
+/* -------------------------------------------------------------- utils */
+function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
+function account(id){ return byId(ACCOUNTS,id); }
+function profile(id){ return byId(PROFILES,id); }
+function customer(id){ return byId(CUSTOMERS,id); }
+function rental(id){ return byId(RENTALS,id); }
+function mailbox(id){ return byId(MAILBOXES,id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+
+var THAI_M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+function toBangkok(d){ return new Date(d.getTime() + 7*3600*1000); }
+function fmtDT(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear()+" เวลา "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
+function fmtD(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear(); }
+function fmtT(iso){ var d=toBangkok(new Date(iso)); return String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
+function remaining(expIso,nowMs){
+  var diff=new Date(expIso).getTime()-nowMs, abs=Math.abs(diff);
+  var days=Math.floor(abs/86400000), hrs=Math.floor((abs%86400000)/3600000), mins=Math.floor((abs%3600000)/60000);
+  var parts=[]; if(days>0) parts.push(days+" วัน"); if(hrs>0||days>0) parts.push(hrs+" ชม."); parts.push(mins+" นาที");
+  return (diff>=0? "เหลืออีก ":"เลยเวลามาแล้ว ")+parts.join(" ");
+}
+function deriveStatus(rentalObj){
+  if(!rentalObj || rentalObj.closedAt) return "AVAILABLE";
+  return Date.now() >= new Date(rentalObj.expiresAt).getTime() ? "EXPIRED" : "OCCUPIED";
+}
+var STATUS_LABEL={AVAILABLE:"ว่าง",OCCUPIED:"ไม่ว่าง",EXPIRED:"หมดเวลา"};
+function currentRentalOf(profileObj){
+  if(!profileObj.rentalId) return null;
+  var r=rental(profileObj.rentalId);
+  return (r && !r.closedAt) ? r : null;
+}
+function profileRow(p){
+  var r=currentRentalOf(p), acc=account(p.accountId), status=deriveStatus(r);
+  var cust=r?customer(r.customerId):null;
+  return {profile:p, account:acc, rental:r, status:status, customer:cust};
+}
+function allRows(){ return PROFILES.map(profileRow); }
+
+/* icons (tiny inline svg) */
+function icon(name){
+  var p={
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon:'<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',
+    monitor:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',
+    close:'<path d="M18 6L6 18M6 6l12 12"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    eye:'<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>',
+    copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>',
+    back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
+    logout:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>'
+  };
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||"")+'</svg>';
+}
+
+/* ------------------------------------------------------------- theme */
+function getTheme(){ try{ return localStorage.getItem("ph-theme")||"system"; }catch(e){ return "system"; } }
+function setTheme(t){
+  try{ localStorage.setItem("ph-theme",t); }catch(e){}
+  if(t==="system") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme",t);
+  renderThemeToggles();
+}
+function themeToggleHTML(id){
+  var t=getTheme();
+  function b(v,ic){ return '<button data-theme-btn="'+v+'" class="'+(t===v?"active":"")+'" title="'+v+'">'+icon(ic)+'</button>'; }
+  return '<div class="theme-toggle" id="'+id+'">'+b("light","sun")+b("system","monitor")+b("dark","moon")+'</div>';
+}
+function renderThemeToggles(){
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(el){
+    el.outerHTML = themeToggleHTML(el.id);
+  });
+  document.querySelectorAll('[data-theme-btn]').forEach(function(btn){
+    btn.onclick=function(){ setTheme(btn.getAttribute("data-theme-btn")); };
+  });
+}
+(function initTheme(){
+  var t=getTheme();
+  if(t!=="system") document.documentElement.setAttribute("data-theme",t);
+})();
+
+/* ------------------------------------------------------------- toast */
+function toast(msg,kind){
+  var host=document.getElementById("toastHost");
+  var el=document.createElement("div");
+  el.className="toast "+(kind||"good");
+  el.textContent=msg;
+  host.appendChild(el);
+  setTimeout(function(){ el.style.transition="opacity .25s"; el.style.opacity="0"; setTimeout(function(){ el.remove(); },250); }, 2600);
+}
+
+/* ------------------------------------------------------------- state */
+var STATE = { drawerOpen:false, modal:null };
+
+function closeModal(){ STATE.modal=null; render(); }
+
+/* ------------------------------------------------------------ router */
+function go(hash){ location.hash = hash; }
+window.addEventListener("hashchange", render);
+
+function currentRoute(){
+  var h=(location.hash||"#home").slice(1);
+  return h || "home";
+}
+
+/* ------------------------------------------------------------ layout helpers */
+function statusBadge(status){
+  var cls = status==="AVAILABLE"?"badge-good":status==="OCCUPIED"?"badge-info":"badge-bad";
+  return '<span class="badge '+cls+'"><span class="dot"></span>'+STATUS_LABEL[status]+'</span>';
+}
+function mailboxBadge(status){
+  var map={NOT_CONNECTED:["ยังไม่เชื่อมต่อ (Demo)","badge-neutral"],CONNECTED:["เชื่อมต่อแล้ว (Demo)","badge-good"],REFRESHING:["กำลังรีเฟรช (Demo)","badge-neutral"],ERROR:["เกิดข้อผิดพลาด (Demo)","badge-bad"]};
+  var m=map[status]||map.NOT_CONNECTED;
+  return '<span class="badge '+m[1]+'"><span class="dot"></span>'+m[0]+'</span>';
+}
+function demoTag(){ return '<span class="badge badge-demo">Demo</span>'; }
+function emptyState(title,desc){
+  return '<div class="empty"><div class="t">'+esc(title)+'</div>'+(desc?'<div class="d">'+esc(desc)+'</div>':'')+'</div>';
+}
+function countdownSpan(expIso,isExpired){
+  return '<span class="num" data-countdown data-exp="'+expIso+'" data-expired="'+(isExpired?1:0)+'" style="font-size:12.5px;color:'+(isExpired?"var(--bad)":"var(--muted)")+';font-weight:'+(isExpired?700:400)+'">'+remaining(expIso,Date.now())+'</span>';
+}
+function tickCountdowns(){
+  document.querySelectorAll('[data-countdown]').forEach(function(el){
+    el.textContent = remaining(el.getAttribute("data-exp"), Date.now());
+  });
+}
+setInterval(tickCountdowns, 1000);
+
+/* ------------------------------------------------------------ public topbar (storefront/customer) */
+function publicTopbar(opts){
+  opts=opts||{};
+  return '' +
+  '<header class="topbar gutter">' +
+    '<a href="#'+(opts.homeHref||'home')+'" style="text-decoration:none"><div class="brand"><div class="mark">P</div>'+esc(SHOP.name)+'</div></a>' +
+    '<div style="display:flex;align-items:center;gap:8px">' +
+      themeToggleHTML('tt-'+Math.random().toString(36).slice(2)) +
+      (opts.showLogin!==false?'<a href="#login" class="btn btn-outline btn-sm">เข้าสู่ระบบ</a>':'') +
+      (opts.showLogout?'<a href="#home" class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>':'') +
+    '</div>' +
+  '</header>';
+}
+
+/* ================================================================ VIEWS */
+
+function viewHome(){
+  var plansHtml = PLANS.map(function(p){
+    return '<div class="plan-tile"><span style="font-weight:700;font-size:13px">'+esc(p.name)+'</span><span class="price num">฿'+p.price+'</span><span class="faint" style="font-size:10.5px">ราคาตัวอย่าง</span></div>';
+  }).join("");
+  return publicTopbar() +
+  '<main class="gutter" style="max-width:920px;margin:0 auto;padding-top:28px;padding-bottom:40px">' +
+    '<section class="hero" style="display:flex;flex-direction:column;gap:14px">' +
+      '<span class="pill">ร้านพรีเมียม Netflix</span>' +
+      '<h1 style="font-size:30px;line-height:1.3;font-weight:800">บริการ Netflix โปรไฟล์พร้อมใช้ จัดการวันหมดอายุให้อัตโนมัติ</h1>' +
+      '<p class="muted" style="max-width:520px">'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วติดต่อแอดมินเพื่อให้มอบหมายโปรไฟล์ให้คุณ</p>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">' +
+        '<a href="'+SHOP.contact+'" target="_blank" rel="noreferrer" class="btn btn-primary">ติดต่อแอดมิน</a>' +
+        '<a href="#login" class="btn btn-secondary">เข้าสู่ระบบลูกค้า</a>' +
+      '</div>' +
+    '</section>' +
+    '<section style="margin-top:36px">' +
+      '<h2 style="font-size:16px;font-weight:800;margin-bottom:10px">Netflix</h2>' +
+      '<div class="card" style="padding:18px">' +
+        '<p class="muted" style="font-size:12.5px;margin-bottom:14px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาด้านล่างเป็น<strong style="color:var(--ink)"> ข้อมูลตัวอย่างสำหรับเดโม่ </strong>แก้ไขได้ในหลังบ้าน</p>' +
+        '<div class="grid grid-6">'+plansHtml+'</div>' +
+        '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
+      '</div>' +
+    '</section>' +
+    '<section class="grid grid-3" style="margin-top:28px">' +
+      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('search')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">จัดการได้ทุกโปรไฟล์</div><div class="muted" style="font-size:12.5px">แอดมินเลือกโปรไฟล์ ลูกค้า และจำนวนวัน ระบบคำนวณวันหมดอายุให้เอง</div></div></div>' +
+      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('monitor')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ตรวจสอบเวลาคงเหลือได้</div><div class="muted" style="font-size:12.5px">ลูกค้าดูวันเริ่ม วันหมดอายุ และเวลาคงเหลือของบริการตนเองได้ตลอดเวลา</div></div></div>' +
+      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('eye')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">โปร่งใส ตรวจสอบได้</div><div class="muted" style="font-size:12.5px">ทุกการเปลี่ยนแปลงถูกบันทึกเป็นประวัติกิจกรรม พร้อมผู้ดำเนินการและเวลา</div></div></div>' +
+    '</section>' +
+  '</main>' +
+  '<footer class="site">'+esc(SHOP.name)+' — ระบบนี้เป็น MVP Demo ใช้ข้อมูลและ OTP จำลองเท่านั้น</footer>';
+}
+
+function viewLogin(){
+  return publicTopbar({showLogin:false}) +
+  '<main class="gutter" style="max-width:380px;margin:40px auto;display:flex;flex-direction:column;align-items:center;gap:0">' +
+    '<div class="card" style="padding:22px;width:100%">' +
+      '<div class="tabs" id="loginTabs" style="width:100%">' +
+        '<button data-role="customer" class="active" style="flex:1">ลูกค้า</button>' +
+        '<button data-role="admin" style="flex:1">แอดมิน</button>' +
+      '</div>' +
+      '<form id="loginForm" style="margin-top:16px;display:flex;flex-direction:column;gap:12px">' +
+        '<div class="field"><label for="le">อีเมล</label><input class="input" id="le" type="email" placeholder="name@example.com"></div>' +
+        '<div class="field"><label for="lp">รหัสผ่าน</label><input class="input" id="lp" type="password" placeholder="••••••••"></div>' +
+        '<button class="btn btn-primary" type="submit" style="margin-top:2px">เข้าสู่ระบบ</button>' +
+      '</form>' +
+      '<div class="card" style="margin-top:16px;padding:11px;background:var(--bg-subtle)">' +
+        '<div style="font-weight:700;font-size:11.5px;margin-bottom:6px">บัญชีทดลอง (Demo)</div>' +
+        '<button class="link-btn" id="fillCustomer" style="display:block;font-size:11.5px">ลูกค้า: '+DEMO_ACC.customer.email+'</button>' +
+        '<button class="link-btn" id="fillAdmin" style="display:block;font-size:11.5px;margin-top:3px">แอดมิน: '+DEMO_ACC.admin.email+'</button>' +
+      '</div>' +
+    '</div>' +
+    '<a href="#home" class="link-btn" style="margin-top:14px;font-size:12px">'+icon('back')+'กลับหน้าร้าน</a>' +
+  '</main>';
+}
+function mountLogin(){
+  var role="customer";
+  document.querySelectorAll('#loginTabs button').forEach(function(b){
+    b.onclick=function(){ role=b.getAttribute("data-role"); document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.remove("active")}); b.classList.add("active"); };
+  });
+  document.getElementById("fillCustomer").onclick=function(){ document.getElementById("le").value=DEMO_ACC.customer.email; document.getElementById("lp").value=DEMO_ACC.customer.pass; role="customer"; document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.toggle("active",x.getAttribute("data-role")==="customer")}); };
+  document.getElementById("fillAdmin").onclick=function(){ document.getElementById("le").value=DEMO_ACC.admin.email; document.getElementById("lp").value=DEMO_ACC.admin.pass; role="admin"; document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.toggle("active",x.getAttribute("data-role")==="admin")}); };
+  document.getElementById("loginForm").onsubmit=function(e){
+    e.preventDefault();
+    var email=document.getElementById("le").value, pass=document.getElementById("lp").value;
+    if(!email||!pass){ toast("กรุณากรอกอีเมลและรหัสผ่าน","bad"); return; }
+    toast("เข้าสู่ระบบสำเร็จ (Demo)","good");
+    setTimeout(function(){ go(role==="admin"?"admin":"my-services"); }, 350);
+  };
+}
+
+function customerTopbar(){
+  return '<header class="topbar gutter">' +
+    '<a href="#my-services" style="text-decoration:none"><div class="brand"><div class="mark">P</div>'+esc(SHOP.name)+'</div></a>' +
+    '<div style="display:flex;align-items:center;gap:8px">' + themeToggleHTML('tt-cust-'+Math.random().toString(36).slice(2)) +
+      '<a href="#home" class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>' +
+    '</div></header>';
+}
+
+function viewMyServices(){
+  var cust = customer(SESSION_CUSTOMER);
+  var mine = RENTALS.filter(function(r){ return r.customerId===cust.id && !r.closedAt; });
+  var body;
+  if(mine.length===0){
+    body = emptyState("ยังไม่มีบริการที่ใช้งานอยู่","ติดต่อแอดมินเพื่อเริ่มใช้งานบริการ Netflix");
+  }else{
+    body = '<div class="grid grid-2">' + mine.map(function(r){
+      var p=profile(r.profileId), acc=account(p.accountId), status=deriveStatus(r);
+      return '<div class="card" style="padding:18px">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">' +
+          '<div style="display:flex;align-items:center;gap:10px"><div class="mark" style="background:var(--accent-soft);color:var(--accent);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800">N</div>' +
+          '<div><div style="font-weight:700;font-size:13.5px">Netflix</div><div class="muted" style="font-size:12px">โปรไฟล์ '+esc(p.name)+'</div></div></div>' +
+          statusBadge(status) +
+        '</div>' +
+        '<div class="grid" style="grid-template-columns:1fr 1fr;gap:6px 0;font-size:12.5px">' +
+          '<div class="muted">วันเริ่ม</div><div style="text-align:right">'+fmtDT(r.startedAt)+'</div>' +
+          '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+fmtDT(r.expiresAt)+'</div>' +
+          '<div class="muted">เวลาคงเหลือ</div><div style="text-align:right">'+countdownSpan(r.expiresAt,status==="EXPIRED")+'</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-top:14px">' +
+          '<a href="#otp-'+r.id+'" class="btn btn-primary" style="flex:1" '+(status==="EXPIRED"?'onclick="return false" aria-disabled="true" style=\'opacity:.5;pointer-events:none;flex:1\'':'')+'>รับ OTP เดโม่</a>' +
+          '<a href="#service-'+r.id+'" class="btn btn-secondary" style="flex:1">ดูรายละเอียด</a>' +
+        '</div>' +
+        (status==="EXPIRED"?'<p style="color:var(--bad);font-size:11.5px;margin-top:10px">รายการนี้หมดเวลาแล้ว กรุณาติดต่อแอดมินเพื่อต่ออายุ</p>':'') +
+        '<p class="faint" style="font-size:11px;margin-top:8px">บัญชีอ้างอิง: '+esc(acc.name)+'</p>' +
+      '</div>';
+    }).join("") + '</div>';
+  }
+  return customerTopbar() +
+  '<main class="gutter" style="max-width:860px;margin:0 auto;padding:22px 0 40px">' +
+    '<div style="margin-bottom:18px"><h1 style="font-size:19px;font-weight:800">บริการของฉัน</h1><p class="muted" style="font-size:13px">สวัสดีคุณ '+esc(cust.name)+'</p></div>' +
+    body +
+  '</main>';
+}
+
+function viewServiceDetail(rentalId){
+  var r=rental(rentalId);
+  if(!r || r.customerId!==SESSION_CUSTOMER){
+    return customerTopbar() + '<main class="gutter" style="max-width:520px;margin:30px auto">' + emptyState("ไม่พบรายการ","รายการนี้อาจไม่ใช่ของคุณ") + '</main>';
+  }
+  var p=profile(r.profileId), status=deriveStatus(r), cust=customer(SESSION_CUSTOMER);
+  var hist = RENEWALS.filter(function(h){ return h.rentalId===r.id; });
+  return customerTopbar() +
+  '<main class="gutter" style="max-width:640px;margin:0 auto;padding:22px 0 40px">' +
+    '<a href="#my-services" class="link-btn" style="font-size:12.5px;margin-bottom:14px;display:inline-flex">'+icon('back')+'กลับไปบริการของฉัน</a>' +
+    '<div class="card" style="padding:22px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
+        '<div style="display:flex;gap:12px;align-items:center"><div style="width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">N</div>' +
+        '<div><div style="font-weight:800;font-size:15px">Netflix — '+esc(p.name)+'</div><div class="muted" style="font-size:12.5px">ผู้ใช้งาน: '+esc(cust.name)+'</div></div></div>' +
+        statusBadge(status) +
+      '</div>' +
+      '<div class="card" style="background:var(--bg-subtle);padding:14px" class="grid grid-2">' +
+        '<div class="grid grid-2" style="font-size:12.5px">' +
+          '<div><div class="muted">วันเริ่มใช้งาน</div><div style="font-weight:600">'+fmtDT(r.startedAt)+'</div></div>' +
+          '<div><div class="muted">วันหมดอายุ</div><div style="font-weight:600">'+fmtDT(r.expiresAt)+'</div></div>' +
+          '<div><div class="muted">จำนวนวันที่ใช้งาน</div><div style="font-weight:600">'+r.days+' วัน</div></div>' +
+          '<div><div class="muted">เวลาคงเหลือ</div><div>'+countdownSpan(r.expiresAt,status==="EXPIRED")+'</div></div>' +
+        '</div>' +
+      '</div>' +
+      (status==="EXPIRED"?'<p style="margin-top:12px;background:var(--bad-bg);color:var(--bad);padding:9px 12px;border-radius:8px;font-size:12.5px">รายการนี้หมดเวลาแล้ว กรุณาติดต่อแอดมินเพื่อต่ออายุ</p>':'') +
+      '<div style="display:flex;gap:8px;margin-top:16px">' +
+        '<a href="#otp-'+r.id+'" class="btn btn-primary" '+(status==="EXPIRED"?'style="opacity:.5;pointer-events:none"':'')+'>รับ OTP เดโม่</a>' +
+        '<a href="'+SHOP.contact+'" target="_blank" rel="noreferrer" class="btn btn-secondary">ติดต่อแอดมินเพื่อต่ออายุ</a>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:20px"><div class="section-title">ประวัติการต่ออายุ</div>' +
+      (hist.length===0? emptyState("ยังไม่มีประวัติการต่ออายุ"): '<div class="card">' + hist.map(function(h,i){
+        return '<div style="padding:12px 16px;'+(i<hist.length-1?'border-bottom:1px solid var(--border)':'')+';display:flex;justify-content:space-between;font-size:12.5px">' +
+          '<div><div style="font-weight:600">เพิ่ม '+h.days+' วัน</div><div class="muted" style="font-size:11.5px">'+fmtDT(h.prevExpires)+' → '+fmtDT(h.newExpires)+'</div></div>' +
+          '<div class="faint" style="font-size:11px">'+fmtDT(h.at)+'</div></div>';
+      }).join("") + '</div>') +
+    '</div>' +
+  '</main>';
+}
+
+function viewOtp(rentalId){
+  var r=rental(rentalId);
+  if(!r || r.customerId!==SESSION_CUSTOMER){
+    return customerTopbar() + '<main class="gutter" style="max-width:420px;margin:30px auto">' + emptyState("ไม่พบรายการ หรือคุณไม่มีสิทธิ์เข้าถึง") + '</main>';
+  }
+  var p=profile(r.profileId), acc=account(p.accountId), cust=customer(SESSION_CUSTOMER), status=deriveStatus(r);
+  return customerTopbar() +
+  '<main class="gutter" style="max-width:460px;margin:0 auto;padding:22px 0 40px">' +
+    '<a href="#service-'+r.id+'" class="link-btn" style="font-size:12.5px;margin-bottom:14px;display:inline-flex">'+icon('back')+'กลับไปรายละเอียดบริการ</a>' +
+    '<div class="card" style="padding:24px;text-align:center" id="otpCard" data-rental="'+r.id+'" data-expired="'+(status==="EXPIRED"?1:0)+'">' +
+      '<div style="display:flex;justify-content:center;gap:7px;align-items:center;margin-bottom:8px">'+demoTag()+'<span class="faint" style="font-size:10.5px;font-weight:700;letter-spacing:.06em">ระบบสาธิต</span></div>' +
+      '<h1 style="font-size:16px;font-weight:800">รับรหัส OTP เดโม่</h1>' +
+      '<p class="muted" style="font-size:12.5px;margin-top:3px">Netflix — โปรไฟล์ '+esc(p.name)+' · '+esc(cust.name)+'</p>' +
+      '<p class="faint" style="font-size:11px">บัญชีอ้างอิง: '+esc(acc.name)+'</p>' +
+      '<div id="otpBody" style="margin-top:20px">' + otpBodyHTML(status==="EXPIRED") + '</div>' +
+      '<p class="faint" style="font-size:11px;margin-top:20px">รหัสนี้ใช้สาธิตภายในระบบเท่านั้น ไม่มีผลต่อการยืนยันตัวตนกับ Netflix หรือบริการภายนอกใด ๆ</p>' +
+    '</div>' +
+  '</main>';
+}
+var OTP_STATE = {};
+function otpBodyHTML(expired){
+  if(expired){
+    return '<div class="card" style="background:var(--bad-bg);border-color:var(--bad-bd);padding:20px"><div style="color:var(--bad);font-weight:700;font-size:13px">รายการนี้หมดเวลาแล้ว</div><div class="muted" style="font-size:12px;margin-top:3px">กรุณาติดต่อแอดมินเพื่อต่ออายุ</div></div>';
+  }
+  return '<button class="btn btn-primary" id="reqOtpBtn" style="width:100%;height:44px">ขอรหัสเดโม่</button>';
+}
+function mountOtp(rentalId){
+  var card=document.getElementById("otpCard");
+  if(!card) return;
+  var st=OTP_STATE[rentalId]||{};
+  function paint(){
+    var body=document.getElementById("otpBody");
+    if(st.code){
+      var left=Math.max(0, 300-Math.floor((Date.now()-st.at)/1000));
+      var expiredCode = left<=0;
+      body.innerHTML =
+        '<div class="card" style="background:var(--bg-subtle);padding:18px">' +
+          '<div class="otp-code'+(expiredCode?" expired":"")+'">'+st.code+'</div>' +
+          '<div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:11.5px" class="muted">' +
+            '<span>ได้รับเมื่อ '+fmtT(new Date(st.at).toISOString())+'</span>' +
+            '<span style="color:'+(expiredCode?"var(--bad)":"inherit")+'">'+(expiredCode?"รหัสหมดอายุแล้ว":"หมดอายุใน "+Math.floor(left/60)+":"+String(left%60).padStart(2,"0"))+'</span>' +
+          '</div></div>' +
+        '<div style="display:flex;gap:8px;margin-top:10px">' +
+          '<button class="btn btn-secondary" id="copyOtp" style="flex:1" '+(expiredCode?"disabled":"")+'>'+icon('copy')+'คัดลอกรหัส</button>' +
+          '<button class="btn btn-primary" id="reReq" style="flex:1" '+(st.cooldown>0?"disabled":"")+'>'+(st.cooldown>0?("ขอรหัสใหม่ ("+st.cooldown+"s)"):"ขอรหัสใหม่")+'</button>' +
+        '</div>';
+      document.getElementById("copyOtp").onclick=function(){ try{ navigator.clipboard.writeText(st.code); }catch(e){} toast("คัดลอกรหัสแล้ว","good"); };
+      document.getElementById("reReq").onclick=function(){ if(st.cooldown>0) return; requestCode(); };
+    }else if(st.loading){
+      body.innerHTML='<div class="card" style="background:var(--bg-subtle);padding:30px 0"><div class="muted" style="font-size:12.5px">กำลังจำลองการดึงข้อความ...</div></div>';
+    }else{
+      body.innerHTML = otpBodyHTML(false);
+      var b=document.getElementById("reqOtpBtn"); if(b) b.onclick=requestCode;
+    }
+  }
+  function requestCode(){
+    st.loading=true; paint();
+    setTimeout(function(){
+      st.loading=false; st.code=String(Math.floor(100000+Math.random()*900000)); st.at=Date.now(); st.cooldown=60;
+      OTP_STATE[rentalId]=st; paint(); toast("ได้รับรหัสเดโม่แล้ว","good");
+      var iv=setInterval(function(){
+        st.cooldown=Math.max(0,st.cooldown-1);
+        if(document.getElementById("reReq")){ document.getElementById("reReq").disabled = st.cooldown>0; document.getElementById("reReq").textContent = st.cooldown>0?("ขอรหัสใหม่ ("+st.cooldown+"s)"):"ขอรหัสใหม่"; }
+        if(st.cooldown<=0) clearInterval(iv);
+      },1000);
+    }, 1200);
+  }
+  OTP_STATE[rentalId]=st;
+  paint();
+  var tick=setInterval(function(){ if(!document.getElementById("otpCard")){ clearInterval(tick); return;} if(st.code) paint(); }, 1000);
+}
+
+/* ================================================================ ADMIN */
+var ADMIN_NAV = [
+  {href:"admin",label:"แดชบอร์ด"},
+  {href:"admin-accounts",label:"บัญชี Netflix"},
+  {href:"admin-customers",label:"ลูกค้า"},
+  {href:"admin-rentals",label:"รายการใช้งาน"},
+  {href:"admin-mailboxes",label:"จัดการอีเมล"},
+  {href:"admin-activity",label:"ประวัติกิจกรรม"},
+  {href:"admin-settings",label:"ตั้งค่าร้าน"}
+];
+function adminActiveKey(route){
+  if(route==="admin") return "admin";
+  if(route.indexOf("admin-account-")===0) return "admin-accounts";
+  if(route.indexOf("admin-customer-")===0 && route!=="admin-customers") return "admin-customers";
+  for(var i=0;i<ADMIN_NAV.length;i++) if(route===ADMIN_NAV[i].href) return ADMIN_NAV[i].href;
+  return "admin";
+}
+function railNavHTML(active){
+  return ADMIN_NAV.map(function(n){
+    return '<a href="#'+n.href+'" class="'+(active===n.href?"active":"")+'">'+esc(n.label)+'</a>';
+  }).join("");
+}
+function adminShell(route, title, bodyHtml){
+  var active=adminActiveKey(route);
+  var rail = '<aside class="rail">' +
+      '<div class="brand"><div class="mark">P</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
+      '<nav>'+railNavHTML(active)+'</nav>' +
+      '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+    '</aside>';
+  var drawer='';
+  if(STATE.drawerOpen){
+    drawer = '<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding-right:8px">' +
+        '<div class="brand" style="padding:16px"><div class="mark">P</div>'+esc(SHOP.name)+'</div>' +
+        '<button class="btn btn-ghost btn-sm" id="drawerClose">'+icon('close')+'</button>' +
+      '</div><nav style="padding:0 10px">'+railNavHTML(active)+'</nav>' +
+      '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+    '</div>';
+  }
+  return '<div class="admin">' + rail +
+    '<div class="admin-main">' +
+      '<header class="topbar gutter">' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<button class="btn btn-ghost btn-sm" id="drawerOpenBtn" style="display:none" data-mobile-only>'+icon('menu')+'</button>' +
+          '<h1 style="font-size:15px;font-weight:800">'+esc(title)+'</h1>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          themeToggleHTML('tt-admin-'+Math.random().toString(36).slice(2)) +
+          '<div style="display:flex;align-items:center;gap:7px;border-left:1px solid var(--border);padding-left:10px" data-desktop-only>' +
+            '<div style="width:28px;height:28px;border-radius:999px;background:var(--bg-subtle);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800">AD</div>' +
+            '<div><div style="font-size:11px;font-weight:700">แอดมิน</div><div class="faint" style="font-size:10px">admin@premiumhub.demo</div></div>' +
+          '</div>' +
+        '</div>' +
+      '</header>' +
+      '<div class="admin-content">'+bodyHtml+'</div>' +
+    '</div>' +
+  drawer + '</div>' +
+  '<style>@media (max-width:900px){ #drawerOpenBtn{display:inline-flex!important} [data-desktop-only]{display:none!important} }</style>';
+}
+function mountAdminShellEvents(){
+  var btn=document.getElementById("drawerOpenBtn");
+  if(btn) btn.onclick=function(){ STATE.drawerOpen=true; render(); };
+  var scrim=document.getElementById("drawerScrim");
+  if(scrim) scrim.onclick=function(){ STATE.drawerOpen=false; render(); };
+  var close=document.getElementById("drawerClose");
+  if(close) close.onclick=function(){ STATE.drawerOpen=false; render(); };
+}
+
+function viewAdminDashboard(){
+  var rows=allRows();
+  var avail=rows.filter(function(r){return r.status==="AVAILABLE"}).length;
+  var occ=rows.filter(function(r){return r.status==="OCCUPIED"}).length;
+  var exp=rows.filter(function(r){return r.status==="EXPIRED"}).length;
+  var soon=rows.filter(function(r){ if(r.status!=="OCCUPIED") return false; return (new Date(r.rental.expiresAt).getTime()-Date.now())/3600000<=24; });
+  var awaiting=rows.filter(function(r){return r.status==="EXPIRED"});
+  var stats=[
+    ["บัญชี Netflix ทั้งหมด",ACCOUNTS.length],["โปรไฟล์ทั้งหมด",rows.length],
+    ["โปรไฟล์ว่าง",avail],["โปรไฟล์ไม่ว่าง",occ],["โปรไฟล์หมดเวลา",exp],["ลูกค้าทั้งหมด",CUSTOMERS.length]
+  ];
+  var statCards = stats.map(function(s){ return '<div class="card stat"><div class="v num">'+s[1]+'</div><div class="l">'+s[0]+'</div></div>'; }).join("");
+  var soonHtml = soon.length===0? emptyState("ไม่มีรายการใกล้หมดเวลา","รายการไม่ว่างทั้งหมดยังเหลือเวลามากกว่า 24 ชั่วโมง") :
+    '<div>'+soon.map(function(r){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px"><div><div style="font-weight:600">'+esc(r.profile.name)+' · '+esc(r.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(r.customer.name)+'</div></div>'+countdownSpan(r.rental.expiresAt,false)+'</div>'; }).join("")+'</div>';
+  var awaitHtml = awaiting.length===0? emptyState("ไม่มีรายการรอคืนเป็นว่าง") :
+    '<div>'+awaiting.map(function(r){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px"><div><div style="font-weight:600">'+esc(r.profile.name)+' · '+esc(r.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(r.customer.name)+'</div></div>'+statusBadge("EXPIRED")+'</div>'; }).join("")+'</div>';
+  var activityHtml = ACTIVITY.slice().sort(function(a,b){return new Date(b.at)-new Date(a.at)}).slice(0,6).map(function(a){
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px"><div><div>'+esc(a.detail)+'</div><div class="muted" style="font-size:11px">โดย '+esc(a.actor)+' · '+esc(a.target)+'</div></div><div class="faint" style="font-size:11px;white-space:nowrap">'+fmtDT(a.at)+'</div></div>';
+  }).join("");
+
+  var body = '<div style="display:flex;flex-direction:column;gap:18px">' +
+    '<div class="grid grid-6">'+statCards+'</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<a href="#admin-accounts" class="btn btn-primary btn-sm">'+icon('plus')+'เพิ่มบัญชี Netflix</a>' +
+      '<a href="#admin-accounts" class="btn btn-secondary btn-sm">เพิ่มลูกค้าเข้าโปรไฟล์</a>' +
+      '<a href="#admin-mailboxes" class="btn btn-secondary btn-sm">จัดการอีเมล</a>' +
+      '<a href="#admin-rentals" class="btn btn-outline btn-sm">ดูรายการหมดเวลา</a>' +
+    '</div>' +
+    '<div class="grid grid-2">' +
+      '<div class="card" style="padding:16px"><div class="section-title">รายการที่จะหมดเวลาภายใน 24 ชั่วโมง</div>'+soonHtml+'</div>' +
+      '<div class="card" style="padding:16px"><div class="section-title">รายการที่หมดเวลาแล้วและรอคืนเป็นว่าง</div>'+awaitHtml+'</div>' +
+    '</div>' +
+    '<div class="card" style="padding:16px"><div class="section-title">กิจกรรมล่าสุด</div>'+activityHtml+'</div>' +
+  '</div>';
+  return adminShell("admin","แดชบอร์ด",body);
+}
+
+function accountsTableRows(rows){
+  return rows.map(function(r){
+    var p=r.profile, acc=r.account;
+    return '<tr>' +
+      '<td style="font-weight:600">'+esc(p.name)+'</td>' +
+      '<td>'+secretHTML(acc.email.replace("@","@pw-"), acc.pass)+'</td>' +
+      '<td>'+(p.pin? secretHTML("4821", p.pin) : '<span class="faint">-</span>')+'</td>' +
+      '<td>'+statusBadge(r.status)+'</td>' +
+      '<td>'+(r.customer? esc(r.customer.name): '<span class="faint">-</span>')+'</td>' +
+      '<td class="num">'+(r.rental? r.rental.days : "-")+'</td>' +
+      '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
+      '<td class="muted" style="font-size:12px">'+(r.rental? (fmtDT(r.rental.expiresAt)+'<br>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")) : "-")+'</td>' +
+      '<td class="muted" style="font-size:12px">'+esc(p.device||"-")+'</td>' +
+      '<td>'+rowActionsHTML(r)+'</td>' +
+    '</tr>';
+  }).join("");
+}
+function accountsCardsHTML(rows){
+  return rows.map(function(r){
+    var p=r.profile;
+    return '<div style="padding:14px;border-bottom:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+'</div>'+statusBadge(r.status)+'</div>' +
+      '<div class="grid grid-2" style="font-size:11.5px">' +
+        '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
+        '<div class="muted">จำนวนวัน</div><div style="text-align:right">'+(r.rental?r.rental.days:"-")+'</div>' +
+        '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
+      '</div>' +
+      '<div style="margin-top:10px">'+rowActionsHTML(r)+'</div>' +
+    '</div>';
+  }).join("");
+}
+function rowActionsHTML(r){
+  if(r.status==="AVAILABLE") return '<button class="btn btn-primary btn-sm" data-assign="'+r.profile.id+'">เพิ่มลูกค้า</button>';
+  if(r.status==="OCCUPIED") return '<button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button>';
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button><button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button></div>';
+}
+function secretHTML(real,masked){
+  var id="s"+Math.random().toString(36).slice(2,9);
+  return '<span class="secret" data-real="'+esc(real)+'" data-masked="'+esc(masked)+'" id="'+id+'"><span class="val">'+esc(masked)+'</span>' +
+    '<button data-secret-toggle="'+id+'">'+icon('eye')+'</button>' +
+    '<button data-secret-copy="'+id+'">'+icon('copy')+'</button></span>';
+}
+function mountSecrets(){
+  document.querySelectorAll('[data-secret-toggle]').forEach(function(btn){
+    btn.onclick=function(){
+      var wrap=document.getElementById(btn.getAttribute("data-secret-toggle"));
+      var val=wrap.querySelector(".val");
+      var showing = val.textContent===wrap.getAttribute("data-real");
+      val.textContent = showing? wrap.getAttribute("data-masked") : wrap.getAttribute("data-real");
+      if(!showing) toast("เปิดดูข้อมูลสำคัญ — บันทึกลงประวัติกิจกรรมแล้ว","info");
+    };
+  });
+  document.querySelectorAll('[data-secret-copy]').forEach(function(btn){
+    btn.onclick=function(){
+      var wrap=document.getElementById(btn.getAttribute("data-secret-copy"));
+      try{ navigator.clipboard.writeText(wrap.getAttribute("data-real")); }catch(e){}
+      toast("คัดลอกแล้ว","good");
+    };
+  });
+}
+
+var ADMIN_UI = { search:"", statusFilter:"ALL", collapsed:{} };
+function viewAdminAccounts(){
+  var rows = allRows();
+  var q=ADMIN_UI.search.trim().toLowerCase();
+  var filtered = rows.filter(function(r){
+    if(ADMIN_UI.statusFilter!=="ALL" && r.status!==ADMIN_UI.statusFilter) return false;
+    if(!q) return true;
+    return r.profile.name.toLowerCase().indexOf(q)>=0 || r.account.email.toLowerCase().indexOf(q)>=0 || (r.customer && r.customer.name.toLowerCase().indexOf(q)>=0);
+  });
+  var groups = ACCOUNTS.map(function(acc){ return {account:acc, rows: filtered.filter(function(r){return r.account.id===acc.id})}; }).filter(function(g){return g.rows.length>0});
+
+  var groupsHtml = groups.map(function(g){
+    var collapsed = !!ADMIN_UI.collapsed[g.account.id];
+    return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle);cursor:pointer" data-toggle-group="'+g.account.id+'">' +
+        '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(g.account.email)+'</div></div>' +
+        '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
+      '</div>' +
+      (collapsed? '' :
+        '<div class="tbl-wrap tbl-desktop"><table class="tbl"><thead><tr><th>โปรไฟล์</th><th>รหัสผ่าน</th><th>PIN</th><th>สถานะ</th><th>ลูกค้าที่เข้า</th><th>จำนวนวัน</th><th>วันเริ่ม</th><th>วันหมดอายุ</th><th>อุปกรณ์</th><th>จัดการ</th></tr></thead><tbody>'+accountsTableRows(g.rows)+'</tbody></table></div>' +
+        '<div class="cards-mobile">'+accountsCardsHTML(g.rows)+'</div>'
+      ) +
+    '</div>';
+  }).join("") || emptyState("ไม่พบโปรไฟล์ที่ตรงกับเงื่อนไข");
+
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+      '<p class="muted" style="font-size:12.5px">'+ACCOUNTS.length+' บัญชี · '+PROFILES.length+' โปรไฟล์</p>' +
+      '<button class="btn btn-primary btn-sm" id="addAccountBtn">'+icon('plus')+'เพิ่มบัญชี Netflix</button>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      '<input class="input" id="acctSearch" placeholder="ค้นหาจากชื่อโปรไฟล์ อีเมลบัญชี หรือชื่อลูกค้า" style="flex:1;min-width:220px" value="'+esc(ADMIN_UI.search)+'">' +
+      '<select class="input" id="acctFilter" style="width:160px">' +
+        ['ALL,ทุกสถานะ','AVAILABLE,ว่าง','OCCUPIED,ไม่ว่าง','EXPIRED,หมดเวลา'].map(function(o){ var v=o.split(","); return '<option value="'+v[0]+'" '+(ADMIN_UI.statusFilter===v[0]?"selected":"")+'>'+v[1]+'</option>'; }).join("") +
+      '</select>' +
+    '</div>' +
+    groupsHtml +
+  '</div>';
+  return adminShell("admin-accounts","บัญชี Netflix",body);
+}
+function mountAdminAccounts(){
+  var search=document.getElementById("acctSearch");
+  if(search){ search.oninput=function(){ ADMIN_UI.search=search.value; render(true); }; }
+  var filt=document.getElementById("acctFilter");
+  if(filt){ filt.onchange=function(){ ADMIN_UI.statusFilter=filt.value; render(); }; }
+  document.querySelectorAll('[data-toggle-group]').forEach(function(el){
+    el.onclick=function(){ var id=el.getAttribute("data-toggle-group"); ADMIN_UI.collapsed[id]=!ADMIN_UI.collapsed[id]; render(); };
+  });
+  document.getElementById("addAccountBtn").onclick=function(){ toast("เดโม่นี้จำกัดไว้ที่ 2 บัญชีตัวอย่าง","info"); };
+  document.querySelectorAll('[data-assign]').forEach(function(btn){ btn.onclick=function(){ openAssignModal(btn.getAttribute("data-assign")); }; });
+  document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
+  document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
+  mountSecrets();
+}
+
+/* ---- modals: assign / renew / release ---- */
+function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7}; render(); }
+function openRenewModal(rentalId){ STATE.modal={type:"renew", rentalId:rentalId, days:7}; render(); }
+function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
+
+function modalHTML(){
+  var m=STATE.modal; if(!m) return "";
+  if(m.type==="assign"){
+    var p=profile(m.profileId), acc=account(p.accountId);
+    var start=new Date();
+    var exp=new Date(start.getTime()+m.days*86400000);
+    var custOptions = CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(m.customerId===c.id?"selected":"")+'>'+esc(c.name)+' ('+esc(c.email)+')</option>'; }).join("");
+    var custLabel = m.mode==="existing" ? (byId(CUSTOMERS,m.customerId)||{}).name : (m.newName||"(ยังไม่ได้ระบุชื่อ)");
+    return modalWrap('เพิ่มลูกค้าเข้าโปรไฟล์','โปรไฟล์ที่เลือก: '+esc(p.name)+' ('+esc(acc.name)+')', '' +
+      '<div class="field"><label>ลูกค้า</label>' +
+        '<div class="tabs" style="margin-bottom:8px"><button data-amode="existing" class="'+(m.mode==="existing"?"active":"")+'">เลือกลูกค้าเดิม</button><button data-amode="new" class="'+(m.mode==="new"?"active":"")+'">เพิ่มลูกค้าใหม่</button></div>' +
+        (m.mode==="existing"? '<select class="input" id="assignCust">'+custOptions+'</select>' : '<input class="input" id="assignNewName" placeholder="ชื่อที่ใช้แสดงของลูกค้าใหม่" value="'+esc(m.newName)+'">') +
+      '</div>' +
+      '<div class="field"><label>จำนวนวันที่ใช้งาน</label><div class="chiprow">' +
+        [1,3,7,15,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-days="'+d+'">'+d+' วัน</button>'; }).join("") +
+        '<input class="input" id="assignCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
+      '</div></div>' +
+      '<div class="field"><label>วันและเวลาเริ่มต้น</label><input class="input" disabled value="'+fmtDT(start.toISOString())+'"><p class="faint" style="font-size:10.5px;margin-top:3px">ใช้เวลาปัจจุบันจากเซิร์ฟเวอร์โดยอัตโนมัติ</p></div>' +
+      '<div class="field"><label>วันและเวลาหมดอายุ (คำนวณให้อัตโนมัติ)</label><input class="input" disabled value="'+fmtDT(exp.toISOString())+'"></div>' +
+      '<div class="summary-box">ใช้งาน '+m.days+' วัน เริ่ม '+fmtDT(start.toISOString())+' หมดเวลา '+fmtDT(exp.toISOString())+' · ลูกค้า: '+esc(custLabel)+'</div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="assignConfirm">บันทึกและมอบหมายโปรไฟล์</button>'
+    );
+  }
+  if(m.type==="renew"){
+    var r=rental(m.rentalId), p2=profile(r.profileId), acc2=account(p2.accountId);
+    var isExpired = deriveStatus(r)==="EXPIRED";
+    var base = isExpired? new Date() : new Date(r.expiresAt);
+    var newExp = new Date(base.getTime()+m.days*86400000);
+    return modalWrap('ต่ออายุการใช้งาน','โปรไฟล์: '+esc(p2.name)+' ('+esc(acc2.name)+')', '' +
+      '<div class="card" style="background:var(--bg-subtle);padding:10px 12px;font-size:12px" class="muted">'+(isExpired? 'รายการนี้หมดเวลาแล้ว ระบบจะนับวันใหม่จากเวลาปัจจุบัน' : ('วันหมดอายุเดิม: '+fmtDT(r.expiresAt)))+'</div>' +
+      '<div class="field" style="margin-top:12px"><label>จำนวนวันที่ต้องการเพิ่ม</label><div class="chiprow">' +
+        [1,3,7,15,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-rdays="'+d+'">+'+d+' วัน</button>'; }).join("") +
+        '<input class="input" id="renewCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px"></div></div>' +
+      '<div class="summary-box">วันหมดอายุใหม่: '+fmtDT(newExp.toISOString())+'</div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="renewConfirm">ยืนยันการต่ออายุ</button>'
+    );
+  }
+  if(m.type==="release"){
+    var r3=rental(m.rentalId), p3=profile(r3.profileId);
+    return modalWrap('คืนโปรไฟล์เป็นว่าง', null,
+      '<p style="font-size:13px">โปรไฟล์ <strong>'+esc(p3.name)+'</strong> จะถูกปิดรายการปัจจุบันและเปิดให้มอบหมายลูกค้าคนใหม่ได้ ประวัติของลูกค้าเดิมจะยังถูกเก็บไว้ และลูกค้าเดิมจะไม่สามารถขอ OTP ของโปรไฟล์นี้ได้อีก</p>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" style="background:var(--bad)" id="releaseConfirm">ยืนยันคืนเป็นว่าง</button>'
+    );
+  }
+  if(m.type==="addMailbox"){
+    return modalWrap('เพิ่มบัญชีอีเมล ('+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เดโม่นี้ใช้ MockMailboxProvider เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อ Gmail/Microsoft จริง',
+      '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider"><option value="GMAIL" '+(m.provider==="GMAIL"?"selected":"")+'>Gmail</option><option value="OUTLOOK" '+(m.provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail</option></select></div>' +
+      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@example.demo"></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">บันทึก</button>'
+    );
+  }
+  if(m.type==="addCustomer"){
+    return modalWrap('เพิ่มลูกค้าใหม่','เก็บข้อมูลเท่าที่จำเป็น ไม่บังคับกรอกเบอร์โทรหรือที่อยู่',
+      '<div class="field"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custName"></div>' +
+      '<div class="field"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEmail" type="email"></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="custConfirm">บันทึก</button>'
+    );
+  }
+  return "";
+}
+function modalWrap(title,sub,body,foot){
+  return '<div class="modal-scrim" id="modalScrim"><div class="modal">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h3>'+esc(title)+'</h3>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div><button class="btn btn-ghost btn-sm" data-close>'+icon('close')+'</button></div>' +
+    '<div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">'+body+'</div>' +
+    '<div class="modal-foot">'+foot+'</div>' +
+  '</div></div>';
+}
+function mountModal(){
+  var m=STATE.modal; if(!m) return;
+  var scrim=document.getElementById("modalScrim");
+  scrim.onclick=function(e){ if(e.target===scrim) closeModal(); };
+  document.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=closeModal; });
+
+  if(m.type==="assign"){
+    document.querySelectorAll('[data-amode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-amode"); render(); }; });
+    document.querySelectorAll('[data-days]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-days")); render(); }; });
+    var cd=document.getElementById("assignCustomDays");
+    if(cd) cd.oninput=function(){ var n=Number(cd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
+    var sel=document.getElementById("assignCust"); if(sel) sel.onchange=function(){ m.customerId=sel.value; };
+    var nn=document.getElementById("assignNewName"); if(nn) nn.oninput=function(){ m.newName=nn.value; };
+    document.getElementById("assignConfirm").onclick=function(){
+      var custId=m.mode==="existing"? (document.getElementById("assignCust")?document.getElementById("assignCust").value:m.customerId) : null;
+      if(m.mode==="new"){
+        var name=(document.getElementById("assignNewName")||{}).value||m.newName;
+        if(!name||!name.trim()){ toast("กรุณาระบุชื่อลูกค้าใหม่","bad"); return; }
+        var nc={id:"cus-new-"+Date.now(), name:name.trim(), email:name.trim().replace(/\s+/g,"").toLowerCase()+"@example.com", contact:"", note:"", pin:false, since:new Date().toISOString()};
+        CUSTOMERS.push(nc); custId=nc.id;
+      }
+      var p=profile(m.profileId);
+      var start=new Date(), exp=new Date(start.getTime()+m.days*86400000);
+      var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, closedAt:null};
+      RENTALS.push(nr); p.rentalId=nr.id;
+      closeModal();
+      toast("มอบหมายโปรไฟล์ให้ลูกค้าแล้ว สถานะเปลี่ยนเป็น “ไม่ว่าง”","good");
+    };
+  }
+  if(m.type==="renew"){
+    document.querySelectorAll('[data-rdays]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-rdays")); render(); }; });
+    var cd2=document.getElementById("renewCustomDays");
+    if(cd2) cd2.oninput=function(){ var n=Number(cd2.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
+    document.getElementById("renewConfirm").onclick=function(){
+      var r=rental(m.rentalId);
+      var isExpired = deriveStatus(r)==="EXPIRED";
+      var base = isExpired? new Date() : new Date(r.expiresAt);
+      r.expiresAt = new Date(base.getTime()+m.days*86400000).toISOString();
+      closeModal();
+      toast("ต่ออายุเพิ่ม "+m.days+" วันแล้ว","good");
+    };
+  }
+  if(m.type==="release"){
+    document.getElementById("releaseConfirm").onclick=function(){
+      var r=rental(m.rentalId); r.closedAt=new Date().toISOString();
+      var p=profile(r.profileId); p.rentalId=null;
+      closeModal();
+      toast("คืนโปรไฟล์เป็นว่างแล้ว ประวัติเดิมยังถูกเก็บไว้","good");
+    };
+  }
+  if(m.type==="addMailbox"){
+    var pr=document.getElementById("mbProvider"); if(pr) pr.onchange=function(){ m.provider=pr.value; };
+    document.getElementById("mbConfirm").onclick=function(){
+      var email=document.getElementById("mbEmail").value.trim();
+      if(!email){ toast("กรุณากรอกอีเมล","bad"); return; }
+      MAILBOXES.push({id:"mbx-new-"+Date.now(), email:email, provider:(document.getElementById("mbProvider")||{}).value||m.provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ทดสอบ", lastAt:null});
+      closeModal(); toast("เพิ่มบัญชีอีเมล (Demo) แล้ว","good");
+    };
+  }
+  if(m.type==="addCustomer"){
+    document.getElementById("custConfirm").onclick=function(){
+      var name=document.getElementById("custName").value.trim(), email=document.getElementById("custEmail").value.trim();
+      if(!name||!email){ toast("กรุณากรอกข้อมูลให้ครบ","bad"); return; }
+      CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:"", note:"", pin:false, since:new Date().toISOString()});
+      closeModal(); toast("เพิ่มลูกค้าใหม่แล้ว","good");
+    };
+  }
+}
+
+function viewAdminAccountDetail(accountId){
+  var acc=account(accountId);
+  if(!acc) return adminShell("admin-accounts","ไม่พบบัญชี", emptyState("ไม่พบบัญชีนี้"));
+  var rows = allRows().filter(function(r){ return r.account.id===acc.id; });
+  var hasActive = rows.some(function(r){ return r.status!=="AVAILABLE"; });
+  var mb = acc.mailbox ? mailbox(acc.mailbox) : null;
+  var body = '<div style="display:flex;flex-direction:column;gap:18px">' +
+    '<a href="#admin-accounts" class="link-btn" style="font-size:12.5px">'+icon('back')+'กลับไปบัญชีทั้งหมด</a>' +
+    '<div class="card" style="padding:20px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
+        '<div><h2 style="font-size:16px;font-weight:800">'+esc(acc.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(acc.email)+'</p></div>' +
+        '<button class="btn btn-outline btn-sm" '+(hasActive?"disabled title=\"ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน\"":"")+'>ลบบัญชี</button>' +
+      '</div>' +
+      '<div class="grid grid-2">' +
+        '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" value="'+esc(acc.name)+'"></div>' +
+        '<div class="field"><label>อีเมล Netflix</label><input class="input" value="'+esc(acc.email)+'"></div>' +
+        '<div class="field"><label>รหัสผ่านจำลอง</label><div class="input" style="display:flex;align-items:center;background:var(--bg-subtle)">'+secretHTML("N3tfl1x-Demo!2026",acc.pass)+'</div></div>' +
+        '<div class="field"><label>บัญชีอีเมลที่เชื่อมโยง</label>'+(mb?'<a href="#admin-mailboxes" class="input" style="display:flex;align-items:center;color:var(--accent);text-decoration:none">'+esc(mb.email)+'</a>':'<div class="input" style="display:flex;align-items:center;color:var(--faint)">ยังไม่ได้เชื่อมโยง</div>')+'</div>' +
+      '</div>' +
+      '<div class="field" style="margin-top:4px"><label>หมายเหตุ</label><textarea class="input" rows="2">'+esc(acc.note||"")+'</textarea></div>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" id="saveAccBtn">บันทึกการเปลี่ยนแปลง</button></div>' +
+    '</div>' +
+    '<div><h3 style="font-size:13px;font-weight:800;margin-bottom:10px">โปรไฟล์ในบัญชีนี้ ('+rows.length+')</h3>' +
+      '<div class="grid grid-2">' + rows.map(function(r){
+        return '<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-weight:700;font-size:13px">'+esc(r.profile.name)+'</div>'+statusBadge(r.status)+'</div>' +
+        '<div class="muted" style="font-size:11.5px">'+(r.customer?("ลูกค้า: "+esc(r.customer.name)):"ยังไม่มีลูกค้า")+'</div>' +
+        (r.rental?'<div class="faint" style="font-size:11px;margin-top:3px">หมดอายุ '+fmtDT(r.rental.expiresAt)+'</div>':'')+'</div>';
+      }).join("") + '</div>' +
+    '</div>' +
+  '</div>';
+  return adminShell("admin-account-"+accountId,"รายละเอียดบัญชี",body);
+}
+function mountAdminAccountDetail(){ var b=document.getElementById("saveAccBtn"); if(b) b.onclick=function(){ toast("บันทึกข้อมูลบัญชีแล้ว","good"); }; mountSecrets(); }
+
+function viewAdminCustomers(){
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">' +
+      '<input class="input" id="custSearch" placeholder="ค้นหาชื่อหรืออีเมลลูกค้า" style="max-width:320px">' +
+      '<button class="btn btn-primary btn-sm" id="addCustBtn">'+icon('plus')+'เพิ่มลูกค้าใหม่</button>' +
+    '</div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
+    '<div class="cards-mobile" id="custCards">'+custCards(CUSTOMERS)+'</div>' +
+  '</div>';
+  return adminShell("admin-customers","ลูกค้า",body);
+}
+function custRows(list){
+  return list.map(function(c){
+    var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
+    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td></tr>';
+  }).join("");
+}
+function custCards(list){
+  return list.map(function(c){
+    var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none">'+esc(c.name)+'</a><div class="muted" style="font-size:11.5px">'+esc(c.email)+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span>'+active+' บริการที่ใช้งานอยู่</span><span>สมัคร '+fmtD(c.since)+'</span></div></div>';
+  }).join("");
+}
+function mountAdminCustomers(){
+  document.getElementById("addCustBtn").onclick=function(){ STATE.modal={type:"addCustomer"}; render(); };
+  var s=document.getElementById("custSearch");
+  s.oninput=function(){
+    var q=s.value.trim().toLowerCase();
+    var list=CUSTOMERS.filter(function(c){ return !q || c.name.toLowerCase().indexOf(q)>=0 || c.email.toLowerCase().indexOf(q)>=0; });
+    document.getElementById("custTbody").innerHTML = custRows(list);
+    document.getElementById("custCards").innerHTML = custCards(list);
+  };
+}
+
+function viewAdminCustomerDetail(customerId){
+  var c=customer(customerId);
+  if(!c) return adminShell("admin-customers","ไม่พบลูกค้า", emptyState("ไม่พบลูกค้านี้"));
+  var mine = RENTALS.filter(function(r){ return r.customerId===c.id; }).sort(function(a,b){return new Date(b.startedAt)-new Date(a.startedAt)});
+  var active = mine.filter(function(r){return !r.closedAt});
+  var past = mine.filter(function(r){return r.closedAt});
+  var renewalsForCust = RENEWALS.filter(function(h){ return mine.some(function(r){return r.id===h.rentalId}); });
+  var body = '<div style="display:flex;flex-direction:column;gap:18px">' +
+    '<a href="#admin-customers" class="link-btn" style="font-size:12.5px">'+icon('back')+'กลับไปลูกค้าทั้งหมด</a>' +
+    '<div class="card" style="padding:20px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px"><div><h2 style="font-size:16px;font-weight:800">'+esc(c.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(c.email)+'</p></div>' +
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px" class="muted">PIN ดู OTP <input type="checkbox" '+(c.pin?"checked":"")+' id="pinToggle"></label></div>' +
+      '<div class="grid grid-3" style="font-size:12.5px">' +
+        '<div><div class="muted">ช่องทางติดต่อเพิ่มเติม</div><div>'+esc(c.contact||"-")+'</div></div>' +
+        '<div><div class="muted">สมัครเมื่อ</div><div>'+fmtDT(c.since)+'</div></div>' +
+        '<div><div class="muted">บริการที่ใช้งานอยู่</div><div>'+active.length+' รายการ</div></div>' +
+      '</div>' +
+      '<div class="field" style="margin-top:12px"><label>หมายเหตุแอดมิน (ลูกค้ามองไม่เห็น)</label><textarea class="input" rows="2">'+esc(c.note||"")+'</textarea></div>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" id="saveCustBtn">บันทึก</button></div>' +
+    '</div>' +
+    '<div><div class="section-title">บริการที่ใช้งานอยู่</div>' + (active.length===0? emptyState("ไม่มีบริการที่ใช้งานอยู่") :
+      '<div class="grid grid-2">'+active.map(function(r){ var p=profile(r.profileId), acc=account(p.accountId), status=deriveStatus(r);
+        return '<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+' <span class="muted" style="font-weight:400">('+esc(acc.name)+')</span></div>'+statusBadge(status)+'</div><div class="muted" style="font-size:11.5px">'+fmtDT(r.startedAt)+' → '+fmtDT(r.expiresAt)+'</div></div>';
+      }).join("")+'</div>') + '</div>' +
+    '<div><div class="section-title">ประวัติการใช้งานและการต่ออายุ</div>' +
+      (past.length===0 && renewalsForCust.length===0 ? emptyState("ยังไม่มีประวัติ") :
+      '<div class="card">' + past.map(function(r,i){ var p=profile(r.profileId);
+        return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:12.5px"><div><div style="font-weight:600">'+esc(p.name)+' — คืนเป็นว่างแล้ว</div><div class="muted" style="font-size:11.5px">'+fmtDT(r.startedAt)+' → '+fmtDT(r.expiresAt)+'</div></div><div class="faint" style="font-size:11px">ปิดรายการ '+(r.closedAt?fmtDT(r.closedAt):"")+'</div></div>';
+      }).join("") + renewalsForCust.map(function(h){
+        return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:12.5px"><div><div style="font-weight:600">ต่ออายุ +'+h.days+' วัน</div><div class="muted" style="font-size:11.5px">'+fmtDT(h.prevExpires)+' → '+fmtDT(h.newExpires)+'</div></div><div class="faint" style="font-size:11px">โดย '+esc(h.actor)+'</div></div>';
+      }).join("") + '</div>') + '</div>' +
+  '</div>';
+  return adminShell("admin-customer-"+customerId,"รายละเอียดลูกค้า",body);
+}
+function mountAdminCustomerDetail(customerId){
+  var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){ var c=customer(customerId); var t=document.querySelector(".admin-content textarea.input"); if(t) c.note=t.value; var pt=document.getElementById("pinToggle"); if(pt) c.pin=pt.checked; toast("บันทึกข้อมูลลูกค้าแล้ว","good"); };
+}
+
+var RENTALS_TAB = "ALL";
+function viewAdminRentals(){
+  var rows = allRows().filter(function(r){ return !!r.rental; }).sort(function(a,b){ return new Date(a.rental.expiresAt)-new Date(b.rental.expiresAt); });
+  var soonCount = rows.filter(function(r){ return r.status==="OCCUPIED" && (new Date(r.rental.expiresAt)-Date.now())/3600000<=24; }).length;
+  var expCount = rows.filter(function(r){ return r.status==="EXPIRED"; }).length;
+  var filtered = rows.filter(function(r){
+    if(RENTALS_TAB==="EXPIRING_SOON") return r.status==="OCCUPIED" && (new Date(r.rental.expiresAt)-Date.now())/3600000<=24;
+    if(RENTALS_TAB==="EXPIRED") return r.status==="EXPIRED";
+    return true;
+  });
+  var tableHtml = filtered.length===0? emptyState("ไม่มีรายการในหมวดนี้") :
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>โปรไฟล์ / บัญชี</th><th>ลูกค้า</th><th>สถานะ</th><th>วันหมดอายุ</th><th>เวลาคงเหลือ</th><th>จัดการ</th></tr></thead><tbody>' +
+    filtered.map(function(r){
+      return '<tr><td><div style="font-weight:600">'+esc(r.profile.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(r.account.name)+'</div></td>' +
+      '<td>'+esc(r.customer.name)+'</td><td>'+statusBadge(r.status)+'</td><td class="muted" style="font-size:12px">'+fmtDT(r.rental.expiresAt)+'</td><td>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")+'</td>' +
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+(r.status==="EXPIRED"?'<button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>':'')+'</div></td></tr>';
+    }).join("") + '</tbody></table></div></div>' +
+    '<div class="cards-mobile">' + filtered.map(function(r){
+      return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-weight:700;font-size:13px">'+esc(r.profile.name)+'</div>'+statusBadge(r.status)+'</div>' +
+      '<div class="muted" style="font-size:11.5px">'+esc(r.account.name)+' · '+esc(r.customer.name)+'</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px"><span class="muted">'+fmtDT(r.rental.expiresAt)+'</span>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")+'</div>' +
+      '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-secondary btn-sm" style="flex:1" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+(r.status==="EXPIRED"?'<button class="btn btn-outline btn-sm" style="flex:1" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>':'')+'</div></div>';
+    }).join("") + '</div>';
+
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div class="tabs">' +
+      '<button data-rtab="ALL" class="'+(RENTALS_TAB==="ALL"?"active":"")+'">ทั้งหมด ('+rows.length+')</button>' +
+      '<button data-rtab="EXPIRING_SOON" class="'+(RENTALS_TAB==="EXPIRING_SOON"?"active":"")+'">ใกล้หมดเวลา ('+soonCount+')</button>' +
+      '<button data-rtab="EXPIRED" class="'+(RENTALS_TAB==="EXPIRED"?"active":"")+'">หมดเวลาแล้ว ('+expCount+')</button>' +
+    '</div>' + tableHtml +
+  '</div>';
+  return adminShell("admin-rentals","รายการใช้งาน",body);
+}
+function mountAdminRentals(){
+  document.querySelectorAll('[data-rtab]').forEach(function(b){ b.onclick=function(){ RENTALS_TAB=b.getAttribute("data-rtab"); render(); }; });
+  document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
+  document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
+}
+
+function viewAdminMailboxes(){
+  var pinCount = CUSTOMERS.filter(function(c){return c.pin}).length;
+  var rowsHtml = MAILBOXES.map(function(m,i){
+    return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
+      '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+esc(m.lastResult)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></td></tr>';
+  }).join("");
+  var cardsHtml = MAILBOXES.map(function(m){
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:12.5px">'+esc(m.email)+'</span>'+demoTag()+'</div>'+mailboxBadge(m.status)+'<p class="muted" style="font-size:11.5px;margin-top:6px">'+esc(m.lastResult)+'</p><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></div>';
+  }).join("");
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div class="card" style="padding:18px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
+        '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail / Outlook / Hotmail และตั้งค่า PIN สำหรับหน้ารับรหัสลูกค้า — ใช้ MockMailboxProvider เท่านั้น ไม่เชื่อมต่อ Gmail หรือ Microsoft จริง</p></div>' +
+        '<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" id="addOutlookBtn">+ Outlook / Hotmail</button><button class="btn btn-primary btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
+      '</div>' +
+      '<div class="grid grid-4">' +
+        '<div class="card stat"><div class="v num">'+MAILBOXES.length+'</div><div class="l">บัญชีทั้งหมด</div></div>' +
+        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="GMAIL"}).length+'</div><div class="l">Gmail</div></div>' +
+        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="OUTLOOK"}).length+'</div><div class="l">Outlook / Hotmail</div></div>' +
+        '<div class="card stat"><div class="v num">'+pinCount+'</div><div class="l">เปิด PIN ลูกค้า</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>อีเมล</th><th>ผู้ให้บริการ</th><th>สถานะ TOKEN</th><th>ผลการดึง OTP</th><th>จัดการ</th></tr></thead><tbody id="mbTbody">'+rowsHtml+'</tbody></table></div></div>' +
+    '<div class="cards-mobile" id="mbCards">'+cardsHtml+'</div>' +
+  '</div>';
+  return adminShell("admin-mailboxes","จัดการอีเมล",body);
+}
+function refreshMailboxView(){
+  document.getElementById("mbTbody").innerHTML = MAILBOXES.map(function(m,i){
+    return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
+      '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+esc(m.lastResult)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></td></tr>';
+  }).join("");
+  mountMailboxRowEvents();
+}
+function mountMailboxRowEvents(){
+  document.querySelectorAll('[data-test]').forEach(function(btn){
+    btn.onclick=function(){
+      var m=mailbox(btn.getAttribute("data-test")); m.status="REFRESHING"; refreshMailboxView();
+      setTimeout(function(){ m.status="CONNECTED"; refreshMailboxView(); toast("ทดสอบการเชื่อมต่อสำเร็จ (Demo)","good"); }, 1000);
+    };
+  });
+  document.querySelectorAll('[data-fetch]').forEach(function(btn){
+    btn.onclick=function(){
+      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ตัวอย่างในกล่องจดหมาย (Demo)"; m.lastAt=new Date().toISOString();
+      refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว (Demo)","good");
+    };
+  });
+  document.querySelectorAll('[data-delmb]').forEach(function(btn){
+    btn.onclick=function(){
+      var id=btn.getAttribute("data-delmb");
+      var idx=MAILBOXES.findIndex(function(x){return x.id===id});
+      if(idx>=0) MAILBOXES.splice(idx,1);
+      refreshMailboxView(); toast("ลบบัญชีอีเมลแล้ว","good");
+    };
+  });
+}
+function mountAdminMailboxes(){
+  document.getElementById("addGmailBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"GMAIL"}; render(); };
+  document.getElementById("addOutlookBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK"}; render(); };
+  mountMailboxRowEvents();
+}
+
+var TYPE_META = {
+  ACCOUNT_CREATED:["เพิ่มบัญชี","badge-info"],ACCOUNT_UPDATED:["แก้ไขบัญชี","badge-info"],
+  CUSTOMER_ASSIGNED:["เพิ่มลูกค้าเข้าโปรไฟล์","badge-good"],RENEWED:["ต่ออายุ","badge-demo"],
+  EXPIRED:["หมดเวลา","badge-bad"],RELEASED:["คืนเป็นว่าง","badge-neutral"],
+  SECRET_VIEWED:["เปิดดูข้อมูลสำคัญ","badge-demo"],OTP_REQUESTED:["ขอ OTP เดโม่","badge-info"]
+};
+function viewAdminActivity(){
+  var list = ACTIVITY.slice().sort(function(a,b){return new Date(b.at)-new Date(a.at)});
+  var itemsHtml = list.map(function(a){
+    var meta=TYPE_META[a.type]||["กิจกรรม","badge-neutral"];
+    return '<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px"><span class="badge '+meta[1]+'" style="height:fit-content">'+meta[0]+'</span>' +
+      '<div style="flex:1"><div style="font-size:12.5px">'+esc(a.detail)+'</div><div class="faint" style="font-size:11px;margin-top:3px">โดย '+esc(a.actor)+' · '+esc(a.target)+' · '+fmtDT(a.at)+'</div></div></div>';
+  }).join("");
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<input class="input" placeholder="ค้นหาผู้ดำเนินการ หรือรายการที่เกี่ยวข้อง" style="max-width:420px">' +
+    '<div class="card" style="padding:0">'+itemsHtml+'</div>' +
+  '</div>';
+  return adminShell("admin-activity","ประวัติกิจกรรม",body);
+}
+
+function viewAdminSettings(){
+  var plansHtml = PLANS.map(function(p,i){
+    return '<div class="grid" style="grid-template-columns:1fr 100px 120px auto;gap:8px;align-items:end;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">' +
+      '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" value="'+esc(p.name)+'"></div>' +
+      '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" value="'+p.days+'"></div>' +
+      '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" value="'+p.price+'"></div>' +
+      '<button class="btn btn-outline btn-sm" data-delplan="'+p.id+'" style="height:38px">ลบ</button>' +
+    '</div>';
+  }).join("");
+  var body = '<div style="display:flex;flex-direction:column;gap:16px">' +
+    '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
+      '<div class="grid grid-2">' +
+        '<div class="field"><label>ชื่อร้าน</label><input class="input" value="'+esc(SHOP.name)+'"></div>' +
+        '<div class="field"><label>ช่องทางติดต่อ (ลิงก์)</label><input class="input" value="'+esc(SHOP.contact)+'"></div>' +
+      '</div><div class="field"><label>คำอธิบายร้านสั้น ๆ</label><textarea class="input" rows="2">'+esc(SHOP.tagline)+'</textarea></div>' +
+    '</div>' +
+    '<div class="card" style="padding:18px"><div class="section-title">รูปแบบการแสดงผล</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-size:13px;font-weight:600">ธีมเริ่มต้นของระบบ</div><div class="muted" style="font-size:12px">ค่าเริ่มต้นแนะนำ: อัตโนมัติ (ตามอุปกรณ์)</div></div>' +
+      '<div style="display:flex;align-items:center;gap:8px"><span class="muted" style="font-size:12.5px">ดูตัวอย่าง:</span>'+themeToggleHTML('tt-settings')+'</div></div>' +
+    '</div>' +
+    '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="section-title" style="margin:0">แพ็กเกจและราคาตัวอย่าง</div><button class="btn btn-secondary btn-sm" id="addPlanBtn">'+icon('plus')+'เพิ่มแพ็กเกจ</button></div>' +
+      '<div id="plansWrap">'+plansHtml+'</div>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button></div>' +
+  '</div>';
+  return adminShell("admin-settings","ตั้งค่าร้าน",body);
+}
+function mountAdminSettings(){
+  var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ toast("บันทึกการตั้งค่าแล้ว","good"); };
+  var ap=document.getElementById("addPlanBtn"); if(ap) ap.onclick=function(){ toast("เพิ่มแพ็กเกจแล้ว (Demo)","good"); };
+  document.querySelectorAll('[data-delplan]').forEach(function(btn){ btn.onclick=function(){ btn.closest("div.grid").remove(); toast("ลบแพ็กเกจแล้ว","good"); }; });
+}
+
+/* ================================================================ render */
+function render(skipScroll){
+  var route = currentRoute();
+  var html;
+
+  if(route==="home") html=viewHome();
+  else if(route==="login") html=viewLogin();
+  else if(route==="my-services") html=viewMyServices();
+  else if(route.indexOf("service-")===0) html=viewServiceDetail(route.slice(8));
+  else if(route.indexOf("otp-")===0) html=viewOtp(route.slice(4));
+  else if(route==="admin") html=viewAdminDashboard();
+  else if(route==="admin-accounts") html=viewAdminAccounts();
+  else if(route.indexOf("admin-account-")===0) html=viewAdminAccountDetail(route.slice(14));
+  else if(route==="admin-customers") html=viewAdminCustomers();
+  else if(route.indexOf("admin-customer-")===0) html=viewAdminCustomerDetail(route.slice(15));
+  else if(route==="admin-rentals") html=viewAdminRentals();
+  else if(route==="admin-mailboxes") html=viewAdminMailboxes();
+  else if(route==="admin-activity") html=viewAdminActivity();
+  else if(route==="admin-settings") html=viewAdminSettings();
+  else html=viewHome();
+
+  html += modalHTML();
+  document.getElementById("app").innerHTML = html;
+  if(!skipScroll) window.scrollTo(0,0);
+
+  mountAdminShellEvents();
+  mountModal();
+
+  if(route==="login") mountLogin();
+  else if(route.indexOf("otp-")===0) mountOtp(route.slice(4));
+  else if(route==="admin-accounts") mountAdminAccounts();
+  else if(route.indexOf("admin-account-")===0) mountAdminAccountDetail();
+  else if(route==="admin-customers") mountAdminCustomers();
+  else if(route.indexOf("admin-customer-")===0) mountAdminCustomerDetail(route.slice(15));
+  else if(route==="admin-rentals") mountAdminRentals();
+  else if(route==="admin-mailboxes") mountAdminMailboxes();
+  else if(route==="admin-settings") mountAdminSettings();
+}
+
+render();
+})();
+</script>

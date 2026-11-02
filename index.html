@@ -219,17 +219,30 @@ var NOW = Date.now();
 function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
 
 var SHOP = { name:"Premium Hub", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contact:"https://line.me/ti/p/~premiumhub" };
-var PLANS = [
-  {id:"p1",name:"1 วัน",days:1,price:19},{id:"p3",name:"3 วัน",days:3,price:49},
-  {id:"p7",name:"7 วัน",days:7,price:99},{id:"p15",name:"15 วัน",days:15,price:169},
-  {id:"p30",name:"30 วัน",days:30,price:299}
+// แพ็กเกจแบ่งตามประเภทอุปกรณ์: มือถือ/ไอแพด/คอม กับ Smart TV/กล่อง TV/Android TV ราคาไม่เท่ากัน
+var DEVICE_TYPES = [
+  {id:"mobile", label:"มือถือ / ไอแพด / คอมพิวเตอร์", short:"มือถือ/คอม", emoji:"📱"},
+  {id:"tv", label:"Smart TV / กล่อง TV / Android TV", short:"Smart TV", emoji:"📺"}
 ];
-// คำนวณราคาอัตโนมัติจากจำนวนวัน: ถ้าตรงกับแพ็กเกจที่ตั้งไว้ใช้ราคานั้นเลย
-// ถ้าเป็นจำนวนวันกำหนดเอง จะเทียบบัญญัติไตรยางศ์ระหว่างสองแพ็กเกจที่ใกล้ที่สุดให้อัตโนมัติ
-function planPrice(days){
-  var exact = PLANS.filter(function(p){ return p.days===days; })[0];
+function deviceTypeLabel(id){ var d=DEVICE_TYPES.filter(function(x){return x.id===id;})[0]; return d?d.label:id; }
+var PLANS = [
+  {id:"m1",device:"mobile",name:"1 วัน",days:1,price:10},
+  {id:"m7",device:"mobile",name:"7 วัน",days:7,price:49},
+  {id:"m14",device:"mobile",name:"14 วัน",days:14,price:89},
+  {id:"m30",device:"mobile",name:"30 วัน",days:30,price:109},
+  {id:"t1",device:"tv",name:"1 วัน",days:1,price:19},
+  {id:"t7",device:"tv",name:"7 วัน",days:7,price:69},
+  {id:"t14",device:"tv",name:"14 วัน",days:14,price:109},
+  {id:"t30",device:"tv",name:"30 วัน",days:30,price:159}
+];
+// คำนวณราคาอัตโนมัติจากประเภทอุปกรณ์ + จำนวนวัน: ถ้าตรงกับแพ็กเกจที่ตั้งไว้ใช้ราคานั้นเลย
+// ถ้าเป็นจำนวนวันกำหนดเอง จะเทียบบัญญัติไตรยางศ์ระหว่างสองแพ็กเกจที่ใกล้ที่สุดในหมวดอุปกรณ์เดียวกันให้อัตโนมัติ
+function planPrice(deviceType, days){
+  var list = PLANS.filter(function(p){ return p.device===deviceType; });
+  if(list.length===0) list = PLANS.filter(function(p){ return p.device==="mobile"; });
+  var exact = list.filter(function(p){ return p.days===days; })[0];
   if(exact) return exact.price;
-  var sorted = PLANS.slice().sort(function(a,b){ return a.days-b.days; });
+  var sorted = list.slice().sort(function(a,b){ return a.days-b.days; });
   if(days<=sorted[0].days) return Math.max(1, Math.round(days*(sorted[0].price/sorted[0].days)));
   for(var i=0;i<sorted.length-1;i++){
     var a=sorted[i], b=sorted[i+1];
@@ -296,7 +309,7 @@ var RENTALS = [
 ];
 var RENEWALS = [
   {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,actor:"admin@premiumhub.demo",at:hoursFromNow(-24*3)},
-  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice(2),actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
+  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
 ];
 var ACTIVITY = [
   {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
@@ -364,7 +377,8 @@ function icon(name){
     eye:'<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>',
     copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>',
     back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
-    logout:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>'
+    logout:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
+    bell:'<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>'
   };
   return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||"")+'</svg>';
 }
@@ -408,6 +422,45 @@ function toast(msg,kind){
 /* ------------------------------------------------------------- state */
 var STATE = { drawerOpen:false, modal:null };
 
+/* -------------------------------------------- แจ้งเตือนจอหมดเวลา (เดโม่) */
+// เดโม่นี้แจ้งเตือนได้เฉพาะตอนเปิดแท็บเบราว์เซอร์ค้างไว้เท่านั้น (ใช้ Notification API ของเบราว์เซอร์)
+// การแจ้งเตือนเข้าโทรศัพท์แบบ push จริงตอนปิดแอป/ปิดแท็บ ต้องมีเซิร์ฟเวอร์ backend
+// (web push + service worker หรือเชื่อม LINE Notify/SMS) ซึ่งเว็บ static บน GitHub Pages ทำเองไม่ได้
+var NOTIFY = { seen:{}, permission:(typeof Notification!=="undefined"?Notification.permission:"unsupported") };
+function currentExpiredRentalIds(){
+  return allRows().filter(function(r){ return r.status==="EXPIRED" && r.rental; }).map(function(r){ return r.rental.id; });
+}
+function notifyBellHTML(){
+  var count = currentExpiredRentalIds().length;
+  return '<button class="btn btn-ghost btn-sm" id="notifyBell" title="จอที่หมดเวลา" style="position:relative">'+icon('bell') +
+    (count>0? '<span style="position:absolute;top:2px;right:2px;background:var(--bad);color:#fff;border-radius:999px;min-width:15px;height:15px;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">'+count+'</span>' : '') +
+  '</button>';
+}
+function checkExpiryNotifications(){
+  var ids = currentExpiredRentalIds();
+  var fresh = ids.filter(function(id){ return !NOTIFY.seen[id]; });
+  ids.forEach(function(id){ NOTIFY.seen[id]=true; });
+  if(fresh.length===0) return;
+  fresh.forEach(function(id){
+    var r=rental(id); if(!r) return;
+    var p=profile(r.profileId), cust=customer(r.customerId);
+    var msg=(p?p.name:"โปรไฟล์")+' ('+(cust?cust.name:"-")+') หมดเวลาแล้ว';
+    toast(msg,"bad");
+    if(NOTIFY.permission==="granted"){
+      try{ new Notification("Premium Hub — จอหมดเวลา", {body:msg, tag:id}); }catch(e){}
+    }
+  });
+}
+function requestNotifyPermission(){
+  if(typeof Notification==="undefined"){ toast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน","bad"); return; }
+  Notification.requestPermission().then(function(perm){
+    NOTIFY.permission=perm;
+    if(perm==="granted") toast("เปิดการแจ้งเตือนแล้ว — ต้องเปิดแท็บนี้ค้างไว้เพื่อรับแจ้งเตือน","good");
+    else toast("ไม่ได้รับอนุญาตให้แจ้งเตือน","bad");
+    render(true);
+  });
+}
+
 function closeModal(){ STATE.modal=null; render(); }
 
 /* ------------------------------------------------------------ router */
@@ -430,6 +483,10 @@ function mailboxBadge(status){
   return '<span class="badge '+m[1]+'"><span class="dot"></span>'+m[0]+'</span>';
 }
 function demoTag(){ return '<span class="badge badge-demo">Demo</span>'; }
+function statCard(value,label,tone){
+  var color = tone==="good"?"var(--good)":tone==="info"?"var(--info)":tone==="bad"?"var(--bad)":"var(--ink)";
+  return '<div class="card" style="padding:16px"><div style="font-size:22px;font-weight:800;color:'+color+'">'+value+'</div><div class="muted" style="font-size:12px;margin-top:2px">'+esc(label)+'</div></div>';
+}
 function emptyState(title,desc){
   return '<div class="empty"><div class="t">'+esc(title)+'</div>'+(desc?'<div class="d">'+esc(desc)+'</div>':'')+'</div>';
 }
@@ -463,9 +520,15 @@ function nfMark(size){
   var s=size||22, r=Math.max(4,Math.round(s*0.28)), fs=Math.round(s*0.52);
   return '<span aria-hidden="true" style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:'+s+'px;height:'+s+'px;border-radius:'+r+'px;background:#E50914;color:#fff;font-weight:800;font-size:'+fs+'px;font-family:var(--font-la),sans-serif;line-height:1">N</span>';
 }
-function viewHome(){
-  var plansHtml = PLANS.map(function(p){
+function devicePlansHtml(deviceType){
+  return PLANS.filter(function(p){ return p.device===deviceType; }).map(function(p){
     return '<div class="plan-tile">'+nfMark(24)+'<span style="font-weight:700;font-size:13px">'+esc(p.name)+'</span><span class="price num">฿'+p.price+'</span><span class="faint" style="font-size:10.5px">ราคาตัวอย่าง</span></div>';
+  }).join("");
+}
+function viewHome(){
+  var devicePlanSections = DEVICE_TYPES.map(function(dt){
+    return '<div style="margin-top:14px"><div style="font-weight:700;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>'+dt.emoji+'</span>'+esc(dt.label)+'</div>' +
+      '<div class="grid grid-4">'+devicePlansHtml(dt.id)+'</div></div>';
   }).join("");
   return publicTopbar() +
   '<main class="gutter" style="max-width:920px;margin:0 auto;padding-top:28px;padding-bottom:40px">' +
@@ -481,8 +544,8 @@ function viewHome(){
     '<section style="margin-top:36px">' +
       '<h2 style="font-size:16px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+nfMark(26)+'Netflix</h2>' +
       '<div class="card" style="padding:18px">' +
-        '<p class="muted" style="font-size:12.5px;margin-bottom:14px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาด้านล่างเป็น<strong style="color:var(--ink)"> ข้อมูลตัวอย่างสำหรับเดโม่ </strong>แก้ไขได้ในหลังบ้าน</p>' +
-        '<div class="grid grid-6">'+plansHtml+'</div>' +
+        '<p class="muted" style="font-size:12.5px;margin-bottom:4px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาต่างกันตามประเภทอุปกรณ์ ราคาด้านล่างเป็น<strong style="color:var(--ink)"> ข้อมูลตัวอย่างสำหรับเดโม่ </strong>แก้ไขได้ในหลังบ้าน</p>' +
+        devicePlanSections +
         '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
       '</div>' +
     '</section>' +
@@ -700,6 +763,7 @@ function adminShell(route, title, bodyHtml){
           '<h1 style="font-size:15px;font-weight:800">'+esc(title)+'</h1>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px">' +
+          notifyBellHTML() +
           themeToggleHTML('tt-admin-'+Math.random().toString(36).slice(2)) +
           '<div style="display:flex;align-items:center;gap:7px;border-left:1px solid var(--border);padding-left:10px" data-desktop-only>' +
             '<div style="width:28px;height:28px;border-radius:999px;background:var(--bg-subtle);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800">AD</div>' +
@@ -719,6 +783,11 @@ function mountAdminShellEvents(){
   if(scrim) scrim.onclick=function(){ STATE.drawerOpen=false; render(); };
   var close=document.getElementById("drawerClose");
   if(close) close.onclick=function(){ STATE.drawerOpen=false; render(); };
+  var bell=document.getElementById("notifyBell");
+  if(bell) bell.onclick=function(){
+    if(NOTIFY.permission!=="granted"){ requestNotifyPermission(); return; }
+    RENTALS_TAB="EXPIRED"; go("admin-rentals");
+  };
 }
 
 function viewAdminDashboard(){
@@ -758,32 +827,45 @@ function viewAdminDashboard(){
   return adminShell("admin","แดชบอร์ด",body);
 }
 
+function editInlineHTML(profileId,field,value,width){
+  var w = width==="100%" ? "100%" : (width||64)+"px";
+  return '<div style="display:flex;gap:4px;align-items:center">' +
+    '<input class="input" style="height:30px;font-size:12px;width:'+w+';padding:4px 6px" value="'+esc(value||"")+'" data-edit-field="'+field+'" data-edit-id="'+profileId+'">' +
+    '<button class="btn btn-outline btn-sm" style="padding:4px 7px;height:30px;flex:none" data-save-field="'+field+'" data-save-id="'+profileId+'" title="บันทึก">✓</button>' +
+  '</div>';
+}
 function accountsTableRows(rows){
   return rows.map(function(r){
     var p=r.profile, acc=r.account;
     return '<tr>' +
       '<td style="font-weight:600">'+esc(p.name)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+esc(acc.email)+'</td>' +
       '<td>'+secretHTML(acc.email.replace("@","@pw-"), acc.pass)+'</td>' +
-      '<td>'+(p.pin? secretHTML("4821", p.pin) : '<span class="faint">-</span>')+'</td>' +
+      '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60")+'</td>' +
       '<td>'+statusBadge(r.status)+'</td>' +
       '<td>'+(r.customer? esc(r.customer.name): '<span class="faint">-</span>')+'</td>' +
-      '<td class="num">'+(r.rental? r.rental.days : "-")+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? (fmtDT(r.rental.expiresAt)+'<br>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")) : "-")+'</td>' +
-      '<td class="muted" style="font-size:12px">'+esc(p.device||"-")+'</td>' +
+      '<td class="num">'+(r.rental? r.rental.days : "-")+'</td>' +
+      '<td>'+editInlineHTML(p.id,"device",p.device||"","84")+'</td>' +
       '<td>'+rowActionsHTML(r)+'</td>' +
     '</tr>';
   }).join("");
 }
 function accountsCardsHTML(rows){
   return rows.map(function(r){
-    var p=r.profile;
+    var p=r.profile, acc=r.account;
     return '<div style="padding:14px;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+'</div>'+statusBadge(r.status)+'</div>' +
       '<div class="grid grid-2" style="font-size:11.5px">' +
+        '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+esc(acc.email)+'</div>' +
         '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
         '<div class="muted">จำนวนวัน</div><div style="text-align:right">'+(r.rental?r.rental.days:"-")+'</div>' +
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px">' +
+        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">PIN</div>'+editInlineHTML(p.id,"pin",p.pin||"","100%")+'</div>' +
+        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">อุปกรณ์</div>'+editInlineHTML(p.id,"device",p.device||"","100%")+'</div>' +
       '</div>' +
       '<div style="margin-top:10px">'+rowActionsHTML(r)+'</div>' +
     '</div>';
@@ -838,13 +920,24 @@ function viewAdminAccounts(){
         '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
       '</div>' +
       (collapsed? '' :
-        '<div class="tbl-wrap tbl-desktop"><table class="tbl"><thead><tr><th>โปรไฟล์</th><th>รหัสผ่าน</th><th>PIN</th><th>สถานะ</th><th>ลูกค้าที่เข้า</th><th>จำนวนวัน</th><th>วันเริ่ม</th><th>วันหมดอายุ</th><th>อุปกรณ์</th><th>จัดการ</th></tr></thead><tbody>'+accountsTableRows(g.rows)+'</tbody></table></div>' +
+        '<div class="tbl-wrap tbl-desktop"><table class="tbl"><thead><tr><th>โปรไฟล์</th><th>อีเมล Netflix</th><th>รหัสผ่าน</th><th>PIN</th><th>สถานะ</th><th>ลูกค้าที่เข้า</th><th>วันเริ่ม</th><th>วันหมดอายุ</th><th>เช่ากี่วัน</th><th>อุปกรณ์</th><th>จัดการ</th></tr></thead><tbody>'+accountsTableRows(g.rows)+'</tbody></table></div>' +
         '<div class="cards-mobile">'+accountsCardsHTML(g.rows)+'</div>'
       ) +
     '</div>';
   }).join("") || emptyState("ไม่พบโปรไฟล์ที่ตรงกับเงื่อนไข");
 
+  var statsHtml = '<div class="grid grid-4">' +
+      statCard(ACCOUNTS.length,"บัญชี Netflix ทั้งหมด") +
+      statCard(PROFILES.length,"โปรไฟล์ (จอ) ทั้งหมด") +
+      statCard(rows.filter(function(r){return r.status==="AVAILABLE";}).length,"โปรไฟล์ว่าง","good") +
+      statCard(rows.filter(function(r){return r.status==="OCCUPIED";}).length,"โปรไฟล์ไม่ว่าง","info") +
+      statCard(rows.filter(function(r){return r.status==="EXPIRED";}).length,"โปรไฟล์หมดเวลา","bad") +
+      statCard(CUSTOMERS.length,"ลูกค้าทั้งหมด") +
+      statCard(REVIEWS.length,"รีวิวทั้งหมด") +
+    '</div>';
+
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    statsHtml +
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
       '<p class="muted" style="font-size:12.5px">'+ACCOUNTS.length+' บัญชี · '+PROFILES.length+' โปรไฟล์</p>' +
       '<button class="btn btn-primary btn-sm" id="addAccountBtn">'+icon('plus')+'เพิ่มบัญชี Netflix</button>' +
@@ -871,12 +964,20 @@ function mountAdminAccounts(){
   document.querySelectorAll('[data-assign]').forEach(function(btn){ btn.onclick=function(){ openAssignModal(btn.getAttribute("data-assign")); }; });
   document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
   document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
+  document.querySelectorAll('[data-save-field]').forEach(function(btn){
+    btn.onclick=function(){
+      var field=btn.getAttribute("data-save-field"), id=btn.getAttribute("data-save-id");
+      var input=document.querySelector('[data-edit-field="'+field+'"][data-edit-id="'+id+'"]');
+      var p=profile(id);
+      if(p && input){ p[field]=input.value.trim(); toast((field==="pin"?"บันทึก PIN แล้ว":"บันทึกอุปกรณ์แล้ว"),"good"); render(true); }
+    };
+  });
   mountSecrets();
 }
 
 /* ---- modals: assign / renew / release ---- */
-function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7}; render(); }
-function openRenewModal(rentalId){ STATE.modal={type:"renew", rentalId:rentalId, days:7}; render(); }
+function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile"}; render(); }
+function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile"}; render(); }
 function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
 
 function modalHTML(){
@@ -892,14 +993,17 @@ function modalHTML(){
         '<div class="tabs" style="margin-bottom:8px"><button data-amode="existing" class="'+(m.mode==="existing"?"active":"")+'">เลือกลูกค้าเดิม</button><button data-amode="new" class="'+(m.mode==="new"?"active":"")+'">เพิ่มลูกค้าใหม่</button></div>' +
         (m.mode==="existing"? '<select class="input" id="assignCust">'+custOptions+'</select>' : '<input class="input" id="assignNewName" placeholder="ชื่อที่ใช้แสดงของลูกค้าใหม่" value="'+esc(m.newName)+'">') +
       '</div>' +
+      '<div class="field"><label>ประเภทอุปกรณ์ (มีผลกับราคา)</label><div class="tabs">' +
+        DEVICE_TYPES.map(function(dt){ return '<button data-adevice="'+dt.id+'" class="'+(m.deviceType===dt.id?"active":"")+'">'+dt.emoji+' '+dt.short+'</button>'; }).join("") +
+      '</div></div>' +
       '<div class="field"><label>จำนวนวันที่ใช้งาน</label><div class="chiprow">' +
-        [1,3,7,15,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-days="'+d+'">'+d+' วัน</button>'; }).join("") +
+        [1,7,14,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-days="'+d+'">'+d+' วัน</button>'; }).join("") +
         '<input class="input" id="assignCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
       '</div></div>' +
       '<div class="field"><label>วันและเวลาเริ่มต้น</label><input class="input" disabled value="'+fmtDT(start.toISOString())+'"><p class="faint" style="font-size:10.5px;margin-top:3px">ใช้เวลาปัจจุบันจากเซิร์ฟเวอร์โดยอัตโนมัติ</p></div>' +
       '<div class="field"><label>วันและเวลาหมดอายุ (คำนวณให้อัตโนมัติ)</label><input class="input" disabled value="'+fmtDT(exp.toISOString())+'"></div>' +
       '<div class="summary-box">ใช้งาน '+m.days+' วัน เริ่ม '+fmtDT(start.toISOString())+' หมดเวลา '+fmtDT(exp.toISOString())+' · ลูกค้า: '+esc(custLabel)+'</div>' +
-      '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ)</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.days))+'</strong></div>',
+      '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ — '+deviceTypeLabel(m.deviceType)+')</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="assignConfirm">บันทึกและมอบหมายโปรไฟล์</button>'
     );
   }
@@ -910,11 +1014,14 @@ function modalHTML(){
     var newExp = new Date(base.getTime()+m.days*86400000);
     return modalWrap('ต่ออายุการใช้งาน','โปรไฟล์: '+esc(p2.name)+' ('+esc(acc2.name)+')', '' +
       '<div class="card" style="background:var(--bg-subtle);padding:10px 12px;font-size:12px" class="muted">'+(isExpired? 'รายการนี้หมดเวลาแล้ว ระบบจะนับวันใหม่จากเวลาปัจจุบัน' : ('วันหมดอายุเดิม: '+fmtDT(r.expiresAt)))+'</div>' +
+      '<div class="field" style="margin-top:12px"><label>ประเภทอุปกรณ์ (มีผลกับราคา)</label><div class="tabs">' +
+        DEVICE_TYPES.map(function(dt){ return '<button data-rdevice="'+dt.id+'" class="'+(m.deviceType===dt.id?"active":"")+'">'+dt.emoji+' '+dt.short+'</button>'; }).join("") +
+      '</div></div>' +
       '<div class="field" style="margin-top:12px"><label>จำนวนวันที่ต้องการเพิ่ม</label><div class="chiprow">' +
-        [1,3,7,15,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-rdays="'+d+'">+'+d+' วัน</button>'; }).join("") +
+        [1,7,14,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-rdays="'+d+'">+'+d+' วัน</button>'; }).join("") +
         '<input class="input" id="renewCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px"></div></div>' +
       '<div class="summary-box">วันหมดอายุใหม่: '+fmtDT(newExp.toISOString())+'</div>' +
-      '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ)</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.days))+'</strong></div>',
+      '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ — '+deviceTypeLabel(m.deviceType)+')</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="renewConfirm">ยืนยันการต่ออายุ</button>'
     );
   }
@@ -956,6 +1063,7 @@ function mountModal(){
 
   if(m.type==="assign"){
     document.querySelectorAll('[data-amode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-amode"); render(); }; });
+    document.querySelectorAll('[data-adevice]').forEach(function(b){ b.onclick=function(){ m.deviceType=b.getAttribute("data-adevice"); render(); }; });
     document.querySelectorAll('[data-days]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-days")); render(); }; });
     var cd=document.getElementById("assignCustomDays");
     if(cd) cd.oninput=function(){ var n=Number(cd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
@@ -971,13 +1079,14 @@ function mountModal(){
       }
       var p=profile(m.profileId);
       var start=new Date(), exp=new Date(start.getTime()+m.days*86400000);
-      var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, price:planPrice(m.days), closedAt:null};
+      var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, deviceType:m.deviceType, price:planPrice(m.deviceType,m.days), closedAt:null};
       RENTALS.push(nr); p.rentalId=nr.id;
       closeModal();
       toast("มอบหมายโปรไฟล์ให้ลูกค้าแล้ว ยอดขาย "+fmtMoney(nr.price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
     };
   }
   if(m.type==="renew"){
+    document.querySelectorAll('[data-rdevice]').forEach(function(b){ b.onclick=function(){ m.deviceType=b.getAttribute("data-rdevice"); render(); }; });
     document.querySelectorAll('[data-rdays]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-rdays")); render(); }; });
     var cd2=document.getElementById("renewCustomDays");
     if(cd2) cd2.oninput=function(){ var n=Number(cd2.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
@@ -986,8 +1095,9 @@ function mountModal(){
       var isExpired = deriveStatus(r)==="EXPIRED";
       var base = isExpired? new Date() : new Date(r.expiresAt);
       var prevExpires = r.expiresAt;
-      var price = planPrice(m.days);
+      var price = planPrice(m.deviceType,m.days);
       r.expiresAt = new Date(base.getTime()+m.days*86400000).toISOString();
+      r.deviceType = m.deviceType;
       RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, actor:"admin@premiumhub.demo", at:new Date().toISOString() });
       closeModal();
       toast("ต่ออายุเพิ่ม "+m.days+" วันแล้ว ยอดขาย "+fmtMoney(price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
@@ -1350,13 +1460,16 @@ function viewAdminActivity(){
 }
 
 function viewAdminSettings(){
-  var plansHtml = PLANS.map(function(p,i){
-    return '<div class="grid" style="grid-template-columns:1fr 100px 120px auto;gap:8px;align-items:end;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">' +
-      '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" value="'+esc(p.name)+'"></div>' +
-      '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" value="'+p.days+'"></div>' +
-      '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" value="'+p.price+'"></div>' +
-      '<button class="btn btn-outline btn-sm" data-delplan="'+p.id+'" style="height:38px">ลบ</button>' +
-    '</div>';
+  var plansHtml = DEVICE_TYPES.map(function(dt){
+    var rows = PLANS.filter(function(p){ return p.device===dt.id; }).map(function(p){
+      return '<div class="grid" style="grid-template-columns:1fr 100px 120px auto;gap:8px;align-items:end;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">' +
+        '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" value="'+esc(p.name)+'"></div>' +
+        '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" value="'+p.days+'"></div>' +
+        '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" value="'+p.price+'"></div>' +
+        '<button class="btn btn-outline btn-sm" data-delplan="'+p.id+'" style="height:38px">ลบ</button>' +
+      '</div>';
+    }).join("");
+    return '<div style="margin-bottom:14px"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px">'+dt.emoji+' '+esc(dt.label)+'</div>'+rows+'</div>';
   }).join("");
   var body = '<div style="display:flex;flex-direction:column;gap:16px">' +
     '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
@@ -1369,6 +1482,11 @@ function viewAdminSettings(){
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-size:13px;font-weight:600">ธีมเริ่มต้นของระบบ</div><div class="muted" style="font-size:12px">ค่าเริ่มต้นแนะนำ: อัตโนมัติ (ตามอุปกรณ์)</div></div>' +
       '<div style="display:flex;align-items:center;gap:8px"><span class="muted" style="font-size:12.5px">ดูตัวอย่าง:</span>'+themeToggleHTML('tt-settings')+'</div></div>' +
     '</div>' +
+    '<div class="card" style="padding:18px"><div class="section-title">การแจ้งเตือนจอหมดเวลา '+demoTag()+'</div>' +
+      '<p class="muted" style="font-size:12.5px;margin-bottom:10px">เมื่อมีจอ/โปรไฟล์หมดเวลา ระบบจะแจ้งเตือนผ่านกระดิ่งด้านบนและป๊อปอัปของเบราว์เซอร์ทันที <strong style="color:var(--ink)">แต่ใช้ได้เฉพาะตอนเปิดแท็บเว็บนี้ค้างไว้เท่านั้น</strong> — การส่งแจ้งเตือนเข้าโทรศัพท์ตอนปิดแอป/ปิดแท็บ (เช่น LINE หรือ SMS) ต้องมีเซิร์ฟเวอร์ backend เพิ่มเติม เว็บไฟล์เดียวแบบนี้ทำเองไม่ได้</p>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="muted" style="font-size:12.5px">สถานะการอนุญาต: <strong style="color:var(--ink)">'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":NOTIFY.permission==="denied"?"ถูกปฏิเสธ (แก้ไขได้ในตั้งค่าเบราว์เซอร์)":"ยังไม่ได้เปิด")+'</strong></div>' +
+        '<button class="btn btn-primary btn-sm" id="enableNotifyBtn" '+(NOTIFY.permission==="granted"?"disabled":"")+'>'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":"เปิดการแจ้งเตือน")+'</button></div>' +
+    '</div>' +
     '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="section-title" style="margin:0">แพ็กเกจและราคาตัวอย่าง</div><button class="btn btn-secondary btn-sm" id="addPlanBtn">'+icon('plus')+'เพิ่มแพ็กเกจ</button></div>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
     '</div>' +
@@ -1380,6 +1498,7 @@ function mountAdminSettings(){
   var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ toast("บันทึกการตั้งค่าแล้ว","good"); };
   var ap=document.getElementById("addPlanBtn"); if(ap) ap.onclick=function(){ toast("เพิ่มแพ็กเกจแล้ว (Demo)","good"); };
   document.querySelectorAll('[data-delplan]').forEach(function(btn){ btn.onclick=function(){ btn.closest("div.grid").remove(); toast("ลบแพ็กเกจแล้ว","good"); }; });
+  var nb=document.getElementById("enableNotifyBtn"); if(nb) nb.onclick=requestNotifyPermission;
 }
 
 /* ================================================================ render */
@@ -1422,6 +1541,8 @@ function render(skipScroll){
   else if(route==="admin-settings") mountAdminSettings();
 }
 
+currentExpiredRentalIds().forEach(function(id){ NOTIFY.seen[id]=true; }); // อย่าแจ้งเตือนย้อนหลังสำหรับข้อมูลเดโม่ที่หมดเวลาอยู่แล้วตั้งแต่โหลดหน้า
+setInterval(checkExpiryNotifications, 10000);
 render();
 })();
 </script>

@@ -857,7 +857,6 @@ function accountsCardsHTML(rows){
 }
 function rowActionsHTML(r){
   if(r.status==="AVAILABLE") return '<button class="btn btn-primary btn-sm" data-assign="'+r.profile.id+'">เพิ่มลูกค้า</button>';
-  if(r.status==="OCCUPIED") return '<button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button>';
   return '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button><button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button></div>';
 }
 function secretHTML(real,masked){
@@ -1616,13 +1615,13 @@ function viewAdminRentals(){
     filtered.map(function(r){
       return '<tr><td><div style="font-weight:600">'+esc(r.profile.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(r.account.name)+'</div></td>' +
       '<td>'+esc(r.customer.name)+'</td><td>'+statusBadge(r.status)+'</td><td class="muted" style="font-size:12px">'+fmtDT(r.rental.expiresAt)+'</td><td>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")+'</td>' +
-      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+(r.status==="EXPIRED"?'<button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>':'')+'</div></td></tr>';
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+'<button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>'+'</div></td></tr>';
     }).join("") + '</tbody></table></div></div>' +
     '<div class="cards-mobile">' + filtered.map(function(r){
       return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-weight:700;font-size:13px">'+esc(r.profile.name)+'</div>'+statusBadge(r.status)+'</div>' +
       '<div class="muted" style="font-size:11.5px">'+esc(r.account.name)+' · '+esc(r.customer.name)+'</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px"><span class="muted">'+fmtDT(r.rental.expiresAt)+'</span>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")+'</div>' +
-      '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-secondary btn-sm" style="flex:1" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+(r.status==="EXPIRED"?'<button class="btn btn-outline btn-sm" style="flex:1" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>':'')+'</div></div>';
+      '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-secondary btn-sm" style="flex:1" data-renew="'+r.rental.id+'">ต่ออายุ</button>'+'<button class="btn btn-outline btn-sm" style="flex:1" data-release="'+r.rental.id+'">คืนเป็นว่าง</button>'+'</div></div>';
     }).join("") + '</div>';
 
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +

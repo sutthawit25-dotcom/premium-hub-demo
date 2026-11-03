@@ -126,11 +126,11 @@
   .admin{display:flex; min-height:100%}
   .rail{width:232px; flex-shrink:0; border-right:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column}
   .rail .brand{padding:18px 16px}
-  .rail nav, .drawer nav{display:flex; flex-direction:column; gap:3px; padding:0 10px; flex:1}
+  .rail nav, .drawer nav{display:flex; flex-direction:column; gap:3px; padding:0 10px}
   .rail nav a, .drawer nav a{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); color:var(--muted); font-size:13.5px; font-weight:600; text-decoration:none}
   .rail nav a:hover, .drawer nav a:hover{background:var(--bg-subtle); color:var(--ink)}
   .rail nav a.active, .drawer nav a.active{background:var(--accent-soft); color:var(--accent)}
-  .rail .foot{padding:10px; border-top:1px solid var(--border)}
+  .rail .foot, .drawer .foot{padding:10px; border-top:1px solid var(--border); margin-top:10px}
   .admin-main{flex:1; min-width:0}
   .admin-content{padding:20px}
   @media (max-width:900px){ .rail{display:none} .admin-content{padding:16px} }
@@ -251,6 +251,7 @@ var PLANS = [
   {id:"t14",device:"tv",name:"14 วัน",days:14,price:109},
   {id:"t30",device:"tv",name:"30 วัน",days:30,price:159}
 ];
+var PLAN_ID_SEQ = 1; // ใช้สร้างรหัสแพ็กเกจใหม่ที่ไม่ซ้ำกันตอนแอดมินกด "เพิ่มแพ็กเกจ"
 // คำนวณราคาอัตโนมัติจากประเภทอุปกรณ์ + จำนวนวัน: ถ้าตรงกับแพ็กเกจที่ตั้งไว้ใช้ราคานั้นเลย
 // ถ้าเป็นจำนวนวันกำหนดเอง จะเทียบบัญญัติไตรยางศ์ระหว่างสองแพ็กเกจที่ใกล้ที่สุดในหมวดอุปกรณ์เดียวกันให้อัตโนมัติ
 function planPrice(deviceType, days){

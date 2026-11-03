@@ -300,9 +300,9 @@ function starsHTML(rating,size){
   return '<span style="display:inline-flex;gap:1px;flex-wrap:wrap">'+s+'</span>';
 }
 var MAILBOXES = [
-  {id:"mbx-1", email:"streambox.0a@gmail.demo", provider:"GMAIL", status:"CONNECTED", lastResult:"พบ OTP ล่าสุดเมื่อ 12 นาทีที่แล้ว (Demo)", lastAt:hoursFromNow(-0.2)},
+  {id:"mbx-1", email:"streambox.0a@gmail.demo", provider:"GMAIL", status:"CONNECTED", lastResult:"พบ OTP ล่าสุดเมื่อ 12 นาทีที่แล้ว", lastAt:hoursFromNow(-0.2)},
   {id:"mbx-2", email:"streambox.0b@hotmail.demo", provider:"OUTLOOK", status:"REFRESHING", lastResult:"ยังไม่ทดสอบ", lastAt:null},
-  {id:"mbx-3", email:"streambox.0c@outlook.demo", provider:"OUTLOOK", status:"ERROR", lastResult:"Provider error (Demo): หมดเวลาเชื่อมต่อ", lastAt:hoursFromNow(-5)}
+  {id:"mbx-3", email:"streambox.0c@outlook.demo", provider:"OUTLOOK", status:"ERROR", lastResult:"หมดเวลาเชื่อมต่อ", lastAt:hoursFromNow(-5)}
 ];
 var PROFILES = [
   {id:"pf-1",accountId:"acc-1",name:"FH - User 1",pin:"••••",device:"Smart TV",rentalId:"rt-1"},
@@ -340,7 +340,7 @@ var ONETIME_SALES = [
 var ACTIVITY = [
   {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"super@admin",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
   {id:"al-2",type:"RENEWED",actor:"super@admin",target:"FH - User 1 (NF - Hub B)",detail:"ต่ออายุเพิ่ม 15 วัน จาก 5 วันที่เหลือ",at:hoursFromNow(-24*3)},
-  {id:"al-3",type:"OTP_REQUESTED",actor:"kamonwan.demo@example.com",target:"FH - User 1 (NF - Hub A)",detail:"ลูกค้าขอรหัสเดโม่",at:hoursFromNow(-0.2)},
+  {id:"al-3",type:"OTP_REQUESTED",actor:"kamonwan.demo@example.com",target:"FH - User 1 (NF - Hub A)",detail:"ลูกค้าขอรหัส OTP",at:hoursFromNow(-0.2)},
   {id:"al-4",type:"EXPIRED",actor:"system",target:"FH - User 5 (NF - Hub A)",detail:"รายการหมดเวลาอัตโนมัติตามเวลาเซิร์ฟเวอร์",at:hoursFromNow(-24*3)},
   {id:"al-5",type:"RELEASED",actor:"super@admin",target:"FH - User 3 (NF - Hub A)",detail:"คืนโปรไฟล์เป็นว่างหลังหมดเวลา",at:hoursFromNow(-24*32)},
   {id:"al-6",type:"SECRET_VIEWED",actor:"super@admin",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
@@ -519,11 +519,11 @@ function statusBadge(status){
   return '<span class="badge '+cls+'"><span class="dot"></span>'+STATUS_LABEL[status]+'</span>';
 }
 function mailboxBadge(status){
-  var map={NOT_CONNECTED:["ยังไม่เชื่อมต่อ (Demo)","badge-neutral"],CONNECTED:["เชื่อมต่อแล้ว (Demo)","badge-good"],REFRESHING:["กำลังรีเฟรช (Demo)","badge-neutral"],ERROR:["เกิดข้อผิดพลาด (Demo)","badge-bad"]};
+  var map={NOT_CONNECTED:["ยังไม่เชื่อมต่อ","badge-neutral"],CONNECTED:["เชื่อมต่อแล้ว","badge-good"],REFRESHING:["กำลังรีเฟรช","badge-neutral"],ERROR:["เกิดข้อผิดพลาด","badge-bad"]};
   var m=map[status]||map.NOT_CONNECTED;
   return '<span class="badge '+m[1]+'"><span class="dot"></span>'+m[0]+'</span>';
 }
-function demoTag(){ return '<span class="badge badge-demo">Demo</span>'; }
+function demoTag(){ return ''; }
 // คัดลอกข้อความแบบรองรับเบราว์เซอร์ในแอป (เช่น LINE/Facebook) ที่บางทีปิดกั้น navigator.clipboard
 function copyToClipboard(text, done){
   function fallback(){
@@ -1113,7 +1113,7 @@ function modalHTML(){
     );
   }
   if(m.type==="addMailbox"){
-    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เดโม่นี้ใช้ MockMailboxProvider เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อ Gmail/Microsoft จริง',
+    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'ระบบนี้ยังไม่ได้เชื่อมต่อ Gmail/Microsoft จริง เป็นการจำลองผลลัพธ์เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อบัญชีจริง',
       '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider"><option value="GMAIL" '+(m.provider==="GMAIL"?"selected":"")+'>Gmail</option><option value="OUTLOOK" '+(m.provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail</option></select></div>' +
       '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@example.demo" value="'+esc(m.email||"")+'"></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
@@ -1264,7 +1264,7 @@ function mountModal(){
         closeModal(); toast("บันทึกการแก้ไขบัญชีอีเมลแล้ว","good");
       }else{
         MAILBOXES.push({id:"mbx-new-"+Date.now(), email:email, provider:provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ทดสอบ", lastAt:null});
-        closeModal(); toast("เพิ่มบัญชีอีเมล (Demo) แล้ว","good");
+        closeModal(); toast("เพิ่มบัญชีอีเมลแล้ว","good");
       }
     };
   }
@@ -1508,7 +1508,7 @@ function viewAdminReviews(){
       '</select></div>' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><div style="display:flex;gap:2px;flex-wrap:wrap">'+Array.from({length:REVIEW_MAX},function(_,i){return i+1;}).map(function(n){ return '<button type="button" data-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=draft.rating?"#f5a623":"var(--border)")+';font-size:19px;line-height:1">★</button>'; }).join("")+'</div><span class="muted" style="font-size:12.5px;font-weight:600">'+draft.rating+'/'+REVIEW_MAX+'</span></div>' +
       '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า">'+esc(draft.comment)+'</textarea>' +
-      '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิวเดโม่</button></div>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิว</button></div>' +
     '</div>' +
     '<div><div class="section-title">รีวิวทั้งหมด ('+revs.length+')</div>'+listHtml+'</div>' +
   '</div>';
@@ -1524,7 +1524,7 @@ function mountAdminReviews(){
   if(ar) ar.onclick=function(){
     REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ", at:new Date().toISOString() });
     draft.rating=REVIEW_MAX; draft.comment="";
-    render(true); toast("เพิ่มรีวิวเดโม่แล้ว","good");
+    render(true); toast("เพิ่มรีวิวแล้ว","good");
   };
   document.querySelectorAll('[data-editrev]').forEach(function(btn){
     btn.onclick=function(){
@@ -1630,7 +1630,7 @@ function viewAdminRevenue(){
       '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">วันนี้</div><div style="font-size:20px;font-weight:800;margin-top:4px">'+fmtMoney(sumToday)+'</div></div>' +
       '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">7 วันล่าสุด</div><div style="font-size:20px;font-weight:800;margin-top:4px">'+fmtMoney(sum7)+'</div></div>' +
       '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">30 วันล่าสุด</div><div style="font-size:20px;font-weight:800;margin-top:4px">'+fmtMoney(sum30)+'</div></div>' +
-      '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">รวมทั้งหมด (เดโม่)</div><div style="font-size:20px;font-weight:800;margin-top:4px;color:var(--accent)">'+fmtMoney(sumAll)+'</div></div>' +
+      '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">รวมทั้งหมด</div><div style="font-size:20px;font-weight:800;margin-top:4px;color:var(--accent)">'+fmtMoney(sumAll)+'</div></div>' +
     '</div>';
 
   var byPay = {};
@@ -1742,13 +1742,13 @@ function mountMailboxRowEvents(){
   document.querySelectorAll('[data-test]').forEach(function(btn){
     btn.onclick=function(){
       var m=mailbox(btn.getAttribute("data-test")); m.status="REFRESHING"; refreshMailboxView();
-      setTimeout(function(){ m.status="CONNECTED"; refreshMailboxView(); toast("ทดสอบการเชื่อมต่อสำเร็จ (Demo)","good"); }, 1000);
+      setTimeout(function(){ m.status="CONNECTED"; refreshMailboxView(); toast("ทดสอบการเชื่อมต่อสำเร็จ","good"); }, 1000);
     };
   });
   document.querySelectorAll('[data-fetch]').forEach(function(btn){
     btn.onclick=function(){
-      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ในกล่องจดหมาย (Demo)"; m.lastAt=new Date().toISOString();
-      refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว (Demo)","good");
+      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ในกล่องจดหมาย"; m.lastAt=new Date().toISOString();
+      refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว","good");
     };
   });
   document.querySelectorAll('[data-editmb]').forEach(function(btn){
@@ -1773,7 +1773,7 @@ var TYPE_META = {
   ACCOUNT_CREATED:["เพิ่มบัญชี","badge-info"],ACCOUNT_UPDATED:["แก้ไขบัญชี","badge-info"],
   CUSTOMER_ASSIGNED:["เพิ่มลูกค้าเข้าโปรไฟล์","badge-good"],RENEWED:["ต่ออายุ","badge-demo"],
   EXPIRED:["หมดเวลา","badge-bad"],RELEASED:["คืนเป็นว่าง","badge-neutral"],
-  SECRET_VIEWED:["เปิดดูข้อมูลสำคัญ","badge-demo"],OTP_REQUESTED:["ขอ OTP เดโม่","badge-info"]
+  SECRET_VIEWED:["เปิดดูข้อมูลสำคัญ","badge-demo"],OTP_REQUESTED:["ขอ OTP","badge-info"]
 };
 function viewAdminActivity(){
   var list = ACTIVITY.slice().sort(function(a,b){return new Date(b.at)-new Date(a.at)});

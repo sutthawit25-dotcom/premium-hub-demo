@@ -1580,21 +1580,21 @@ function viewAdminSettings(){
   var plansHtml = DEVICE_TYPES.map(function(dt){
     var rows = PLANS.filter(function(p){ return p.device===dt.id; }).map(function(p){
       return '<div class="grid" style="grid-template-columns:1fr 100px 120px auto;gap:8px;align-items:end;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">' +
-        '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" value="'+esc(p.name)+'"></div>' +
-        '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" value="'+p.days+'"></div>' +
-        '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" value="'+p.price+'"></div>' +
+        '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" data-plan-id="'+p.id+'" data-plan-field="name" value="'+esc(p.name)+'"></div>' +
+        '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" min="1" data-plan-id="'+p.id+'" data-plan-field="days" value="'+p.days+'"></div>' +
+        '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" min="0" data-plan-id="'+p.id+'" data-plan-field="price" value="'+p.price+'"></div>' +
         '<button class="btn btn-outline btn-sm" data-delplan="'+p.id+'" style="height:38px">ลบ</button>' +
       '</div>';
     }).join("");
-    return '<div style="margin-bottom:14px"><div style="font-weight:700;font-size:12.5px;margin-bottom:6px">'+dt.emoji+' '+esc(dt.label)+'</div>'+rows+'</div>';
+    return '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:12.5px">'+dt.emoji+' '+esc(dt.label)+'</div><button class="btn btn-outline btn-sm" data-addplan="'+dt.id+'">'+icon('plus')+'เพิ่มแพ็กเกจ</button></div>'+rows+'</div>';
   }).join("");
   var body = '<div style="display:flex;flex-direction:column;gap:16px">' +
     '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
       '<div class="grid grid-2">' +
-        '<div class="field"><label>ชื่อร้าน</label><input class="input" value="'+esc(SHOP.name)+'"></div>' +
-        '<div class="field"><label>ช่องทางติดต่อ LINE (ลิงก์)</label><input class="input" value="'+esc(SHOP.contactLine)+'"></div>' +
-        '<div class="field"><label>ช่องทางติดต่อ Facebook (ลิงก์)</label><input class="input" value="'+esc(SHOP.contactFacebook)+'"></div>' +
-      '</div><div class="field"><label>คำอธิบายร้านสั้น ๆ</label><textarea class="input" rows="2">'+esc(SHOP.tagline)+'</textarea></div>' +
+        '<div class="field"><label>ชื่อร้าน</label><input class="input" id="setShopName" value="'+esc(SHOP.name)+'"></div>' +
+        '<div class="field"><label>ช่องทางติดต่อ LINE (ลิงก์)</label><input class="input" id="setShopLine" value="'+esc(SHOP.contactLine)+'"></div>' +
+        '<div class="field"><label>ช่องทางติดต่อ Facebook (ลิงก์)</label><input class="input" id="setShopFb" value="'+esc(SHOP.contactFacebook)+'"></div>' +
+      '</div><div class="field"><label>คำอธิบายร้านสั้น ๆ</label><textarea class="input" id="setShopTagline" rows="2">'+esc(SHOP.tagline)+'</textarea></div>' +
     '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title">รูปแบบการแสดงผล</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-size:13px;font-weight:600">ธีมเริ่มต้นของระบบ</div><div class="muted" style="font-size:12px">ค่าเริ่มต้นแนะนำ: อัตโนมัติ (ตามอุปกรณ์)</div></div>' +
@@ -1605,7 +1605,8 @@ function viewAdminSettings(){
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="muted" style="font-size:12.5px">สถานะการอนุญาต: <strong style="color:var(--ink)">'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":NOTIFY.permission==="denied"?"ถูกปฏิเสธ (แก้ไขได้ในตั้งค่าเบราว์เซอร์)":"ยังไม่ได้เปิด")+'</strong></div>' +
         '<button class="btn btn-primary btn-sm" id="enableNotifyBtn" '+(NOTIFY.permission==="granted"?"disabled":"")+'>'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":"เปิดการแจ้งเตือน")+'</button></div>' +
     '</div>' +
-    '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="section-title" style="margin:0">แพ็กเกจและราคาตัวอย่าง</div><button class="btn btn-secondary btn-sm" id="addPlanBtn">'+icon('plus')+'เพิ่มแพ็กเกจ</button></div>' +
+    '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจและราคาตัวอย่าง</div>' +
+      '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ/จำนวนวัน/ราคาได้โดยตรง ระบบจะใช้ราคานี้คำนวณยอดขายทุกจุดในเว็บทันที</p>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
     '</div>' +
     '<div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button></div>' +
@@ -1613,9 +1614,38 @@ function viewAdminSettings(){
   return adminShell("admin-settings","ตั้งค่าร้าน",body);
 }
 function mountAdminSettings(){
-  var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ toast("บันทึกการตั้งค่าแล้ว","good"); };
-  var ap=document.getElementById("addPlanBtn"); if(ap) ap.onclick=function(){ toast("เพิ่มแพ็กเกจแล้ว (Demo)","good"); };
-  document.querySelectorAll('[data-delplan]').forEach(function(btn){ btn.onclick=function(){ btn.closest("div.grid").remove(); toast("ลบแพ็กเกจแล้ว","good"); }; });
+  var sn=document.getElementById("setShopName"); if(sn) sn.oninput=function(){ SHOP.name=sn.value; };
+  var sl=document.getElementById("setShopLine"); if(sl) sl.oninput=function(){ SHOP.contactLine=sl.value; };
+  var sf=document.getElementById("setShopFb"); if(sf) sf.oninput=function(){ SHOP.contactFacebook=sf.value; };
+  var st=document.getElementById("setShopTagline"); if(st) st.oninput=function(){ SHOP.tagline=st.value; };
+  document.querySelectorAll('[data-plan-id]').forEach(function(inp){
+    inp.oninput=function(){
+      var pl=byId(PLANS,inp.getAttribute("data-plan-id")); if(!pl) return;
+      var field=inp.getAttribute("data-plan-field");
+      if(field==="name") pl.name=inp.value;
+      else if(field==="days"){ var d=Number(inp.value); pl.days=(Number.isFinite(d)&&d>0)?d:pl.days; }
+      else if(field==="price"){ var pr=Number(inp.value); pl.price=(Number.isFinite(pr)&&pr>=0)?pr:pl.price; }
+    };
+  });
+  document.querySelectorAll('[data-addplan]').forEach(function(btn){
+    btn.onclick=function(){
+      var deviceId=btn.getAttribute("data-addplan");
+      var newId="plan-new-"+(PLAN_ID_SEQ++);
+      PLANS.push({id:newId, device:deviceId, name:"แพ็กเกจใหม่", days:1, price:0});
+      toast("เพิ่มแพ็กเกจแล้ว แก้ชื่อ/วัน/ราคาได้เลย","good");
+      render();
+    };
+  });
+  document.querySelectorAll('[data-delplan]').forEach(function(btn){
+    btn.onclick=function(){
+      var id=btn.getAttribute("data-delplan");
+      var idx=PLANS.findIndex(function(p){ return p.id===id; });
+      if(idx>=0) PLANS.splice(idx,1);
+      toast("ลบแพ็กเกจแล้ว","good");
+      render();
+    };
+  });
+  var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ toast("บันทึกการตั้งค่าแล้ว การเปลี่ยนแปลงมีผลทั่วทั้งเว็บไซต์ทันที","good"); render(); };
   var nb=document.getElementById("enableNotifyBtn"); if(nb) nb.onclick=requestNotifyPermission;
 }
 

@@ -340,16 +340,29 @@ function applySnapshot(s){
   }
 }
 var PERSIST_TIMER=null, PERSIST_FAIL_WARNED=false;
+// Cloudflare KV ฟรีเขียนได้ 1,000 ครั้ง/วัน — เดิมทุกครั้งที่เปลี่ยนหน้า (render) จะส่งบันทึกทั้งก้อนแม้ข้อมูลไม่เปลี่ยน
+// ทำให้โควต้าหมดเร็ว ตอนนี้จะส่งเฉพาะเมื่อข้อมูลเปลี่ยนจริง และไม่ส่งก่อนโหลดข้อมูลจากเซิร์ฟเวอร์เสร็จ (กันข้อมูลว่างทับของจริง)
+var LAST_SAVED_JSON=null, HYDRATED=false, SAVE_FAIL_WARNED=false, SAVE_RETRY_TIMER=null;
 function schedulePersist(){
-  if(!adminToken()) return;
+  if(!adminToken() || !HYDRATED) return;
   if(PERSIST_TIMER) clearTimeout(PERSIST_TIMER);
-  PERSIST_TIMER=setTimeout(persistStateNow, 600);
+  PERSIST_TIMER=setTimeout(persistStateNow, 1500);
 }
 function persistStateNow(){
-  var t=adminToken(); if(!t) return;
-  fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:JSON.stringify(snapshotState()) })
+  var t=adminToken(); if(!t || !HYDRATED) return;
+  var body=JSON.stringify(snapshotState());
+  if(body===LAST_SAVED_JSON) return;
+  fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:body })
     .then(function(r){
-      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); }
+      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return; }
+      if(r.ok){
+        LAST_SAVED_JSON=body;
+        if(SAVE_FAIL_WARNED){ SAVE_FAIL_WARNED=false; toast("บันทึกข้อมูลขึ้นเซิร์ฟเวอร์สำเร็จแล้ว","good"); }
+        return;
+      }
+      if(!SAVE_FAIL_WARNED){ SAVE_FAIL_WARNED=true; toast("บันทึกข้อมูลขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (โควต้าบันทึกรายวันอาจเต็ม) อย่าเพิ่งปิดหน้านี้ ระบบจะลองใหม่อัตโนมัติ","bad"); }
+      if(SAVE_RETRY_TIMER) clearTimeout(SAVE_RETRY_TIMER);
+      SAVE_RETRY_TIMER=setTimeout(persistStateNow, 5*60*1000);
     })
     .catch(function(){
       if(!PERSIST_FAIL_WARNED){ PERSIST_FAIL_WARNED=true; toast("บันทึกขึ้นฐานข้อมูลไม่ได้ (ไม่พบระบบหลังบ้านบนโดเมนนี้) ข้อมูลจะหายเมื่อรีเฟรช","bad"); }
@@ -357,8 +370,10 @@ function persistStateNow(){
 }
 function hydrateFromBackend(){
   fetch("/api/state").then(function(r){ return r.ok? r.json() : null; }).then(function(data){
-    if(data){ applySnapshot(data); seedNotifySeen(); render(true); }
-  }).catch(function(){ /* ไม่มีระบบหลังบ้านบนโดเมนนี้ (เช่น mirror บน GitHub Pages) — ทำงานต่อแบบชั่วคราวในเครื่อง */ });
+    if(data){ applySnapshot(data); seedNotifySeen(); LAST_SAVED_JSON=JSON.stringify(snapshotState()); }
+    HYDRATED=true;
+    if(data) render(true);
+  }).catch(function(){ HYDRATED=true; /* ไม่มีระบบหลังบ้านบนโดเมนนี้ (เช่น mirror บน GitHub Pages) — ทำงานต่อแบบชั่วคราวในเครื่อง */ });
 }
 
 /* -------------------------------------------------------------- utils */

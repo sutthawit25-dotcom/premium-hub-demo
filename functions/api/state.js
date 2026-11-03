@@ -32,6 +32,15 @@ export async function onRequestPost({ request, env }) {
   }
   if (!parsed || typeof parsed !== "object") return json({ error: "invalid_json" }, 400);
 
-  await env.STATE_KV.put(KV_KEY, JSON.stringify(parsed));
+  // Free KV allows only 1,000 writes/day but 100,000 reads — skip the write
+  // when nothing actually changed.
+  const next = JSON.stringify(parsed);
+  const current = await env.STATE_KV.get(KV_KEY);
+  if (current === next) return json({ ok: true, unchanged: true });
+  try {
+    await env.STATE_KV.put(KV_KEY, next);
+  } catch (e) {
+    return json({ error: "kv_write_failed", message: String((e && e.message) || e).slice(0, 300) }, 500);
+  }
   return json({ ok: true });
 }

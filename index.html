@@ -279,6 +279,7 @@ function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[c
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
 // หน้า "รีวิว" แยกต่างหาก ไม่ได้รวมอยู่ในหน้ารายละเอียดลูกค้าอีกต่อไป
 var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, editingId:null, editRating:0, editComment:"", search:"" };
+var ACTIVITY_UI = { search:"" };
 var REVIEW_MAX = 10; // คะแนนรีวิวเต็ม 10 แต้ม (เดิม 5)
 function starsHTML(rating,size){
   var s="", sz=size||12;
@@ -361,6 +362,12 @@ function hydrateFromBackend(){
 }
 
 /* -------------------------------------------------------------- utils */
+// บันทึกรายการลงหน้า "ประวัติกิจกรรม" — type ต้องตรงกับ key ใน TYPE_META
+function logActivity(type, detail, target){
+  ACTIVITY.unshift({ id:"act-"+Date.now()+"-"+Math.random().toString(36).slice(2,7), type:type, detail:detail, target:target||"-", actor:ADMIN_EMAIL_LABEL, at:new Date().toISOString() });
+  if(ACTIVITY.length>500) ACTIVITY.length=500; // กันไม่ให้ก้อนข้อมูลโตไม่จำกัด
+  schedulePersist();
+}
 function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
 function account(id){ return byId(ACCOUNTS,id); }
 function profile(id){ return byId(PROFILES,id); }
@@ -883,7 +890,7 @@ function mountSecrets(){
       var val=wrap.querySelector(".val");
       var showing = val.textContent===wrap.getAttribute("data-real");
       val.textContent = showing? wrap.getAttribute("data-masked") : wrap.getAttribute("data-real");
-      if(!showing) toast("เปิดดูข้อมูลสำคัญ — บันทึกลงประวัติกิจกรรมแล้ว","info");
+      if(!showing){ logActivity("SECRET_VIEWED","เปิดดูข้อมูลสำคัญที่ถูกซ่อนไว้ (อีเมล/รหัสผ่าน/ชื่อลูกค้า)","-"); toast("เปิดดูข้อมูลสำคัญ — บันทึกลงประวัติกิจกรรมแล้ว","info"); }
     };
   });
   document.querySelectorAll('[data-secret-copy]').forEach(function(btn){
@@ -1226,6 +1233,8 @@ function mountModal(){
       var start=new Date(), exp=new Date(start.getTime()+m.days*86400000);
       var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, deviceType:m.deviceType, price:planPrice(m.deviceType,m.days), paymentMethod:m.paymentMethod, closedAt:null};
       RENTALS.push(nr); p.rentalId=nr.id;
+      var custForLog=customer(custId);
+      logActivity("CUSTOMER_ASSIGNED", "มอบหมายโปรไฟล์ "+p.name+" ให้ "+(custForLog?custForLog.name:"-")+" ("+m.days+" วัน, "+fmtMoney(nr.price)+")", p.name);
       closeModal();
       toast("มอบหมายโปรไฟล์ให้ลูกค้าแล้ว ยอดขาย "+fmtMoney(nr.price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
     };
@@ -1246,6 +1255,8 @@ function mountModal(){
       r.deviceType = m.deviceType;
       r.paymentMethod = m.paymentMethod;
       RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, paymentMethod:m.paymentMethod, actor:"super@admin", at:new Date().toISOString() });
+      var pForLog=profile(r.profileId);
+      logActivity("RENEWED", "ต่ออายุ "+(pForLog?pForLog.name:r.profileId)+" เพิ่ม "+m.days+" วัน ("+fmtMoney(price)+")", pForLog?pForLog.name:"-");
       closeModal();
       toast("ต่ออายุเพิ่ม "+m.days+" วันแล้ว ยอดขาย "+fmtMoney(price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
     };
@@ -1254,6 +1265,7 @@ function mountModal(){
     document.getElementById("releaseConfirm").onclick=function(){
       var r=rental(m.rentalId); r.closedAt=new Date().toISOString();
       var p=profile(r.profileId); p.rentalId=null;
+      logActivity("RELEASED", "คืนโปรไฟล์ "+p.name+" เป็นว่าง", p.name);
       closeModal();
       toast("คืนโปรไฟล์เป็นว่างแล้ว ประวัติเดิมยังถูกเก็บไว้","good");
     };
@@ -1359,6 +1371,7 @@ function mountModal(){
       if(!name){ toast("กรุณากรอกชื่อบัญชี","bad"); return; }
       var acc=account(m.accountId);
       if(acc){ acc.name=name; acc.email=email; acc.note=note; }
+      logActivity("ACCOUNT_UPDATED", "แก้ไขข้อมูลบัญชี "+name, name);
       closeModal(); toast("บันทึกการแก้ไขบัญชีแล้ว","good");
     };
   }
@@ -1376,6 +1389,7 @@ function mountModal(){
       for(var i=1;i<=count;i++){
         PROFILES.push({id:"pf-"+Date.now()+"-"+i, accountId:newId, name:"FH - User "+i, pin:null, device:"-", rentalId:null});
       }
+      logActivity("ACCOUNT_CREATED", "เพิ่มบัญชี "+name+" พร้อมโปรไฟล์ "+count+" โปรไฟล์", name);
       closeModal(); toast("เพิ่มบัญชี "+name+" พร้อมโปรไฟล์ "+count+" โปรไฟล์แล้ว","good");
     };
   }
@@ -1887,6 +1901,7 @@ function mountMailboxRowEvents(){
         var cur=mailbox(id); if(!cur) return;
         if(res && res.ok && res.code){
           cur.lastCode=res.code; cur.lastResult="พบรหัส OTP ล่าสุด"; cur.lastAt=new Date().toISOString(); cur.status="CONNECTED";
+          logActivity("OTP_REQUESTED", "ดึงรหัส OTP จากกล่องเมล "+cur.email+" สำเร็จ", cur.email);
           toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
         }else{
           cur.lastCode=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
@@ -1922,17 +1937,31 @@ var TYPE_META = {
   SECRET_VIEWED:["เปิดดูข้อมูลสำคัญ","badge-demo"],OTP_REQUESTED:["ขอ OTP","badge-info"]
 };
 function viewAdminActivity(){
+  var q=(ACTIVITY_UI.search||"").trim().toLowerCase();
   var list = ACTIVITY.slice().sort(function(a,b){return new Date(b.at)-new Date(a.at)});
-  var itemsHtml = list.map(function(a){
+  if(q){
+    list = list.filter(function(a){
+      var meta=TYPE_META[a.type]||["กิจกรรม","badge-neutral"];
+      return (a.actor||"").toLowerCase().indexOf(q)>=0 || (a.target||"").toLowerCase().indexOf(q)>=0 ||
+        (a.detail||"").toLowerCase().indexOf(q)>=0 || meta[0].toLowerCase().indexOf(q)>=0;
+    });
+  }
+  var itemsHtml = list.length ? list.map(function(a){
     var meta=TYPE_META[a.type]||["กิจกรรม","badge-neutral"];
     return '<div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px"><span class="badge '+meta[1]+'" style="height:fit-content">'+meta[0]+'</span>' +
       '<div style="flex:1"><div style="font-size:12.5px">'+esc(a.detail)+'</div><div class="faint" style="font-size:11px;margin-top:3px">โดย '+esc(a.actor)+' · '+esc(a.target)+' · '+fmtDT(a.at)+'</div></div></div>';
-  }).join("");
+  }).join("") : ('<div style="padding:28px 18px" class="muted" style="font-size:12.5px">' +
+      (q ? 'ไม่พบกิจกรรมที่ตรงกับคำค้นหา' : 'ยังไม่มีกิจกรรม — รายการจะเริ่มบันทึกอัตโนมัติเมื่อมีการเพิ่ม/แก้ไขบัญชี มอบหมายโปรไฟล์ ต่ออายุ คืนโปรไฟล์ เปิดดูข้อมูลสำคัญ หรือดึง OTP') +
+    '</div>');
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
-    '<input class="input" placeholder="ค้นหาผู้ดำเนินการ หรือรายการที่เกี่ยวข้อง" style="max-width:420px">' +
+    '<input class="input" id="actSearch" placeholder="ค้นหาผู้ดำเนินการ หรือรายการที่เกี่ยวข้อง" style="max-width:420px" value="'+esc(ACTIVITY_UI.search)+'">' +
     '<div class="card" style="padding:0">'+itemsHtml+'</div>' +
   '</div>';
   return adminShell("admin-activity","ประวัติกิจกรรม",body);
+}
+function mountAdminActivity(){
+  var s=document.getElementById("actSearch");
+  if(s) s.oninput=function(){ ACTIVITY_UI.search=s.value; render(true); };
 }
 
 function viewAdminSettings(){
@@ -2051,6 +2080,7 @@ function render(skipScroll){
   else if(route==="admin-rentals") mountAdminRentals();
   else if(route==="admin-revenue") mountAdminRevenue();
   else if(route==="admin-mailboxes") mountAdminMailboxes();
+  else if(route==="admin-activity") mountAdminActivity();
   else if(route==="admin-settings") mountAdminSettings();
 
   schedulePersist();

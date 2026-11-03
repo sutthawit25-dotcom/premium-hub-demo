@@ -271,23 +271,9 @@ function planPrice(deviceType, days){
   var last=sorted[sorted.length-1];
   return Math.round(days*(last.price/last.days));
 }
-var ACCOUNTS = [
-  {id:"acc-1", name:"NF - Hub A", email:"premiumhub.a@example-mail.demo", pass:"••••••••", mailbox:"mbx-1", note:"บัญชีหลักสำหรับลูกค้าแพ็กเกจ 7 วันขึ้นไป"},
-  {id:"acc-2", name:"NF - Hub B", email:"premiumhub.b@example-mail.demo", pass:"••••••••", mailbox:"mbx-2", note:""}
-];
-var CUSTOMERS = [
-  {id:"cus-1", name:"กมลวรรณ ศรีสุข", email:"kamonwan.demo@example.com", contact:"LINE: kamonwan_d", note:"ลูกค้าประจำ ต่ออายุทุกเดือน", pin:true, since:hoursFromNow(-24*50)},
-  {id:"cus-2", name:"ธนากร วงศ์ไพศาล", email:"thanakorn.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*30)},
-  {id:"cus-3", name:"ปิยะดา รุ่งเรือง", email:"piyada.demo@example.com", contact:"Tel: 08x-xxx-1234", note:"เคยขอคืนเงินครั้งหนึ่ง แจ้งเหตุผลชัดเจนแล้ว", pin:true, since:hoursFromNow(-24*20)},
-  {id:"cus-4", name:"ศุภกิจ อินทร์แก้ว", email:"supakit.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*10)},
-  {id:"cus-5", name:"วรรณพร ทองสุข", email:"wannaporn.demo@example.com", contact:"LINE: wan_ps", note:"", pin:true, since:hoursFromNow(-24*5)}
-];
-var REVIEWS = [
-  {id:"rv-1", customerId:"cus-1", rating:10, comment:"บริการไว แอดมินตอบเร็วมาก ใช้มาหลายเดือนไม่เคยมีปัญหาเลยค่ะ", at:hoursFromNow(-24*18)},
-  {id:"rv-2", customerId:"cus-1", rating:8, comment:"โปรไฟล์หลุดอยู่ครั้งนึง แต่แจ้งไปแอดมินแก้ให้ไวดี", at:hoursFromNow(-24*45)},
-  {id:"rv-3", customerId:"cus-3", rating:10, comment:"ราคาดี คุ้มค่า แนะนำเพื่อนต่อแล้วหลายคน", at:hoursFromNow(-24*10)},
-  {id:"rv-4", customerId:"cus-5", rating:6, comment:"บางช่วงรอรหัสยืนยันนานหน่อย แต่โดยรวมโอเคค่ะ", at:hoursFromNow(-24*3)}
-];
+var ACCOUNTS = [];
+var CUSTOMERS = [];
+var REVIEWS = [];
 var NEW_REVIEW_DRAFTS = {};
 function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[cid]={rating:REVIEW_MAX, comment:""}); }
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
@@ -299,54 +285,80 @@ function starsHTML(rating,size){
   for(var i=1;i<=REVIEW_MAX;i++){ s += '<span style="color:'+(i<=rating?"#f5a623":"var(--border)")+';font-size:'+sz+'px;line-height:1">★</span>'; }
   return '<span style="display:inline-flex;gap:1px;flex-wrap:wrap">'+s+'</span>';
 }
-var MAILBOXES = [
-  {id:"mbx-1", email:"streambox.0a@gmail.demo", provider:"GMAIL", status:"CONNECTED", lastResult:"พบ OTP ล่าสุดเมื่อ 12 นาทีที่แล้ว", lastAt:hoursFromNow(-0.2)},
-  {id:"mbx-2", email:"streambox.0b@hotmail.demo", provider:"OUTLOOK", status:"REFRESHING", lastResult:"ยังไม่ทดสอบ", lastAt:null},
-  {id:"mbx-3", email:"streambox.0c@outlook.demo", provider:"OUTLOOK", status:"ERROR", lastResult:"หมดเวลาเชื่อมต่อ", lastAt:hoursFromNow(-5)}
-];
-var PROFILES = [
-  {id:"pf-1",accountId:"acc-1",name:"FH - User 1",pin:"••••",device:"Smart TV",rentalId:"rt-1"},
-  {id:"pf-2",accountId:"acc-1",name:"FH - User 2",pin:"••••",device:"มือถือ",rentalId:"rt-2"},
-  {id:"pf-3",accountId:"acc-1",name:"FH - User 3",pin:null,device:"-",rentalId:null},
-  {id:"pf-4",accountId:"acc-1",name:"FH - User 4",pin:"••••",device:"คอมพิวเตอร์/แล็ปท็อป",rentalId:"rt-4"},
-  {id:"pf-5",accountId:"acc-1",name:"FH - User 5",pin:null,device:"-",rentalId:null},
-  {id:"pf-6",accountId:"acc-2",name:"FH - User 1",pin:"••••",device:"Smart TV",rentalId:"rt-6"},
-  {id:"pf-7",accountId:"acc-2",name:"FH - User 2",pin:null,device:"-",rentalId:null},
-  {id:"pf-8",accountId:"acc-2",name:"FH - User 3",pin:"••••",device:"มือถือ",rentalId:"rt-8"},
-  {id:"pf-9",accountId:"acc-2",name:"FH - User 4",pin:null,device:"-",rentalId:"rt-11"},
-  {id:"pf-10",accountId:"acc-2",name:"FH - User 5",pin:"••••",device:"ไอแพด/แท็บเล็ต",rentalId:"rt-10"}
-];
+var MAILBOXES = [];
+var PROFILES = [];
 // ช่องทางที่ลูกค้าโอนเงินมาให้แอดมิน (เลือกตอนบันทึกการขายแต่ละรายการ)
 var PAYMENT_METHODS = ["โอนเงิน","พร้อมเพย์","เงินสด","อื่นๆ"];
-var RENTALS = [
-  {id:"rt-1",profileId:"pf-1",customerId:"cus-1",startedAt:hoursFromNow(-24*3),expiresAt:hoursFromNow(24*4),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:null},
-  {id:"rt-2",profileId:"pf-2",customerId:"cus-2",startedAt:hoursFromNow(-24*1),expiresAt:hoursFromNow(24*14),days:15,price:169,paymentMethod:"พร้อมเพย์",closedAt:null},
-  {id:"rt-4",profileId:"pf-4",customerId:"cus-3",startedAt:hoursFromNow(-1),expiresAt:hoursFromNow(23),days:1,price:19,paymentMethod:"พร้อมเพย์",closedAt:null,note:"ลูกค้าขอโปรไฟล์อุปกรณ์แล็ปท็อปโดยเฉพาะ"},
-  {id:"rt-6",profileId:"pf-6",customerId:"cus-4",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(24*20),days:30,price:299,paymentMethod:"โอนเงิน",closedAt:null},
-  {id:"rt-8",profileId:"pf-8",customerId:"cus-5",startedAt:hoursFromNow(-24*6.7),expiresAt:hoursFromNow(5),days:7,price:99,paymentMethod:"เงินสด",closedAt:null},
-  {id:"rt-10",profileId:"pf-10",customerId:"cus-1",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(-24*3),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:null},
-  {id:"rt-11",profileId:"pf-9",customerId:"cus-3",startedAt:hoursFromNow(-24*9),expiresAt:hoursFromNow(-2),days:7,price:99,paymentMethod:"พร้อมเพย์",closedAt:null},
-  {id:"rt-h1",profileId:"pf-3",customerId:"cus-2",startedAt:hoursFromNow(-24*40),expiresAt:hoursFromNow(-24*33),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:hoursFromNow(-24*32)},
-  {id:"rt-h2",profileId:"pf-5",customerId:"cus-5",startedAt:hoursFromNow(-24*20),expiresAt:hoursFromNow(-24*17),days:3,price:49,paymentMethod:"เงินสด",closedAt:hoursFromNow(-24*16.5)}
-];
-var RENEWALS = [
-  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,paymentMethod:"โอนเงิน",actor:"super@admin",at:hoursFromNow(-24*3)},
-  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),paymentMethod:"พร้อมเพย์",actor:"super@admin",at:hoursFromNow(-24*19)}
-];
+var RENTALS = [];
+var RENEWALS = [];
 // รายการ "ขายขาด" ที่ไม่ผูกกับรอบเช่า/วันหมดอายุ — บันทึกเองจากหน้า "รายได้"
-var ONETIME_SALES = [
-  {id:"os-1", customerName:"ธนากร วงศ์ไพศาล", note:"ขายบัญชี Netflix ขาด 1 บัญชี", amount:350, paymentMethod:"โอนเงิน", at:hoursFromNow(-24*6)}
-];
-var ACTIVITY = [
-  {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"super@admin",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
-  {id:"al-2",type:"RENEWED",actor:"super@admin",target:"FH - User 1 (NF - Hub B)",detail:"ต่ออายุเพิ่ม 15 วัน จาก 5 วันที่เหลือ",at:hoursFromNow(-24*3)},
-  {id:"al-3",type:"OTP_REQUESTED",actor:"kamonwan.demo@example.com",target:"FH - User 1 (NF - Hub A)",detail:"ลูกค้าขอรหัส OTP",at:hoursFromNow(-0.2)},
-  {id:"al-4",type:"EXPIRED",actor:"system",target:"FH - User 5 (NF - Hub A)",detail:"รายการหมดเวลาอัตโนมัติตามเวลาเซิร์ฟเวอร์",at:hoursFromNow(-24*3)},
-  {id:"al-5",type:"RELEASED",actor:"super@admin",target:"FH - User 3 (NF - Hub A)",detail:"คืนโปรไฟล์เป็นว่างหลังหมดเวลา",at:hoursFromNow(-24*32)},
-  {id:"al-6",type:"SECRET_VIEWED",actor:"super@admin",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
-  {id:"al-7",type:"ACCOUNT_UPDATED",actor:"super@admin",target:"NF - Hub B",detail:"แก้ไขหมายเหตุบัญชี",at:hoursFromNow(-24*6)}
-];
-var ADMIN_ACC = { email:"super@admin", pass:"Flixie@House1910" };
+var ONETIME_SALES = [];
+var ACTIVITY = [];
+var ADMIN_EMAIL_LABEL = "super@admin"; // ใช้แสดงผลเป็นชื่อผู้ดำเนินการเท่านั้น การตรวจสอบรหัสผ่านจริงทำที่เซิร์ฟเวอร์
+
+/* -------------------------------------------------------------- ฐานข้อมูล (Cloudflare KV ผ่าน Pages Functions) */
+// หน้าเว็บนี้ไม่มีข้อมูลในเครื่อง — ทุกครั้งที่แอดมินแก้ไขข้อมูล ระบบจะส่งข้อมูลทั้งหมดไปบันทึกที่ /api/state
+// ถ้าเปิดเว็บจากที่ไม่มี backend (เช่น mirror บน GitHub Pages) การเรียก API จะล้มเหลวเงียบๆ และระบบจะทำงานแบบชั่วคราวในเครื่องนั้นเท่านั้น
+var ADMIN_TOKEN_KEY = "flixie_admin_token";
+function adminToken(){ try{ return localStorage.getItem(ADMIN_TOKEN_KEY)||""; }catch(e){ return ""; } }
+function setAdminToken(t){ try{ if(t) localStorage.setItem(ADMIN_TOKEN_KEY,t); else localStorage.removeItem(ADMIN_TOKEN_KEY); }catch(e){} }
+function decodeTokenPayload(token){
+  try{
+    var payloadB64=(token||"").split(".")[0]||"";
+    var s=payloadB64.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='=';
+    return JSON.parse(decodeURIComponent(escape(atob(s))));
+  }catch(e){ return null; }
+}
+function hasValidLocalToken(){
+  var t=adminToken(); if(!t) return false;
+  var p=decodeTokenPayload(t);
+  return !!(p && p.exp && p.exp>Date.now());
+}
+function clearAdminSession(){ setAdminToken(""); }
+function snapshotState(){
+  return {
+    accounts:ACCOUNTS, customers:CUSTOMERS, reviews:REVIEWS, mailboxes:MAILBOXES,
+    profiles:PROFILES, rentals:RENTALS, renewals:RENEWALS, onetimeSales:ONETIME_SALES,
+    activity:ACTIVITY, plans:PLANS, planIdSeq:PLAN_ID_SEQ, deviceTypes:DEVICE_TYPES,
+    paymentMethods:PAYMENT_METHODS, shop:SHOP
+  };
+}
+function applySnapshot(s){
+  if(!s || typeof s!=="object") return;
+  function setArr(dst,src){ dst.length=0; if(Array.isArray(src)) Array.prototype.push.apply(dst,src); }
+  setArr(ACCOUNTS, s.accounts); setArr(CUSTOMERS, s.customers); setArr(REVIEWS, s.reviews);
+  setArr(MAILBOXES, s.mailboxes); setArr(PROFILES, s.profiles); setArr(RENTALS, s.rentals);
+  setArr(RENEWALS, s.renewals); setArr(ONETIME_SALES, s.onetimeSales); setArr(ACTIVITY, s.activity);
+  if(Array.isArray(s.plans)) setArr(PLANS, s.plans);
+  if(typeof s.planIdSeq==="number") PLAN_ID_SEQ=s.planIdSeq;
+  if(Array.isArray(s.deviceTypes)) setArr(DEVICE_TYPES, s.deviceTypes);
+  if(Array.isArray(s.paymentMethods)) setArr(PAYMENT_METHODS, s.paymentMethods);
+  if(s.shop && typeof s.shop==="object"){
+    SHOP.name=s.shop.name||SHOP.name; SHOP.tagline=s.shop.tagline||SHOP.tagline;
+    SHOP.contactLine=s.shop.contactLine||SHOP.contactLine; SHOP.contactFacebook=s.shop.contactFacebook||SHOP.contactFacebook;
+  }
+}
+var PERSIST_TIMER=null, PERSIST_FAIL_WARNED=false;
+function schedulePersist(){
+  if(!adminToken()) return;
+  if(PERSIST_TIMER) clearTimeout(PERSIST_TIMER);
+  PERSIST_TIMER=setTimeout(persistStateNow, 600);
+}
+function persistStateNow(){
+  var t=adminToken(); if(!t) return;
+  fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:JSON.stringify(snapshotState()) })
+    .then(function(r){
+      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); }
+    })
+    .catch(function(){
+      if(!PERSIST_FAIL_WARNED){ PERSIST_FAIL_WARNED=true; toast("บันทึกขึ้นฐานข้อมูลไม่ได้ (ไม่พบระบบหลังบ้านบนโดเมนนี้) ข้อมูลจะหายเมื่อรีเฟรช","bad"); }
+    });
+}
+function hydrateFromBackend(){
+  fetch("/api/state").then(function(r){ return r.ok? r.json() : null; }).then(function(data){
+    if(data){ applySnapshot(data); seedNotifySeen(); render(true); }
+  }).catch(function(){ /* ไม่มีระบบหลังบ้านบนโดเมนนี้ (เช่น mirror บน GitHub Pages) — ทำงานต่อแบบชั่วคราวในเครื่อง */ });
+}
 
 /* -------------------------------------------------------------- utils */
 function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
@@ -569,7 +581,7 @@ function publicTopbar(opts){
     '<div style="display:flex;align-items:center;gap:8px">' +
       themeToggleHTML('tt-'+Math.random().toString(36).slice(2)) +
       (opts.showLogin!==false?'<a href="#login" class="btn btn-outline btn-sm">เข้าสู่ระบบ</a>':'') +
-      (opts.showLogout?'<a href="#home" class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>':'') +
+      (opts.showLogout?'<a href="#home" data-logout-link class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>':'') +
     '</div>' +
   '</header>';
 }
@@ -647,9 +659,25 @@ function mountLogin(){
     e.preventDefault();
     var email=document.getElementById("le").value.trim(), pass=document.getElementById("lp").value;
     if(!email||!pass){ toast("กรุณากรอกอีเมลและรหัสผ่าน","bad"); return; }
-    if(email!==ADMIN_ACC.email || pass!==ADMIN_ACC.pass){ toast("อีเมลหรือรหัสผ่านไม่ถูกต้อง","bad"); return; }
-    toast("เข้าสู่ระบบสำเร็จ","good");
-    setTimeout(function(){ go("admin"); }, 350);
+    var btn=e.target.querySelector('button[type=submit]');
+    if(btn){ btn.disabled=true; }
+    fetch("/api/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({email:email,password:pass}) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(data){ return {ok:r.ok, data:data}; }); })
+      .then(function(res){
+        if(btn){ btn.disabled=false; }
+        if(res.ok && res.data && res.data.token){
+          setAdminToken(res.data.token);
+          toast("เข้าสู่ระบบสำเร็จ","good");
+          hydrateFromBackend();
+          setTimeout(function(){ go("admin"); }, 350);
+        } else {
+          toast("อีเมลหรือรหัสผ่านไม่ถูกต้อง","bad");
+        }
+      })
+      .catch(function(){
+        if(btn){ btn.disabled=false; }
+        toast("เชื่อมต่อระบบหลังบ้านไม่ได้ ลองใหม่อีกครั้ง","bad");
+      });
   };
 }
 
@@ -682,7 +710,7 @@ function adminShell(route, title, bodyHtml){
   var rail = '<aside class="rail">' +
       '<div class="brand"><div class="mark">F</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
       '<nav>'+railNavHTML(active)+'</nav>' +
-      '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+      '<div class="foot"><a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</aside>';
   var drawer='';
   if(STATE.drawerOpen){
@@ -691,7 +719,7 @@ function adminShell(route, title, bodyHtml){
         '<div class="brand" style="padding:16px"><div class="mark">F</div>'+esc(SHOP.name)+'</div>' +
         '<button class="btn btn-ghost btn-sm" id="drawerClose">'+icon('close')+'</button>' +
       '</div><nav style="padding:0 10px">'+railNavHTML(active)+'</nav>' +
-      '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+      '<div class="foot"><a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</div>';
   }
   return '<div class="admin">' + rail +
@@ -727,6 +755,7 @@ function mountAdminShellEvents(){
     if(NOTIFY.permission!=="granted"){ requestNotifyPermission(); return; }
     RENTALS_TAB="EXPIRED"; go("admin-rentals");
   };
+  document.querySelectorAll('[data-logout-link]').forEach(function(a){ a.onclick=function(){ clearAdminSession(); }; });
 }
 
 function viewAdminDashboard(){
@@ -945,7 +974,7 @@ function mountAdminAccounts(){
   document.querySelectorAll('[data-toggle-group]').forEach(function(el){
     el.onclick=function(e){ if(e.target.closest("[data-stop-toggle]")) return; var id=el.getAttribute("data-toggle-group"); ADMIN_UI.collapsed[id]=!ADMIN_UI.collapsed[id]; render(); };
   });
-  document.getElementById("addAccountBtn").onclick=function(){ toast("เว็บไฟล์เดียวนี้ยังไม่รองรับการเพิ่มบัญชีใหม่ในหน้านี้","info"); };
+  document.getElementById("addAccountBtn").onclick=function(){ STATE.modal={type:"addAccount", name:"", email:"", pass:"", note:"", profileCount:5}; render(); };
   document.querySelectorAll('[data-editacc]').forEach(function(btn){
     btn.onclick=function(e){ e.stopPropagation(); openEditAccountModal(btn.getAttribute("data-editacc")); };
   });
@@ -990,7 +1019,7 @@ function mountCopyText(){
 }
 
 /* ---- modals: assign / renew / release ---- */
-function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:(CUSTOMERS.length?"existing":"new"), customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile", paymentMethod:(r&&r.paymentMethod)||PAYMENT_METHODS[0]}; render(); }
 function openOnetimeSaleModal(){ STATE.modal={type:"onetime", editId:null, mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", deviceType:"mobile", days:7, amount:planPrice("mobile",7), amountTouched:false, paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openEditOnetimeSaleModal(id){
@@ -1134,6 +1163,16 @@ function modalHTML(){
       '<div class="field"><label>อีเมล Netflix</label><input class="input" id="editAccEmail" value="'+esc(m.email||"")+'"></div>' +
       '<div class="field"><label>หมายเหตุ</label><textarea class="input" id="editAccNote" rows="2">'+esc(m.note||"")+'</textarea></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="editAccConfirm">บันทึกการแก้ไข</button>'
+    );
+  }
+  if(m.type==="addAccount"){
+    return modalWrap('เพิ่มบัญชี Netflix', 'ระบุข้อมูลบัญชี Netflix และจำนวนโปรไฟล์ (จอ) ที่บัญชีนี้มี ระบบจะสร้างโปรไฟล์ว่างให้อัตโนมัติ',
+      '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" id="addAccName" placeholder="เช่น NF - Hub A" value="'+esc(m.name||"")+'"></div>' +
+      '<div class="field"><label>อีเมล Netflix</label><input class="input" id="addAccEmail" placeholder="account@email.com" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="field"><label>รหัสผ่าน Netflix</label><input class="input" id="addAccPass" placeholder="รหัสผ่านบัญชี" value="'+esc(m.pass||"")+'"></div>' +
+      '<div class="field"><label>จำนวนโปรไฟล์ (จอ)</label><input class="input" id="addAccProfiles" type="number" min="1" max="20" value="'+esc(String(m.profileCount||5))+'"></div>' +
+      '<div class="field"><label>หมายเหตุ</label><textarea class="input" id="addAccNote" rows="2">'+esc(m.note||"")+'</textarea></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="addAccConfirm">เพิ่มบัญชี</button>'
     );
   }
   return "";
@@ -1291,6 +1330,23 @@ function mountModal(){
       var acc=account(m.accountId);
       if(acc){ acc.name=name; acc.email=email; acc.note=note; }
       closeModal(); toast("บันทึกการแก้ไขบัญชีแล้ว","good");
+    };
+  }
+  if(m.type==="addAccount"){
+    document.getElementById("addAccConfirm").onclick=function(){
+      var name=document.getElementById("addAccName").value.trim();
+      var email=document.getElementById("addAccEmail").value.trim();
+      var pass=document.getElementById("addAccPass").value;
+      var note=(document.getElementById("addAccNote")||{}).value||"";
+      var countRaw=Number(document.getElementById("addAccProfiles").value);
+      var count=Number.isInteger(countRaw)&&countRaw>=1&&countRaw<=20?countRaw:5;
+      if(!name){ toast("กรุณากรอกชื่อบัญชี","bad"); return; }
+      var newId="acc-"+Date.now();
+      ACCOUNTS.push({id:newId, name:name, email:email, pass:pass||"••••••••", mailbox:null, note:note});
+      for(var i=1;i<=count;i++){
+        PROFILES.push({id:"pf-"+Date.now()+"-"+i, accountId:newId, name:"FH - User "+i, pin:null, device:"-", rentalId:null});
+      }
+      closeModal(); toast("เพิ่มบัญชี "+name+" พร้อมโปรไฟล์ "+count+" โปรไฟล์แล้ว","good");
     };
   }
 }
@@ -1865,6 +1921,11 @@ function mountAdminSettings(){
 /* ================================================================ render */
 function render(skipScroll){
   var route = currentRoute();
+  if(route.indexOf("admin")===0 && !hasValidLocalToken()){
+    clearAdminSession();
+    location.hash = "login";
+    route = "login";
+  }
   var html;
 
   if(route==="home") html=viewHome();
@@ -1901,13 +1962,19 @@ function render(skipScroll){
   else if(route==="admin-revenue") mountAdminRevenue();
   else if(route==="admin-mailboxes") mountAdminMailboxes();
   else if(route==="admin-settings") mountAdminSettings();
+
+  schedulePersist();
 }
 
-// อย่าแจ้งเตือนย้อนหลังสำหรับข้อมูลเดโม่ที่หมดเวลา/ใกล้หมดเวลา/ครบโควตาอยู่แล้วตั้งแต่โหลดหน้าแรก
-currentExpiredRentalIds().forEach(function(id){ NOTIFY.seen["exp:"+id]=true; });
-currentExpiringSoonRentalIds().forEach(function(id){ NOTIFY.seen["soon:"+id]=true; });
+// อย่าแจ้งเตือนย้อนหลังสำหรับรายการที่หมดเวลา/ใกล้หมดเวลาอยู่แล้วตั้งแต่โหลดหน้าแรก
+function seedNotifySeen(){
+  currentExpiredRentalIds().forEach(function(id){ NOTIFY.seen["exp:"+id]=true; });
+  currentExpiringSoonRentalIds().forEach(function(id){ NOTIFY.seen["soon:"+id]=true; });
+}
+seedNotifySeen();
 setInterval(checkExpiryNotifications, 10000);
 render();
+hydrateFromBackend();
 })();
 </script>
 

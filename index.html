@@ -566,7 +566,7 @@ function nfMark(size){
 }
 function devicePlansHtml(deviceType){
   return PLANS.filter(function(p){ return p.device===deviceType; }).map(function(p){
-    return '<div class="plan-tile">'+nfMark(24)+'<span style="font-weight:700;font-size:13px">'+esc(p.name)+'</span><span class="price num">฿'+p.price+'</span><span class="faint" style="font-size:10.5px">ราคาตัวอย่าง</span>' +
+    return '<div class="plan-tile">'+nfMark(24)+'<span style="font-weight:700;font-size:13px">'+esc(p.name)+'</span><span class="price num">฿'+p.price+'</span>' +
       '<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;width:100%">' +
         '<button type="button" class="btn btn-primary btn-sm" data-buyplan="'+p.id+'" style="width:100%">ซื้อสินค้า</button>' +
         '<button type="button" class="btn btn-outline btn-sm" data-detailplan="'+p.id+'" style="width:100%">รายละเอียด</button>' +
@@ -592,7 +592,7 @@ function viewHome(){
     '<section style="margin-top:36px">' +
       '<h2 style="font-size:16px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+nfMark(26)+'Netflix</h2>' +
       '<div class="card" style="padding:18px">' +
-        '<p class="muted" style="font-size:12.5px;margin-bottom:4px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาต่างกันตามประเภทอุปกรณ์ ราคาด้านล่างเป็น<strong style="color:var(--ink)"> ข้อมูลตัวอย่างสำหรับเดโม่ </strong>แก้ไขได้ในหลังบ้าน</p>' +
+        '<p class="muted" style="font-size:12.5px;margin-bottom:4px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาต่างกันตามประเภทอุปกรณ์ แก้ไขราคาได้ในหลังบ้าน</p>' +
         devicePlanSections +
         '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
       '</div>' +
@@ -908,7 +908,7 @@ function mountAdminAccounts(){
   document.querySelectorAll('[data-toggle-group]').forEach(function(el){
     el.onclick=function(){ var id=el.getAttribute("data-toggle-group"); ADMIN_UI.collapsed[id]=!ADMIN_UI.collapsed[id]; render(); };
   });
-  document.getElementById("addAccountBtn").onclick=function(){ toast("เดโม่นี้จำกัดไว้ที่ 2 บัญชีตัวอย่าง","info"); };
+  document.getElementById("addAccountBtn").onclick=function(){ toast("เว็บไฟล์เดียวนี้ยังไม่รองรับการเพิ่มบัญชีใหม่ในหน้านี้","info"); };
   document.querySelectorAll('[data-assign]').forEach(function(btn){ btn.onclick=function(){ openAssignModal(btn.getAttribute("data-assign")); }; });
   document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
   document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
@@ -1050,7 +1050,7 @@ function modalHTML(){
       '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ราคา</span><strong style="font-size:16px">฿'+dp.price+'</strong></div>' +
       '<div class="field" style="margin-top:12px"><label>ระยะเวลาใช้งาน</label><p style="font-size:13px;margin:0">'+esc(dp.name)+' นับจากวันที่เริ่มใช้งาน</p></div>' +
       '<div class="field"><label>รองรับอุปกรณ์</label><p style="font-size:13px;margin:0">'+esc(deviceTypeLabel(dp.device))+'</p></div>' +
-      '<div class="field"><label>เงื่อนไข</label><p style="font-size:12.5px;margin:0" class="muted">เป็นราคาตัวอย่างสำหรับเดโม่ แอดมินจะยืนยันราคาและรายละเอียดอีกครั้งก่อนโอนเงิน</p></div>',
+      '<div class="field"><label>เงื่อนไข</label><p style="font-size:12.5px;margin:0" class="muted">แอดมินจะยืนยันราคาและรายละเอียดอีกครั้งก่อนโอนเงิน</p></div>',
       '<button class="btn btn-outline" data-close>ปิด</button><button class="btn btn-primary" id="planDetailBuy">สั่งซื้อแพ็กเกจนี้</button>'
     );
   }
@@ -1337,12 +1337,12 @@ function viewAdminReviews(){
       statCard(revs.filter(function(r){return r.rating<=4;}).length,"รีวิว 4 คะแนนลงมา","bad") +
     '</div>' +
     '<div class="card" style="padding:16px">' +
-      '<div class="section-title" style="margin-bottom:10px">เพิ่มรีวิวตัวอย่าง '+demoTag()+'</div>' +
+      '<div class="section-title" style="margin-bottom:10px">เพิ่มรีวิว '+demoTag()+'</div>' +
       '<div class="field" style="margin-bottom:10px"><label>ลูกค้า</label><select class="input" id="revCustSel">' +
         CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(REVIEW_UI.customerId===c.id?"selected":"")+'>'+esc(c.name)+'</option>'; }).join("") +
       '</select></div>' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><div style="display:flex;gap:2px;flex-wrap:wrap">'+Array.from({length:REVIEW_MAX},function(_,i){return i+1;}).map(function(n){ return '<button type="button" data-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=draft.rating?"#f5a623":"var(--border)")+';font-size:19px;line-height:1">★</button>'; }).join("")+'</div><span class="muted" style="font-size:12.5px;font-weight:600">'+draft.rating+'/'+REVIEW_MAX+'</span></div>' +
-      '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า (ตัวอย่าง)">'+esc(draft.comment)+'</textarea>' +
+      '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า">'+esc(draft.comment)+'</textarea>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิวเดโม่</button></div>' +
     '</div>' +
     '<div><div class="section-title">รีวิวทั้งหมด ('+revs.length+')</div>'+listHtml+'</div>' +
@@ -1357,7 +1357,7 @@ function mountAdminReviews(){
   var ta=document.getElementById("newRevComment"); if(ta) ta.oninput=function(){ draft.comment=ta.value; };
   var ar=document.getElementById("addReviewBtn");
   if(ar) ar.onclick=function(){
-    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ (ตัวอย่าง)", at:new Date().toISOString() });
+    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ", at:new Date().toISOString() });
     draft.rating=REVIEW_MAX; draft.comment="";
     render(true); toast("เพิ่มรีวิวเดโม่แล้ว","good");
   };
@@ -1537,7 +1537,7 @@ function mountMailboxRowEvents(){
   });
   document.querySelectorAll('[data-fetch]').forEach(function(btn){
     btn.onclick=function(){
-      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ตัวอย่างในกล่องจดหมาย (Demo)"; m.lastAt=new Date().toISOString();
+      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ในกล่องจดหมาย (Demo)"; m.lastAt=new Date().toISOString();
       refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว (Demo)","good");
     };
   });
@@ -1582,7 +1582,7 @@ function viewAdminSettings(){
       return '<div class="grid" style="grid-template-columns:1fr 100px 120px auto;gap:8px;align-items:end;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">' +
         '<div class="field" style="margin:0"><label>ชื่อแพ็กเกจ</label><input class="input" data-plan-id="'+p.id+'" data-plan-field="name" value="'+esc(p.name)+'"></div>' +
         '<div class="field" style="margin:0"><label>จำนวนวัน</label><input class="input" type="number" min="1" data-plan-id="'+p.id+'" data-plan-field="days" value="'+p.days+'"></div>' +
-        '<div class="field" style="margin:0"><label>ราคาตัวอย่าง (บาท)</label><input class="input" type="number" min="0" data-plan-id="'+p.id+'" data-plan-field="price" value="'+p.price+'"></div>' +
+        '<div class="field" style="margin:0"><label>ราคา (บาท)</label><input class="input" type="number" min="0" data-plan-id="'+p.id+'" data-plan-field="price" value="'+p.price+'"></div>' +
         '<button class="btn btn-outline btn-sm" data-delplan="'+p.id+'" style="height:38px">ลบ</button>' +
       '</div>';
     }).join("");
@@ -1598,14 +1598,14 @@ function viewAdminSettings(){
     '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title">รูปแบบการแสดงผล</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-size:13px;font-weight:600">ธีมเริ่มต้นของระบบ</div><div class="muted" style="font-size:12px">ค่าเริ่มต้นแนะนำ: อัตโนมัติ (ตามอุปกรณ์)</div></div>' +
-      '<div style="display:flex;align-items:center;gap:8px"><span class="muted" style="font-size:12.5px">ดูตัวอย่าง:</span>'+themeToggleHTML('tt-settings')+'</div></div>' +
+      '<div style="display:flex;align-items:center;gap:8px"><span class="muted" style="font-size:12.5px">สลับธีม:</span>'+themeToggleHTML('tt-settings')+'</div></div>' +
     '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title">การแจ้งเตือนจอหมดเวลา '+demoTag()+'</div>' +
       '<p class="muted" style="font-size:12.5px;margin-bottom:10px">เมื่อมีจอ/โปรไฟล์หมดเวลา ระบบจะแจ้งเตือนผ่านกระดิ่งด้านบนและป๊อปอัปของเบราว์เซอร์ทันที <strong style="color:var(--ink)">แต่ใช้ได้เฉพาะตอนเปิดแท็บเว็บนี้ค้างไว้เท่านั้น</strong> — การส่งแจ้งเตือนเข้าโทรศัพท์ตอนปิดแอป/ปิดแท็บ (เช่น LINE หรือ SMS) ต้องมีเซิร์ฟเวอร์ backend เพิ่มเติม เว็บไฟล์เดียวแบบนี้ทำเองไม่ได้</p>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="muted" style="font-size:12.5px">สถานะการอนุญาต: <strong style="color:var(--ink)">'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":NOTIFY.permission==="denied"?"ถูกปฏิเสธ (แก้ไขได้ในตั้งค่าเบราว์เซอร์)":"ยังไม่ได้เปิด")+'</strong></div>' +
         '<button class="btn btn-primary btn-sm" id="enableNotifyBtn" '+(NOTIFY.permission==="granted"?"disabled":"")+'>'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":"เปิดการแจ้งเตือน")+'</button></div>' +
     '</div>' +
-    '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจและราคาตัวอย่าง</div>' +
+    '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจและราคา</div>' +
       '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ/จำนวนวัน/ราคาได้โดยตรง ระบบจะใช้ราคานี้คำนวณยอดขายทุกจุดในเว็บทันที</p>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
     '</div>' +

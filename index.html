@@ -372,6 +372,9 @@ function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return a
 function account(id){ return byId(ACCOUNTS,id); }
 function profile(id){ return byId(PROFILES,id); }
 function customer(id){ return byId(CUSTOMERS,id); }
+// ลูกค้าที่ถูกสร้างอัตโนมัติจากการพิมพ์ชื่อใหม่ในหน้ารีวิว (fromReview) จะไม่โชว์ในตารางจัดการลูกค้าหลัก
+// เพราะยังไม่ใช่ลูกค้าที่ซื้อบริการจริง — แต่ยังอยู่ในระบบไว้เผื่อถูกอ้างอิงจากรีวิว
+function managedCustomers(){ return CUSTOMERS.filter(function(c){ return !c.fromReview; }); }
 function rental(id){ return byId(RENTALS,id); }
 function mailbox(id){ return byId(MAILBOXES,id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
@@ -1465,8 +1468,8 @@ function viewAdminCustomers(){
       '<input class="input" id="custSearch" placeholder="ค้นหาชื่อหรืออีเมลลูกค้า" style="max-width:320px">' +
       '<button class="btn btn-primary btn-sm" id="addCustBtn">'+icon('plus')+'เพิ่มลูกค้าใหม่</button>' +
     '</div>' +
-    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
-    '<div class="cards-mobile" id="custCards">'+custCards(CUSTOMERS)+'</div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="custTbody">' + custRows(managedCustomers()) + '</tbody></table></div></div>' +
+    '<div class="cards-mobile" id="custCards">'+custCards(managedCustomers())+'</div>' +
     purchaseHistorySectionHTML() +
   '</div>';
   return adminShell("admin-customers","ลูกค้า",body);
@@ -1479,7 +1482,7 @@ function purchaseHistorySectionHTML(){
   var rowsHtml = shown.map(function(e){
     var cust = e.customerId ? customer(e.customerId) : null;
     var contactHtml = cust ? contactDisplayHTML(cust) : '<span class="faint">-</span>';
-    return '<tr><td style="font-weight:600">'+esc(e.customerName)+'</td><td class="muted">'+contactHtml+'</td>' +
+    return '<tr><td style="font-weight:600">'+secretHTML(e.customerName)+'</td><td class="muted">'+contactHtml+'</td>' +
       '<td class="muted">'+esc(purchaseServiceLabel(e))+'</td><td class="muted">'+esc(e.kind)+'</td>' +
       '<td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td></tr>';
   }).join("");
@@ -1487,7 +1490,7 @@ function purchaseHistorySectionHTML(){
     var cust = e.customerId ? customer(e.customerId) : null;
     var contactHtml = cust ? contactDisplayHTML(cust) : '<span class="faint">-</span>';
     return '<div class="card" style="padding:14px;margin-bottom:10px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:13px">'+esc(e.customerName)+'</div><div style="font-weight:800;color:var(--accent)">'+fmtMoney(e.amount)+'</div></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:13px">'+secretHTML(e.customerName)+'</div><div style="font-weight:800;color:var(--accent)">'+fmtMoney(e.amount)+'</div></div>' +
       '<div class="muted" style="font-size:11.5px;margin-top:2px">ช่องทาง: '+contactHtml+'</div>' +
       '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(purchaseServiceLabel(e))+' · '+esc(e.kind)+'</div>' +
       '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(e.at)+'</div>' +
@@ -1526,12 +1529,14 @@ function mountAdminCustomers(){
   var s=document.getElementById("custSearch");
   s.oninput=function(){
     var q=s.value.trim().toLowerCase();
-    var list=CUSTOMERS.filter(function(c){ return !q || c.name.toLowerCase().indexOf(q)>=0 || c.email.toLowerCase().indexOf(q)>=0; });
+    var list=managedCustomers().filter(function(c){ return !q || c.name.toLowerCase().indexOf(q)>=0 || c.email.toLowerCase().indexOf(q)>=0; });
     document.getElementById("custTbody").innerHTML = custRows(list);
     document.getElementById("custCards").innerHTML = custCards(list);
     mountCustRowEvents();
   };
   mountCustRowEvents();
+  mountSecrets();
+  mountCopyText();
 }
 
 function viewAdminCustomerDetail(customerId){
@@ -1691,7 +1696,7 @@ function mountAdminReviews(){
     if(REVIEW_UI.mode==="new"){
       var nm=((document.getElementById("revNewName")||{}).value||REVIEW_UI.newName||"").trim();
       if(!nm){ toast("กรุณาพิมพ์ชื่อลูกค้า","bad"); return; }
-      var nc={id:"cus-new-"+Date.now(), name:nm, email:nm.replace(/\s+/g,"").toLowerCase()+"@example.com", contactType:"", contact:"", note:"", pin:false, since:new Date().toISOString()};
+      var nc={id:"cus-new-"+Date.now(), name:nm, email:nm.replace(/\s+/g,"").toLowerCase()+"@example.com", contactType:"", contact:"", note:"", pin:false, since:new Date().toISOString(), fromReview:true};
       CUSTOMERS.push(nc); custId=nc.id; REVIEW_UI.customerId=nc.id;
     }
     if(!custId){ toast("กรุณาเลือกหรือพิมพ์ชื่อลูกค้า","bad"); return; }

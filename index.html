@@ -1009,6 +1009,15 @@ function modalHTML(){
         (m.mode==="existing"? '<select class="input" id="oneCust">'+custOptions2+'</select>' : '<input class="input" id="oneNewName" placeholder="ชื่อลูกค้า (พิมพ์เอง)" value="'+esc(m.newName)+'">') +
       '</div>' +
       '<div class="field"><label>รายละเอียดการขาย</label><input class="input" id="oneNote" placeholder="เช่น ขายบัญชี Netflix ขาด 1 บัญชี" value="'+esc(m.note)+'"></div>' +
+      '<div class="field"><label>เลือกจากแพ็กเกจราคา (ไม่บังคับ — กดเพื่อใส่ราคาให้อัตโนมัติ)</label>' +
+        DEVICE_TYPES.map(function(dt){
+          return '<div style="margin-bottom:6px"><div class="faint" style="font-size:11px;margin-bottom:4px">'+dt.emoji+' '+esc(dt.label)+'</div><div class="chiprow">' +
+            PLANS.filter(function(pl){return pl.device===dt.id;}).map(function(pl){
+              return '<button type="button" class="chip" data-oplan="'+pl.id+'">'+pl.name+' · '+fmtMoney(pl.price)+'</button>';
+            }).join("") +
+          '</div></div>';
+        }).join("") +
+      '</div>' +
       '<div class="field"><label>จำนวนเงิน (บาท)</label><input class="input" id="oneAmount" type="number" min="1" placeholder="0" value="'+esc(m.amount)+'"></div>' +
       paymentPickerHTML(m.paymentMethod,"opay"),
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">บันทึกยอดขาย</button>'
@@ -1099,6 +1108,12 @@ function mountModal(){
   if(m.type==="onetime"){
     document.querySelectorAll('[data-omode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-omode"); render(); }; });
     document.querySelectorAll('[data-opay]').forEach(function(b){ b.onclick=function(){ m.paymentMethod=b.getAttribute("data-opay"); render(); }; });
+    document.querySelectorAll('[data-oplan]').forEach(function(b){ b.onclick=function(){
+      var pl=byId(PLANS,b.getAttribute("data-oplan")); if(!pl) return;
+      m.amount=pl.price;
+      if(!m.note||!m.note.trim()) m.note="ขายแพ็กเกจ "+deviceTypeLabel(pl.device)+" "+pl.name;
+      render();
+    }; });
     var oc=document.getElementById("oneCust"); if(oc) oc.onchange=function(){ m.customerId=oc.value; };
     var onn=document.getElementById("oneNewName"); if(onn) onn.oninput=function(){ m.newName=onn.value; };
     var on2=document.getElementById("oneNote"); if(on2) on2.oninput=function(){ m.note=on2.value; };

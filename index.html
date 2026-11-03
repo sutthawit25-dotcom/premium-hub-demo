@@ -275,13 +275,19 @@ var ACCOUNTS = [
   {id:"acc-1", name:"NF - Hub A", email:"premiumhub.a@example-mail.demo", pass:"••••••••", mailbox:"mbx-1", note:"บัญชีหลักสำหรับลูกค้าแพ็กเกจ 7 วันขึ้นไป"},
   {id:"acc-2", name:"NF - Hub B", email:"premiumhub.b@example-mail.demo", pass:"••••••••", mailbox:"mbx-2", note:""}
 ];
+var OTP_QUOTA_LIMIT = 2; // จำนวนครั้งที่ลูกค้าแต่ละคนขอ OTP ผ่านแชทได้ ก่อนที่แอดมินจะเห็นคำเตือน แก้ได้ในหน้าตั้งค่าร้าน
 var CUSTOMERS = [
-  {id:"cus-1", name:"กมลวรรณ ศรีสุข", email:"kamonwan.demo@example.com", contact:"LINE: kamonwan_d", note:"ลูกค้าประจำ ต่ออายุทุกเดือน", pin:true, since:hoursFromNow(-24*50)},
-  {id:"cus-2", name:"ธนากร วงศ์ไพศาล", email:"thanakorn.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*30)},
-  {id:"cus-3", name:"ปิยะดา รุ่งเรือง", email:"piyada.demo@example.com", contact:"Tel: 08x-xxx-1234", note:"เคยขอคืนเงินครั้งหนึ่ง แจ้งเหตุผลชัดเจนแล้ว", pin:true, since:hoursFromNow(-24*20)},
-  {id:"cus-4", name:"ศุภกิจ อินทร์แก้ว", email:"supakit.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*10)},
-  {id:"cus-5", name:"วรรณพร ทองสุข", email:"wannaporn.demo@example.com", contact:"LINE: wan_ps", note:"", pin:true, since:hoursFromNow(-24*5)}
+  {id:"cus-1", name:"กมลวรรณ ศรีสุข", email:"kamonwan.demo@example.com", contact:"LINE: kamonwan_d", note:"ลูกค้าประจำ ต่ออายุทุกเดือน", pin:true, since:hoursFromNow(-24*50), otpCount:1, otpLastAt:hoursFromNow(-0.2)},
+  {id:"cus-2", name:"ธนากร วงศ์ไพศาล", email:"thanakorn.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*30), otpCount:0, otpLastAt:null},
+  {id:"cus-3", name:"ปิยะดา รุ่งเรือง", email:"piyada.demo@example.com", contact:"Tel: 08x-xxx-1234", note:"เคยขอคืนเงินครั้งหนึ่ง แจ้งเหตุผลชัดเจนแล้ว", pin:true, since:hoursFromNow(-24*20), otpCount:2, otpLastAt:hoursFromNow(-30)},
+  {id:"cus-4", name:"ศุภกิจ อินทร์แก้ว", email:"supakit.demo@example.com", contact:"", note:"", pin:false, since:hoursFromNow(-24*10), otpCount:0, otpLastAt:null},
+  {id:"cus-5", name:"วรรณพร ทองสุข", email:"wannaporn.demo@example.com", contact:"LINE: wan_ps", note:"", pin:true, since:hoursFromNow(-24*5), otpCount:0, otpLastAt:null}
 ];
+function otpQuotaReached(c){ return (c.otpCount||0) >= OTP_QUOTA_LIMIT; }
+function otpQuotaBadgeHTML(c){
+  var n=c.otpCount||0, reached=otpQuotaReached(c);
+  return '<span style="font-weight:700;'+(reached?'color:var(--bad)':'')+'">'+n+'/'+OTP_QUOTA_LIMIT+'</span>'+(reached?' <span class="badge badge-bad" style="margin-left:4px">เต็มโควตา</span>':'');
+}
 var REVIEWS = [
   {id:"rv-1", customerId:"cus-1", rating:10, comment:"บริการไว แอดมินตอบเร็วมาก ใช้มาหลายเดือนไม่เคยมีปัญหาเลยค่ะ", at:hoursFromNow(-24*18)},
   {id:"rv-2", customerId:"cus-1", rating:8, comment:"โปรไฟล์หลุดอยู่ครั้งนึง แต่แจ้งไปแอดมินแก้ให้ไวดี", at:hoursFromNow(-24*45)},
@@ -1097,7 +1103,7 @@ function mountModal(){
       if(m.mode==="new"){
         var name=(document.getElementById("assignNewName")||{}).value||m.newName;
         if(!name||!name.trim()){ toast("กรุณาระบุชื่อลูกค้าใหม่","bad"); return; }
-        var nc={id:"cus-new-"+Date.now(), name:name.trim(), email:name.trim().replace(/\s+/g,"").toLowerCase()+"@example.com", contact:"", note:"", pin:false, since:new Date().toISOString()};
+        var nc={id:"cus-new-"+Date.now(), name:name.trim(), email:name.trim().replace(/\s+/g,"").toLowerCase()+"@example.com", contact:"", note:"", pin:false, since:new Date().toISOString(), otpCount:0, otpLastAt:null};
         CUSTOMERS.push(nc); custId=nc.id;
       }
       var p=profile(m.profileId);
@@ -1190,7 +1196,7 @@ function mountModal(){
     document.getElementById("custConfirm").onclick=function(){
       var name=document.getElementById("custName").value.trim(), email=document.getElementById("custEmail").value.trim();
       if(!name||!email){ toast("กรุณากรอกข้อมูลให้ครบ","bad"); return; }
-      CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:"", note:"", pin:false, since:new Date().toISOString()});
+      CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:"", note:"", pin:false, since:new Date().toISOString(), otpCount:0, otpLastAt:null});
       closeModal(); toast("เพิ่มลูกค้าใหม่แล้ว","good");
     };
   }
@@ -1236,7 +1242,7 @@ function viewAdminCustomers(){
       '<input class="input" id="custSearch" placeholder="ค้นหาชื่อหรืออีเมลลูกค้า" style="max-width:320px">' +
       '<button class="btn btn-primary btn-sm" id="addCustBtn">'+icon('plus')+'เพิ่มลูกค้าใหม่</button>' +
     '</div>' +
-    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>โควตา OTP</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
     '<div class="cards-mobile" id="custCards">'+custCards(CUSTOMERS)+'</div>' +
   '</div>';
   return adminShell("admin-customers","ลูกค้า",body);
@@ -1244,13 +1250,13 @@ function viewAdminCustomers(){
 function custRows(list){
   return list.map(function(c){
     var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
-    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td></tr>';
+    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+otpQuotaBadgeHTML(c)+'</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td></tr>';
   }).join("");
 }
 function custCards(list){
   return list.map(function(c){
     var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
-    return '<div class="card" style="padding:14px;margin-bottom:10px"><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none">'+esc(c.name)+'</a><div class="muted" style="font-size:11.5px">'+esc(c.email)+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span>'+active+' บริการที่ใช้งานอยู่</span><span>สมัคร '+fmtD(c.since)+'</span></div></div>';
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none">'+esc(c.name)+'</a><div class="muted" style="font-size:11.5px">'+esc(c.email)+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span>'+active+' บริการที่ใช้งานอยู่</span><span>สมัคร '+fmtD(c.since)+'</span></div><div style="display:flex;align-items:center;gap:4px;font-size:11px;margin-top:4px" class="muted">โควตา OTP: '+otpQuotaBadgeHTML(c)+'</div></div>';
   }).join("");
 }
 function mountAdminCustomers(){
@@ -1284,6 +1290,12 @@ function viewAdminCustomerDetail(customerId){
       '<div class="field" style="margin-top:12px"><label>หมายเหตุแอดมิน (ลูกค้ามองไม่เห็น)</label><textarea class="input" rows="2">'+esc(c.note||"")+'</textarea></div>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" id="saveCustBtn">บันทึก</button></div>' +
     '</div>' +
+    '<div class="card" style="padding:18px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:'+(otpQuotaReached(c)?"10":"4")+'px"><div class="section-title" style="margin:0">โควตาขอ OTP ผ่านแชท</div><div style="font-size:15px">'+otpQuotaBadgeHTML(c)+'</div></div>' +
+      (otpQuotaReached(c)? '<p style="font-size:12.5px;color:var(--bad);margin-bottom:10px">ลูกค้ารายนี้ขอ OTP ครบโควตาแล้ว กรุณาตรวจสอบก่อนส่งรหัสเพิ่ม</p>' : '<p class="muted" style="font-size:12.5px;margin-bottom:10px">กดบันทึกทุกครั้งที่ลูกค้าทักแชทขอรหัส OTP เพื่อจับตาลูกค้าที่ขอถี่ผิดปกติ</p>') +
+      (c.otpLastAt? '<p class="faint" style="font-size:11px;margin-bottom:10px">ขอครั้งล่าสุด: '+fmtDT(c.otpLastAt)+'</p>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="otpLogBtn">+1 ลูกค้าขอ OTP</button><button class="btn btn-outline btn-sm" id="otpResetBtn">รีเซ็ตโควตา</button></div>' +
+    '</div>' +
     '<div><div class="section-title">บริการที่ใช้งานอยู่</div>' + (active.length===0? emptyState("ไม่มีบริการที่ใช้งานอยู่") :
       '<div class="grid grid-2">'+active.map(function(r){ var p=profile(r.profileId), acc=account(p.accountId), status=deriveStatus(r);
         return '<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+' <span class="muted" style="font-weight:400">('+esc(acc.name)+')</span></div>'+statusBadge(status)+'</div><div class="muted" style="font-size:11.5px">'+fmtDT(r.startedAt)+' → '+fmtDT(r.expiresAt)+'</div></div>';
@@ -1311,6 +1323,17 @@ function viewAdminCustomerDetail(customerId){
 }
 function mountAdminCustomerDetail(customerId){
   var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){ var c=customer(customerId); var t=document.querySelector(".admin-content textarea.input"); if(t) c.note=t.value; var pt=document.getElementById("pinToggle"); if(pt) c.pin=pt.checked; toast("บันทึกข้อมูลลูกค้าแล้ว","good"); };
+  var lb=document.getElementById("otpLogBtn"); if(lb) lb.onclick=function(){
+    var c=customer(customerId); c.otpCount=(c.otpCount||0)+1; c.otpLastAt=new Date().toISOString();
+    if(otpQuotaReached(c)) toast("บันทึกแล้ว — ลูกค้ารายนี้ครบโควตา "+OTP_QUOTA_LIMIT+" ครั้งแล้ว","bad");
+    else toast("บันทึกการขอ OTP แล้ว ("+c.otpCount+"/"+OTP_QUOTA_LIMIT+")","good");
+    render();
+  };
+  var rb=document.getElementById("otpResetBtn"); if(rb) rb.onclick=function(){
+    var c=customer(customerId); c.otpCount=0; c.otpLastAt=null;
+    toast("รีเซ็ตโควตา OTP แล้ว","good");
+    render();
+  };
 }
 function viewAdminReviews(){
   var revs = REVIEWS.slice().sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
@@ -1605,6 +1628,10 @@ function viewAdminSettings(){
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="muted" style="font-size:12.5px">สถานะการอนุญาต: <strong style="color:var(--ink)">'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":NOTIFY.permission==="denied"?"ถูกปฏิเสธ (แก้ไขได้ในตั้งค่าเบราว์เซอร์)":"ยังไม่ได้เปิด")+'</strong></div>' +
         '<button class="btn btn-primary btn-sm" id="enableNotifyBtn" '+(NOTIFY.permission==="granted"?"disabled":"")+'>'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":"เปิดการแจ้งเตือน")+'</button></div>' +
     '</div>' +
+    '<div class="card" style="padding:18px"><div class="section-title">โควตาขอ OTP</div>' +
+      '<p class="muted" style="font-size:12.5px;margin-bottom:10px">ลูกค้าทักแชทขอ OTP จากแอดมิน ไม่ได้ขอเองผ่านหน้าเว็บ — กำหนดจำนวนครั้งสูงสุดต่อลูกค้าหนึ่งคนที่นี่ แล้วไปกด "+1" บันทึกทุกครั้งที่ลูกค้าขอในหน้ารายละเอียดลูกค้าแต่ละคน</p>' +
+      '<div class="field" style="max-width:220px"><label>จำนวนครั้งสูงสุดต่อคน</label><input class="input" type="number" min="1" id="setOtpQuota" value="'+OTP_QUOTA_LIMIT+'"></div>' +
+    '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจและราคา</div>' +
       '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ/จำนวนวัน/ราคาได้โดยตรง ระบบจะใช้ราคานี้คำนวณยอดขายทุกจุดในเว็บทันที</p>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
@@ -1618,6 +1645,7 @@ function mountAdminSettings(){
   var sl=document.getElementById("setShopLine"); if(sl) sl.oninput=function(){ SHOP.contactLine=sl.value; };
   var sf=document.getElementById("setShopFb"); if(sf) sf.oninput=function(){ SHOP.contactFacebook=sf.value; };
   var st=document.getElementById("setShopTagline"); if(st) st.oninput=function(){ SHOP.tagline=st.value; };
+  var oq=document.getElementById("setOtpQuota"); if(oq) oq.oninput=function(){ var n=Number(oq.value); if(Number.isFinite(n)&&n>=1) OTP_QUOTA_LIMIT=n; };
   document.querySelectorAll('[data-plan-id]').forEach(function(inp){
     inp.oninput=function(){
       var pl=byId(PLANS,inp.getAttribute("data-plan-id")); if(!pl) return;

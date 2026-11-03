@@ -315,20 +315,26 @@ var PROFILES = [
   {id:"pf-9",accountId:"acc-2",name:"FH - User 4",pin:null,device:"-",rentalId:"rt-11"},
   {id:"pf-10",accountId:"acc-2",name:"FH - User 5",pin:"••••",device:"ไอแพด/แท็บเล็ต",rentalId:"rt-10"}
 ];
+// ช่องทางที่ลูกค้าโอนเงินมาให้แอดมิน (เลือกตอนบันทึกการขายแต่ละรายการ)
+var PAYMENT_METHODS = ["โอนเงิน","พร้อมเพย์","เงินสด","อื่นๆ"];
 var RENTALS = [
-  {id:"rt-1",profileId:"pf-1",customerId:"cus-1",startedAt:hoursFromNow(-24*3),expiresAt:hoursFromNow(24*4),days:7,price:99,closedAt:null},
-  {id:"rt-2",profileId:"pf-2",customerId:"cus-2",startedAt:hoursFromNow(-24*1),expiresAt:hoursFromNow(24*14),days:15,price:169,closedAt:null},
-  {id:"rt-4",profileId:"pf-4",customerId:"cus-3",startedAt:hoursFromNow(-1),expiresAt:hoursFromNow(23),days:1,price:19,closedAt:null,note:"ลูกค้าขอโปรไฟล์อุปกรณ์แล็ปท็อปโดยเฉพาะ"},
-  {id:"rt-6",profileId:"pf-6",customerId:"cus-4",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(24*20),days:30,price:299,closedAt:null},
-  {id:"rt-8",profileId:"pf-8",customerId:"cus-5",startedAt:hoursFromNow(-24*6.7),expiresAt:hoursFromNow(5),days:7,price:99,closedAt:null},
-  {id:"rt-10",profileId:"pf-10",customerId:"cus-1",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(-24*3),days:7,price:99,closedAt:null},
-  {id:"rt-11",profileId:"pf-9",customerId:"cus-3",startedAt:hoursFromNow(-24*9),expiresAt:hoursFromNow(-2),days:7,price:99,closedAt:null},
-  {id:"rt-h1",profileId:"pf-3",customerId:"cus-2",startedAt:hoursFromNow(-24*40),expiresAt:hoursFromNow(-24*33),days:7,price:99,closedAt:hoursFromNow(-24*32)},
-  {id:"rt-h2",profileId:"pf-5",customerId:"cus-5",startedAt:hoursFromNow(-24*20),expiresAt:hoursFromNow(-24*17),days:3,price:49,closedAt:hoursFromNow(-24*16.5)}
+  {id:"rt-1",profileId:"pf-1",customerId:"cus-1",startedAt:hoursFromNow(-24*3),expiresAt:hoursFromNow(24*4),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:null},
+  {id:"rt-2",profileId:"pf-2",customerId:"cus-2",startedAt:hoursFromNow(-24*1),expiresAt:hoursFromNow(24*14),days:15,price:169,paymentMethod:"พร้อมเพย์",closedAt:null},
+  {id:"rt-4",profileId:"pf-4",customerId:"cus-3",startedAt:hoursFromNow(-1),expiresAt:hoursFromNow(23),days:1,price:19,paymentMethod:"พร้อมเพย์",closedAt:null,note:"ลูกค้าขอโปรไฟล์อุปกรณ์แล็ปท็อปโดยเฉพาะ"},
+  {id:"rt-6",profileId:"pf-6",customerId:"cus-4",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(24*20),days:30,price:299,paymentMethod:"โอนเงิน",closedAt:null},
+  {id:"rt-8",profileId:"pf-8",customerId:"cus-5",startedAt:hoursFromNow(-24*6.7),expiresAt:hoursFromNow(5),days:7,price:99,paymentMethod:"เงินสด",closedAt:null},
+  {id:"rt-10",profileId:"pf-10",customerId:"cus-1",startedAt:hoursFromNow(-24*10),expiresAt:hoursFromNow(-24*3),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:null},
+  {id:"rt-11",profileId:"pf-9",customerId:"cus-3",startedAt:hoursFromNow(-24*9),expiresAt:hoursFromNow(-2),days:7,price:99,paymentMethod:"พร้อมเพย์",closedAt:null},
+  {id:"rt-h1",profileId:"pf-3",customerId:"cus-2",startedAt:hoursFromNow(-24*40),expiresAt:hoursFromNow(-24*33),days:7,price:99,paymentMethod:"โอนเงิน",closedAt:hoursFromNow(-24*32)},
+  {id:"rt-h2",profileId:"pf-5",customerId:"cus-5",startedAt:hoursFromNow(-24*20),expiresAt:hoursFromNow(-24*17),days:3,price:49,paymentMethod:"เงินสด",closedAt:hoursFromNow(-24*16.5)}
 ];
 var RENEWALS = [
-  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,actor:"admin@premiumhub.demo",at:hoursFromNow(-24*3)},
-  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
+  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,paymentMethod:"โอนเงิน",actor:"admin@premiumhub.demo",at:hoursFromNow(-24*3)},
+  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),paymentMethod:"พร้อมเพย์",actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
+];
+// รายการ "ขายขาด" ที่ไม่ผูกกับรอบเช่า/วันหมดอายุ — บันทึกเองจากหน้า "รายได้"
+var ONETIME_SALES = [
+  {id:"os-1", customerName:"ธนากร วงศ์ไพศาล", note:"ขายบัญชี Netflix ขาด 1 บัญชี", amount:350, paymentMethod:"โอนเงิน", at:hoursFromNow(-24*6)}
 ];
 var ACTIVITY = [
   {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
@@ -931,10 +937,16 @@ function mountCopyText(){
 }
 
 /* ---- modals: assign / renew / release ---- */
-function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile"}; render(); }
-function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile"}; render(); }
+function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile", paymentMethod:(r&&r.paymentMethod)||PAYMENT_METHODS[0]}; render(); }
+function openOnetimeSaleModal(){ STATE.modal={type:"onetime", mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", amount:"", paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
 
+function paymentPickerHTML(selected,attr){
+  return '<div class="field"><label>ช่องทางการจ่ายเงิน</label><div class="tabs">' +
+    PAYMENT_METHODS.map(function(pm){ return '<button data-'+attr+'="'+esc(pm)+'" class="'+(selected===pm?"active":"")+'">'+esc(pm)+'</button>'; }).join("") +
+  '</div></div>';
+}
 function modalHTML(){
   var m=STATE.modal; if(!m) return "";
   if(m.type==="assign"){
@@ -955,6 +967,7 @@ function modalHTML(){
         [1,7,14,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-days="'+d+'">'+d+' วัน</button>'; }).join("") +
         '<input class="input" id="assignCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
       '</div></div>' +
+      paymentPickerHTML(m.paymentMethod,"apay") +
       '<div class="field"><label>วันและเวลาเริ่มต้น</label><input class="input" disabled value="'+fmtDT(start.toISOString())+'"><p class="faint" style="font-size:10.5px;margin-top:3px">ใช้เวลาปัจจุบันจากเซิร์ฟเวอร์โดยอัตโนมัติ</p></div>' +
       '<div class="field"><label>วันและเวลาหมดอายุ (คำนวณให้อัตโนมัติ)</label><input class="input" disabled value="'+fmtDT(exp.toISOString())+'"></div>' +
       '<div class="summary-box">ใช้งาน '+m.days+' วัน เริ่ม '+fmtDT(start.toISOString())+' หมดเวลา '+fmtDT(exp.toISOString())+' · ลูกค้า: '+esc(custLabel)+'</div>' +
@@ -975,6 +988,7 @@ function modalHTML(){
       '<div class="field" style="margin-top:12px"><label>จำนวนวันที่ต้องการเพิ่ม</label><div class="chiprow">' +
         [1,7,14,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-rdays="'+d+'">+'+d+' วัน</button>'; }).join("") +
         '<input class="input" id="renewCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px"></div></div>' +
+      paymentPickerHTML(m.paymentMethod,"rpay") +
       '<div class="summary-box">วันหมดอายุใหม่: '+fmtDT(newExp.toISOString())+'</div>' +
       '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ — '+deviceTypeLabel(m.deviceType)+')</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="renewConfirm">ยืนยันการต่ออายุ</button>'
@@ -985,6 +999,19 @@ function modalHTML(){
     return modalWrap('คืนโปรไฟล์เป็นว่าง', null,
       '<p style="font-size:13px">โปรไฟล์ <strong>'+esc(p3.name)+'</strong> จะถูกปิดรายการปัจจุบันและเปิดให้มอบหมายลูกค้าคนใหม่ได้ ประวัติของลูกค้าเดิมจะยังถูกเก็บไว้ และลูกค้าเดิมจะไม่สามารถขอ OTP ของโปรไฟล์นี้ได้อีก</p>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" style="background:var(--bad)" id="releaseConfirm">ยืนยันคืนเป็นว่าง</button>'
+    );
+  }
+  if(m.type==="onetime"){
+    var custOptions2 = CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(m.customerId===c.id?"selected":"")+'>'+esc(c.name)+' ('+esc(c.email)+')</option>'; }).join("");
+    return modalWrap('บันทึกขายขาด','สำหรับการขายที่ไม่ใช่การเช่ารายวัน เช่น ขายบัญชี Netflix ขาด หรือบริการอื่นที่ตกลงกับลูกค้านอกเว็บ', '' +
+      '<div class="field"><label>ลูกค้า</label>' +
+        '<div class="tabs" style="margin-bottom:8px"><button data-omode="existing" class="'+(m.mode==="existing"?"active":"")+'">เลือกลูกค้าเดิม</button><button data-omode="new" class="'+(m.mode==="new"?"active":"")+'">ลูกค้าใหม่ / ไม่ระบุ</button></div>' +
+        (m.mode==="existing"? '<select class="input" id="oneCust">'+custOptions2+'</select>' : '<input class="input" id="oneNewName" placeholder="ชื่อลูกค้า (พิมพ์เอง)" value="'+esc(m.newName)+'">') +
+      '</div>' +
+      '<div class="field"><label>รายละเอียดการขาย</label><input class="input" id="oneNote" placeholder="เช่น ขายบัญชี Netflix ขาด 1 บัญชี" value="'+esc(m.note)+'"></div>' +
+      '<div class="field"><label>จำนวนเงิน (บาท)</label><input class="input" id="oneAmount" type="number" min="1" placeholder="0" value="'+esc(m.amount)+'"></div>' +
+      paymentPickerHTML(m.paymentMethod,"opay"),
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">บันทึกยอดขาย</button>'
     );
   }
   if(m.type==="addMailbox"){
@@ -1020,6 +1047,7 @@ function mountModal(){
     document.querySelectorAll('[data-amode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-amode"); render(); }; });
     document.querySelectorAll('[data-adevice]').forEach(function(b){ b.onclick=function(){ m.deviceType=b.getAttribute("data-adevice"); render(); }; });
     document.querySelectorAll('[data-days]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-days")); render(); }; });
+    document.querySelectorAll('[data-apay]').forEach(function(b){ b.onclick=function(){ m.paymentMethod=b.getAttribute("data-apay"); render(); }; });
     var cd=document.getElementById("assignCustomDays");
     if(cd) cd.oninput=function(){ var n=Number(cd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
     var sel=document.getElementById("assignCust"); if(sel) sel.onchange=function(){ m.customerId=sel.value; };
@@ -1034,7 +1062,7 @@ function mountModal(){
       }
       var p=profile(m.profileId);
       var start=new Date(), exp=new Date(start.getTime()+m.days*86400000);
-      var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, deviceType:m.deviceType, price:planPrice(m.deviceType,m.days), closedAt:null};
+      var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, deviceType:m.deviceType, price:planPrice(m.deviceType,m.days), paymentMethod:m.paymentMethod, closedAt:null};
       RENTALS.push(nr); p.rentalId=nr.id;
       closeModal();
       toast("มอบหมายโปรไฟล์ให้ลูกค้าแล้ว ยอดขาย "+fmtMoney(nr.price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
@@ -1043,6 +1071,7 @@ function mountModal(){
   if(m.type==="renew"){
     document.querySelectorAll('[data-rdevice]').forEach(function(b){ b.onclick=function(){ m.deviceType=b.getAttribute("data-rdevice"); render(); }; });
     document.querySelectorAll('[data-rdays]').forEach(function(b){ b.onclick=function(){ m.days=Number(b.getAttribute("data-rdays")); render(); }; });
+    document.querySelectorAll('[data-rpay]').forEach(function(b){ b.onclick=function(){ m.paymentMethod=b.getAttribute("data-rpay"); render(); }; });
     var cd2=document.getElementById("renewCustomDays");
     if(cd2) cd2.oninput=function(){ var n=Number(cd2.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
     document.getElementById("renewConfirm").onclick=function(){
@@ -1053,7 +1082,8 @@ function mountModal(){
       var price = planPrice(m.deviceType,m.days);
       r.expiresAt = new Date(base.getTime()+m.days*86400000).toISOString();
       r.deviceType = m.deviceType;
-      RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, actor:"admin@premiumhub.demo", at:new Date().toISOString() });
+      r.paymentMethod = m.paymentMethod;
+      RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, paymentMethod:m.paymentMethod, actor:"admin@premiumhub.demo", at:new Date().toISOString() });
       closeModal();
       toast("ต่ออายุเพิ่ม "+m.days+" วันแล้ว ยอดขาย "+fmtMoney(price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
     };
@@ -1064,6 +1094,31 @@ function mountModal(){
       var p=profile(r.profileId); p.rentalId=null;
       closeModal();
       toast("คืนโปรไฟล์เป็นว่างแล้ว ประวัติเดิมยังถูกเก็บไว้","good");
+    };
+  }
+  if(m.type==="onetime"){
+    document.querySelectorAll('[data-omode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-omode"); render(); }; });
+    document.querySelectorAll('[data-opay]').forEach(function(b){ b.onclick=function(){ m.paymentMethod=b.getAttribute("data-opay"); render(); }; });
+    var oc=document.getElementById("oneCust"); if(oc) oc.onchange=function(){ m.customerId=oc.value; };
+    var onn=document.getElementById("oneNewName"); if(onn) onn.oninput=function(){ m.newName=onn.value; };
+    var on2=document.getElementById("oneNote"); if(on2) on2.oninput=function(){ m.note=on2.value; };
+    var oa=document.getElementById("oneAmount"); if(oa) oa.oninput=function(){ m.amount=oa.value; };
+    document.getElementById("oneConfirm").onclick=function(){
+      var amount=Number((document.getElementById("oneAmount")||{}).value||m.amount);
+      if(!amount || amount<=0){ toast("กรุณากรอกจำนวนเงินให้ถูกต้อง","bad"); return; }
+      var note=((document.getElementById("oneNote")||{}).value||m.note||"").trim() || "ขายขาด (ไม่ระบุรายละเอียด)";
+      var customerName;
+      if(m.mode==="existing"){
+        var c=customer((document.getElementById("oneCust")||{}).value||m.customerId);
+        customerName = c? c.name : "-";
+      }else{
+        var nm=((document.getElementById("oneNewName")||{}).value||m.newName||"").trim();
+        if(!nm){ toast("กรุณาระบุชื่อลูกค้า","bad"); return; }
+        customerName = nm;
+      }
+      ONETIME_SALES.unshift({ id:"os-"+Date.now(), customerName:customerName, note:note, amount:amount, paymentMethod:m.paymentMethod, at:new Date().toISOString() });
+      closeModal();
+      toast("บันทึกยอดขายขาด "+fmtMoney(amount)+" แล้ว","good");
     };
   }
   if(m.type==="addMailbox"){
@@ -1296,11 +1351,14 @@ function revenueEvents(){
   var events = RENTALS.map(function(r){
     var cust=customer(r.customerId), p=profile(r.profileId);
     return { at:r.startedAt, amount:(r.price!=null?r.price:planPrice(r.days)), days:r.days,
-      customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"เช่าใหม่" };
+      customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"เช่าใหม่", paymentMethod:r.paymentMethod||"-" };
   }).concat(RENEWALS.map(function(h){
     var r=rental(h.rentalId), cust=r?customer(r.customerId):null, p=r?profile(r.profileId):null;
     return { at:h.at, amount:(h.price!=null?h.price:planPrice(h.days)), days:h.days,
-      customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"ต่ออายุ" };
+      customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"ต่ออายุ", paymentMethod:h.paymentMethod||"-" };
+  })).concat(ONETIME_SALES.map(function(s){
+    return { at:s.at, amount:s.amount, days:null,
+      customerName:s.customerName||"-", profileName:s.note||"ขายขาด", kind:"ขายขาด", paymentMethod:s.paymentMethod||"-" };
   }));
   return events.sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
 }
@@ -1328,6 +1386,14 @@ function viewAdminRevenue(){
       '<div class="card" style="padding:16px"><div class="muted" style="font-size:12px">รวมทั้งหมด (เดโม่)</div><div style="font-size:20px;font-weight:800;margin-top:4px;color:var(--accent)">'+fmtMoney(sumAll)+'</div></div>' +
     '</div>';
 
+  var byPay = {};
+  PAYMENT_METHODS.forEach(function(pm){ byPay[pm]=0; });
+  events.forEach(function(e){ byPay[e.paymentMethod]=(byPay[e.paymentMethod]||0)+e.amount; });
+  var payHtml = sumAll===0? "" : '<div class="card" style="padding:16px"><div style="display:flex;flex-wrap:wrap;gap:18px">' +
+    Object.keys(byPay).filter(function(pm){return byPay[pm]>0}).map(function(pm){
+      return '<div><div class="muted" style="font-size:11.5px">'+esc(pm)+'</div><div style="font-weight:700;font-size:14px">'+fmtMoney(byPay[pm])+'</div></div>';
+    }).join("") + '</div></div>';
+
   var barsHtml = dayKeys.length===0? emptyState("ยังไม่มีรายการขาย") :
     '<div class="card" style="padding:16px">' +
       dayKeys.map(function(k){
@@ -1342,23 +1408,30 @@ function viewAdminRevenue(){
     '</div>';
 
   var listHtml = events.length===0? "" :
-    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th>ลูกค้า</th><th>โปรไฟล์</th><th>ประเภท</th><th>จำนวนวัน</th><th>ยอดขาย</th></tr></thead><tbody>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th>ลูกค้า</th><th>โปรไฟล์ / รายละเอียด</th><th>ประเภท</th><th>จำนวนวัน</th><th>ช่องทางชำระ</th><th>ยอดขาย</th></tr></thead><tbody>' +
     events.slice(0,40).map(function(e){
-      return '<tr><td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td>'+esc(e.customerName)+'</td><td class="muted">'+esc(e.profileName)+'</td><td>'+esc(e.kind)+'</td><td>'+e.days+' วัน</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td></tr>';
+      return '<tr><td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td>'+esc(e.customerName)+'</td><td class="muted">'+esc(e.profileName)+'</td><td>'+esc(e.kind)+'</td><td>'+(e.days!=null?e.days+' วัน':'<span class="faint">-</span>')+'</td><td class="muted">'+esc(e.paymentMethod)+'</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td></tr>';
     }).join("") + '</tbody></table></div></div>' +
     '<div class="cards-mobile">' + events.slice(0,40).map(function(e){
       return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:13px">'+esc(e.customerName)+'</div><div style="font-weight:800;color:var(--accent)">'+fmtMoney(e.amount)+'</div></div>' +
-      '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(e.profileName)+' · '+esc(e.kind)+' '+e.days+' วัน</div>' +
+      '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(e.profileName)+' · '+esc(e.kind)+(e.days!=null?(' '+e.days+' วัน'):'')+' · '+esc(e.paymentMethod)+'</div>' +
       '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(e.at)+'</div></div>';
     }).join("") + '</div>';
 
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
-    '<p class="muted" style="font-size:12.5px">ระบบคำนวณยอดขายให้อัตโนมัติจากราคาแพ็กเกจของแต่ละรายการเช่า/ต่ออายุ ไม่ต้องรวมเอง '+demoTag()+'</p>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+      '<p class="muted" style="font-size:12.5px;margin:0">ยอดเช่า/ต่ออายุคำนวณอัตโนมัติจากราคาแพ็กเกจ ส่วนการขายขาดให้กดบันทึกเอง '+demoTag()+'</p>' +
+      '<button class="btn btn-primary btn-sm" id="addOnetimeBtn">'+icon('plus')+'บันทึกขายขาด</button>' +
+    '</div>' +
     cardsHtml +
+    (payHtml? '<div><div class="section-title">แยกตามช่องทางการจ่ายเงิน</div>'+payHtml+'</div>' : '') +
     '<div><div class="section-title">ยอดขายรายวัน (ย้อนหลัง '+REVENUE_RANGE+' วันล่าสุดที่มีรายการ)</div>' + barsHtml + '</div>' +
     '<div><div class="section-title">รายการขายล่าสุด</div>' + (events.length===0? emptyState("ยังไม่มีรายการขาย") : listHtml) + '</div>' +
   '</div>';
   return adminShell("admin-revenue","รายได้",body);
+}
+function mountAdminRevenue(){
+  var b=document.getElementById("addOnetimeBtn"); if(b) b.onclick=openOnetimeSaleModal;
 }
 
 function viewAdminMailboxes(){
@@ -1524,6 +1597,7 @@ function render(skipScroll){
   else if(route.indexOf("admin-customer-")===0) mountAdminCustomerDetail(route.slice(15));
   else if(route==="admin-reviews") mountAdminReviews();
   else if(route==="admin-rentals") mountAdminRentals();
+  else if(route==="admin-revenue") mountAdminRevenue();
   else if(route==="admin-mailboxes") mountAdminMailboxes();
   else if(route==="admin-settings") mountAdminSettings();
 }

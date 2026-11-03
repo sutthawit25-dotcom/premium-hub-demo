@@ -420,17 +420,15 @@ function setTheme(t){
   try{ localStorage.setItem("ph-theme",t); }catch(e){}
   if(t==="system") document.documentElement.removeAttribute("data-theme");
   else document.documentElement.setAttribute("data-theme",t);
-  renderThemeToggles();
+  render(true); // ต้อง render ใหม่เพื่ออัปเดตปุ่ม active ของทุกตัวสลับธีมบนหน้าปัจจุบัน
 }
 function themeToggleHTML(id){
   var t=getTheme();
   function b(v,ic){ return '<button data-theme-btn="'+v+'" class="'+(t===v?"active":"")+'" title="'+v+'">'+icon(ic)+'</button>'; }
   return '<div class="theme-toggle" id="'+id+'">'+b("light","sun")+b("system","monitor")+b("dark","moon")+'</div>';
 }
-function renderThemeToggles(){
-  document.querySelectorAll('[data-theme-toggle]').forEach(function(el){
-    el.outerHTML = themeToggleHTML(el.id);
-  });
+// ปุ่มสลับธีมถูกสร้างใหม่ทุกครั้งที่ render() เขียน innerHTML ใหม่ ต้องผูก onclick ใหม่ทุกครั้งด้วย
+function mountThemeToggleButtons(){
   document.querySelectorAll('[data-theme-btn]').forEach(function(btn){
     btn.onclick=function(){ setTheme(btn.getAttribute("data-theme-btn")); };
   });
@@ -1702,6 +1700,7 @@ function render(skipScroll){
   if(!skipScroll) window.scrollTo(0,0);
 
   mountAdminShellEvents();
+  mountThemeToggleButtons();
   mountModal();
 
   if(route!=="login" && route.indexOf("admin")!==0) mountHome();

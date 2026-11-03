@@ -1155,9 +1155,11 @@ function modalHTML(){
     );
   }
   if(m.type==="addMailbox"){
-    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'ระบบนี้ยังไม่ได้เชื่อมต่อ Gmail/Microsoft จริง เป็นการจำลองผลลัพธ์เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อบัญชีจริง',
+    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เชื่อมต่อกล่องเมลจริงผ่าน IMAP เพื่อดึงรหัส OTP ของ Netflix อัตโนมัติ — ต้องใช้ "รหัสผ่านแอป (App Password)" ของ Gmail/Outlook ไม่ใช่รหัสผ่านเข้าบัญชีปกติ (ต้องเปิดยืนยัน 2 ขั้นตอนก่อนจึงจะสร้างรหัสผ่านแอปได้)',
       '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider"><option value="GMAIL" '+(m.provider==="GMAIL"?"selected":"")+'>Gmail</option><option value="OUTLOOK" '+(m.provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail</option></select></div>' +
-      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@example.demo" value="'+esc(m.email||"")+'"></div>',
+      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@gmail.com" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="field"><label>รหัสผ่านแอป (App Password)</label><input class="input" type="password" id="mbAppPass" placeholder="'+(m.editId?"เว้นไว้ถ้าไม่เปลี่ยน":"xxxx xxxx xxxx xxxx")+'" autocomplete="new-password"></div>' +
+      '<p class="muted" style="font-size:11.5px;margin-top:-6px">ระบบจะเก็บรหัสผ่านแอปนี้แบบเข้ารหัสไว้ที่เซิร์ฟเวอร์ ใช้สำหรับดึง OTP เท่านั้น ไม่แสดงผลซ้ำที่หน้านี้อีก</p>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
     );
   }
@@ -1310,14 +1312,29 @@ function mountModal(){
       var email=document.getElementById("mbEmail").value.trim();
       if(!email){ toast("กรุณากรอกอีเมล","bad"); return; }
       var provider=(document.getElementById("mbProvider")||{}).value||m.provider;
-      if(m.editId){
-        var existing=byId(MAILBOXES,m.editId);
-        if(existing){ existing.email=email; existing.provider=provider; }
-        closeModal(); toast("บันทึกการแก้ไขบัญชีอีเมลแล้ว","good");
-      }else{
-        MAILBOXES.push({id:"mbx-new-"+Date.now(), email:email, provider:provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ทดสอบ", lastAt:null});
-        closeModal(); toast("เพิ่มบัญชีอีเมลแล้ว","good");
+      var appPass=(document.getElementById("mbAppPass")||{}).value||"";
+      var btn=document.getElementById("mbConfirm"); btn.disabled=true;
+      var mailboxId = m.editId || ("mbx-new-"+Date.now());
+      function finishSave(){
+        if(m.editId){
+          var existing=byId(MAILBOXES,m.editId);
+          if(existing){ existing.email=email; existing.provider=provider; }
+          closeModal(); toast("บันทึกการแก้ไขบัญชีอีเมลแล้ว","good");
+        }else{
+          MAILBOXES.push({id:mailboxId, email:email, provider:provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ดึง OTP", lastAt:null});
+          closeModal(); toast("เพิ่มบัญชีอีเมลแล้ว","good");
+        }
       }
+      if(!appPass){ finishSave(); return; }
+      fetch("/api/mailbox-creds", {
+        method:"POST",
+        headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
+        body:JSON.stringify({mailboxId:mailboxId, email:email, provider:provider, appPassword:appPass})
+      }).then(function(r){ return r.json().catch(function(){return {};}); }).then(function(res){
+        btn.disabled=false;
+        if(res && res.ok){ finishSave(); }
+        else { toast("บันทึกรหัสผ่านแอปไม่สำเร็จ ("+((res&&res.error)||"unknown")+")","bad"); }
+      }).catch(function(){ btn.disabled=false; toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง","bad"); });
     };
   }
   if(m.type==="addCustomer"){
@@ -1770,19 +1787,40 @@ function mountAdminRevenue(){
 }
 
 function mailboxActionsHTML(m){
-  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึง OTP ล่าสุด</button><button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
+}
+var OTP_ERROR_MESSAGES = {
+  no_credentials: "ยังไม่ได้ตั้งรหัสผ่านแอป กดแก้ไขเพื่อเพิ่ม",
+  unsupported_provider: "ไม่รองรับผู้ให้บริการนี้",
+  decrypt_failed: "อ่านรหัสผ่านที่บันทึกไว้ไม่ได้ กรุณาตั้งรหัสผ่านแอปใหม่",
+  connect_timeout: "เชื่อมต่อเซิร์ฟเวอร์เมลไม่ได้ (หมดเวลา)",
+  login_failed: "เข้าสู่ระบบไม่ได้ ตรวจสอบอีเมล/รหัสผ่านแอปอีกครั้ง",
+  select_failed: "เปิดกล่องจดหมายไม่ได้",
+  search_failed: "ค้นหาอีเมลไม่สำเร็จ",
+  fetch_failed: "ดึงเนื้อหาอีเมลไม่สำเร็จ",
+  no_netflix_email: "ไม่พบอีเมลจาก Netflix ในกล่องจดหมาย",
+  no_code_found: "พบอีเมลจาก Netflix แต่หารหัสในเนื้ออีเมลไม่เจอ",
+  imap_connection_closed: "การเชื่อมต่อถูกปิดกลางทาง ลองใหม่อีกครั้ง",
+};
+function otpErrorText(code){ return OTP_ERROR_MESSAGES[code] || ("เกิดข้อผิดพลาด ("+code+")"); }
+function mailboxResultHTML(m){
+  if(m.lastCode){
+    return '<span style="display:inline-flex;align-items:center;gap:4px"><strong style="letter-spacing:1px;font-size:13.5px">'+esc(m.lastCode)+'</strong>' +
+      '<button style="border:none;background:transparent;color:var(--faint);cursor:pointer;padding:5px;border-radius:7px;flex:none;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center" data-copy-text="'+esc(m.lastCode)+'" title="คัดลอก">'+icon('copy')+'</button></span>';
+  }
+  return esc(m.lastResult||"ยังไม่ดึง OTP");
 }
 function mailboxRowsHTML(){
   return MAILBOXES.map(function(m,i){
     return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
       '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
-      '<td class="muted" style="font-size:12px">'+esc(m.lastResult)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
+      '<td class="muted" style="font-size:12px">'+mailboxResultHTML(m)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
       '<td>'+mailboxActionsHTML(m)+'</td></tr>';
   }).join("");
 }
 function mailboxCardsHTML(){
   return MAILBOXES.map(function(m){
-    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:12.5px">'+esc(m.email)+'</span>'+demoTag()+'</div>'+mailboxBadge(m.status)+'<p class="muted" style="font-size:11.5px;margin-top:6px">'+esc(m.lastResult)+'</p>'+mailboxActionsHTML(m)+'</div>';
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:12.5px">'+esc(m.email)+'</span>'+demoTag()+'</div>'+mailboxBadge(m.status)+'<p class="muted" style="font-size:11.5px;margin-top:6px">'+mailboxResultHTML(m)+'</p>'+mailboxActionsHTML(m)+'</div>';
   }).join("");
 }
 function viewAdminMailboxes(){
@@ -1792,7 +1830,7 @@ function viewAdminMailboxes(){
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
     '<div class="card" style="padding:18px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
-        '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail / Outlook / Hotmail และตั้งค่า PIN สำหรับหน้ารับรหัสลูกค้า — ใช้ MockMailboxProvider เท่านั้น ไม่เชื่อมต่อ Gmail หรือ Microsoft จริง</p></div>' +
+        '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail / Outlook / Hotmail จริงผ่าน IMAP ด้วยรหัสผ่านแอป แล้วกด "ดึง OTP ล่าสุด" เพื่อรับรหัสจากอีเมล Netflix มาคัดลอกส่งลูกค้าได้ทันที</p></div>' +
         '<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" id="addOutlookBtn">+ Outlook / Hotmail</button><button class="btn btn-primary btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
       '</div>' +
       '<div class="grid grid-4">' +
@@ -1811,23 +1849,51 @@ function refreshMailboxView(){
   var tb=document.getElementById("mbTbody"); if(tb) tb.innerHTML = mailboxRowsHTML();
   var cd=document.getElementById("mbCards"); if(cd) cd.innerHTML = mailboxCardsHTML();
   mountMailboxRowEvents();
+  mountCopyText();
 }
 function openEditMailboxModal(id){
   var m=mailbox(id); if(!m) return;
   STATE.modal={type:"addMailbox", editId:id, provider:m.provider, email:m.email};
   render();
 }
+function mailboxApiFetch(path, mailboxId){
+  return fetch(path, {
+    method:"POST",
+    headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
+    body:JSON.stringify({mailboxId:mailboxId})
+  }).then(function(r){
+    if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return {ok:false,error:"unauthorized"}; }
+    return r.json().catch(function(){ return {ok:false,error:"bad_response"}; });
+  }).catch(function(){ return {ok:false,error:"network_error"}; });
+}
 function mountMailboxRowEvents(){
   document.querySelectorAll('[data-test]').forEach(function(btn){
     btn.onclick=function(){
-      var m=mailbox(btn.getAttribute("data-test")); m.status="REFRESHING"; refreshMailboxView();
-      setTimeout(function(){ m.status="CONNECTED"; refreshMailboxView(); toast("ทดสอบการเชื่อมต่อสำเร็จ","good"); }, 1000);
+      var id=btn.getAttribute("data-test"); var m=mailbox(id); if(!m) return;
+      m.status="REFRESHING"; refreshMailboxView();
+      mailboxApiFetch("/api/mailbox-test", id).then(function(res){
+        var cur=mailbox(id); if(!cur) return;
+        if(res && res.ok){ cur.status="CONNECTED"; toast("ทดสอบการเชื่อมต่อสำเร็จ","good"); }
+        else { cur.status="ERROR"; toast(res && res.error==="network_error" ? "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" : otpErrorText(res&&res.error),"bad"); }
+        refreshMailboxView();
+      });
     };
   });
   document.querySelectorAll('[data-fetch]').forEach(function(btn){
     btn.onclick=function(){
-      var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ในกล่องจดหมาย"; m.lastAt=new Date().toISOString();
-      refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว","good");
+      var id=btn.getAttribute("data-fetch"); var m=mailbox(id); if(!m) return;
+      btn.disabled=true; btn.textContent="กำลังดึง...";
+      mailboxApiFetch("/api/otp", id).then(function(res){
+        var cur=mailbox(id); if(!cur) return;
+        if(res && res.ok && res.code){
+          cur.lastCode=res.code; cur.lastResult="พบรหัส OTP ล่าสุด"; cur.lastAt=new Date().toISOString(); cur.status="CONNECTED";
+          toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
+        }else{
+          cur.lastCode=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
+          toast(res && res.error==="network_error" ? "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" : cur.lastResult,"bad");
+        }
+        refreshMailboxView(); schedulePersist();
+      });
     };
   });
   document.querySelectorAll('[data-editmb]').forEach(function(btn){
@@ -1839,6 +1905,7 @@ function mountMailboxRowEvents(){
       var idx=MAILBOXES.findIndex(function(x){return x.id===id});
       if(idx>=0) MAILBOXES.splice(idx,1);
       refreshMailboxView(); toast("ลบบัญชีอีเมลแล้ว","good");
+      fetch("/api/mailbox-creds?mailboxId="+encodeURIComponent(id), { method:"DELETE", headers:{"authorization":"Bearer "+adminToken()} }).catch(function(){});
     };
   });
 }

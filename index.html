@@ -1349,13 +1349,9 @@ function mountModal(){
         var forwardTag=((document.getElementById("mbForwardTag")||{}).value||"").trim().replace(/[^a-zA-Z0-9]/g,"");
         if(!sourceMailboxId){ toast("กรุณาเลือก Gmail ปลายทาง","bad"); btn.disabled=false; return; }
         if(!forwardTag){ toast("กรุณากรอกแท็กแยกบัญชี","bad"); btn.disabled=false; return; }
-        fetch("/api/mailbox-creds", {
-          method:"POST",
-          headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
-          body:JSON.stringify({mailboxId:mailboxId, email:email, provider:provider, sourceMailboxId:sourceMailboxId, forwardTag:forwardTag})
-        }).then(function(r){ return r.json().catch(function(){return {};}); }).then(function(res){
+        postMailboxCreds({mailboxId:mailboxId, email:email, provider:provider, sourceMailboxId:sourceMailboxId, forwardTag:forwardTag}).then(function(res){
           btn.disabled=false;
-          if(res && res.ok){
+          if(res.ok){
             if(m.editId){
               var existing=byId(MAILBOXES,m.editId);
               if(existing){ existing.email=email; existing.provider=provider; existing.sourceMailboxId=sourceMailboxId; existing.forwardTag=forwardTag; }
@@ -1364,8 +1360,8 @@ function mountModal(){
               MAILBOXES.push({id:mailboxId, email:email, provider:provider, sourceMailboxId:sourceMailboxId, forwardTag:forwardTag, status:"NOT_CONNECTED", lastResult:"ยังไม่ดึง OTP", lastAt:null});
               closeModal(); toast("เพิ่มบัญชีอีเมลแล้ว — อย่าลืมตั้งค่า Forwarding ใน Outlook ด้วย","good");
             }
-          } else { toast("บันทึกไม่สำเร็จ ("+((res&&res.error)||"unknown")+")","bad"); }
-        }).catch(function(){ btn.disabled=false; toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง","bad"); });
+          } else { toast("บันทึกไม่สำเร็จ ("+res.detail+")","bad"); }
+        });
         return;
       }
 
@@ -1381,15 +1377,11 @@ function mountModal(){
         }
       }
       if(!appPass){ finishSave(); return; }
-      fetch("/api/mailbox-creds", {
-        method:"POST",
-        headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
-        body:JSON.stringify({mailboxId:mailboxId, email:email, provider:provider, appPassword:appPass})
-      }).then(function(r){ return r.json().catch(function(){return {};}); }).then(function(res){
+      postMailboxCreds({mailboxId:mailboxId, email:email, provider:provider, appPassword:appPass}).then(function(res){
         btn.disabled=false;
-        if(res && res.ok){ finishSave(); }
-        else { toast("บันทึกรหัสผ่านแอปไม่สำเร็จ ("+((res&&res.error)||"unknown")+")","bad"); }
-      }).catch(function(){ btn.disabled=false; toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง","bad"); });
+        if(res.ok){ finishSave(); }
+        else { toast("บันทึกรหัสผ่านแอปไม่สำเร็จ ("+res.detail+")","bad"); }
+      });
     };
   }
   if(m.type==="addCustomer"){
@@ -2017,6 +2009,25 @@ function openEditMailboxModal(id){
   var m=mailbox(id); if(!m) return;
   STATE.modal={type:"addMailbox", editId:id, provider:m.provider, email:m.email, sourceMailboxId:m.sourceMailboxId, forwardTag:m.forwardTag};
   render();
+}
+// Saves mailbox-creds and reports back a real reason on failure instead of
+// a blank "unknown" — reads the raw response body so a non-JSON response
+// (an expired session redirect, a Cloudflare error page, a dropped
+// connection) is visible too, not just a parsed {error} field.
+function postMailboxCreds(payload){
+  return fetch("/api/mailbox-creds", {
+    method:"POST",
+    headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
+    body:JSON.stringify(payload)
+  }).then(function(r){
+    if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return {ok:false, detail:"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"}; }
+    return r.text().then(function(t){
+      var parsed=null; try{ parsed=JSON.parse(t); }catch(e){ parsed=null; }
+      if(parsed && parsed.ok) return {ok:true};
+      var detail = parsed ? (parsed.error||"unknown") : ("HTTP "+r.status+(t?(": "+t.slice(0,140)):" (ไม่มีเนื้อหาตอบกลับ)"));
+      return {ok:false, detail:detail};
+    });
+  }).catch(function(){ return {ok:false, detail:"เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"}; });
 }
 function mailboxApiFetch(path, mailboxId){
   return fetch(path, {

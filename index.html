@@ -884,6 +884,28 @@ function mountSecrets(){
   });
 }
 
+function deleteAccount(accId){
+  var acc=account(accId); if(!acc) return false;
+  var hasActive = allRows().filter(function(r){return r.account.id===accId;}).some(function(r){return r.status!=="AVAILABLE";});
+  if(hasActive){ toast("ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน","bad"); return false; }
+  if(!confirm('ยืนยันลบบัญชี "'+acc.name+'"?\nโปรไฟล์ทั้งหมดในบัญชีนี้จะถูกลบไปด้วย และไม่สามารถย้อนกลับได้')) return false;
+  var idx=ACCOUNTS.findIndex(function(a){return a.id===acc.id;});
+  if(idx>=0) ACCOUNTS.splice(idx,1);
+  for(var i=PROFILES.length-1;i>=0;i--){ if(PROFILES[i].accountId===acc.id) PROFILES.splice(i,1); }
+  toast("ลบบัญชี "+acc.name+" แล้ว","good");
+  return true;
+}
+function deleteCustomer(custId){
+  var c=customer(custId); if(!c) return false;
+  var activeCount = RENTALS.filter(function(r){return r.customerId===custId && !r.closedAt;}).length;
+  if(activeCount>0){ toast("ห้ามลบลูกค้าที่ยังมีบริการใช้งานอยู่","bad"); return false; }
+  if(!confirm('ยืนยันลบลูกค้า "'+c.name+'"?\nข้อมูลและประวัติที่เกี่ยวข้องจะหายไป และไม่สามารถย้อนกลับได้')) return false;
+  var idx=CUSTOMERS.findIndex(function(x){return x.id===c.id;});
+  if(idx>=0) CUSTOMERS.splice(idx,1);
+  toast("ลบลูกค้า "+c.name+" แล้ว","good");
+  return true;
+}
+
 var ADMIN_UI = { search:"", statusFilter:"ALL", collapsed:{} };
 function viewAdminAccounts(){
   var rows = allRows();
@@ -900,7 +922,11 @@ function viewAdminAccounts(){
     return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle);cursor:pointer" data-toggle-group="'+g.account.id+'">' +
         '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(g.account.email)+'</div></div>' +
-        '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap" data-stop-toggle>' +
+          '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
+          '<button class="btn btn-outline btn-sm" data-editacc="'+g.account.id+'" title="แก้ไขบัญชี">'+icon('edit')+'</button>' +
+          '<button class="btn btn-outline btn-sm" data-delacc="'+g.account.id+'" style="color:var(--bad);border-color:var(--bad-bd)" title="ลบบัญชี">'+icon('trash')+'</button>' +
+        '</div>' +
       '</div>' +
       (collapsed? '' :
         '<div class="tbl-wrap tbl-desktop"><table class="tbl"><thead><tr><th>โปรไฟล์</th><th>อีเมล Netflix</th><th>รหัสผ่าน</th><th>PIN</th><th>สถานะ</th><th>ลูกค้าที่เข้า</th><th>วันเริ่ม</th><th>วันหมดอายุ</th><th>เช่ากี่วัน</th><th>อุปกรณ์</th><th>จัดการ</th></tr></thead><tbody>'+accountsTableRows(g.rows)+'</tbody></table></div>' +
@@ -941,9 +967,15 @@ function mountAdminAccounts(){
   var filt=document.getElementById("acctFilter");
   if(filt){ filt.onchange=function(){ ADMIN_UI.statusFilter=filt.value; render(); }; }
   document.querySelectorAll('[data-toggle-group]').forEach(function(el){
-    el.onclick=function(){ var id=el.getAttribute("data-toggle-group"); ADMIN_UI.collapsed[id]=!ADMIN_UI.collapsed[id]; render(); };
+    el.onclick=function(e){ if(e.target.closest("[data-stop-toggle]")) return; var id=el.getAttribute("data-toggle-group"); ADMIN_UI.collapsed[id]=!ADMIN_UI.collapsed[id]; render(); };
   });
   document.getElementById("addAccountBtn").onclick=function(){ toast("เว็บไฟล์เดียวนี้ยังไม่รองรับการเพิ่มบัญชีใหม่ในหน้านี้","info"); };
+  document.querySelectorAll('[data-editacc]').forEach(function(btn){
+    btn.onclick=function(e){ e.stopPropagation(); openEditAccountModal(btn.getAttribute("data-editacc")); };
+  });
+  document.querySelectorAll('[data-delacc]').forEach(function(btn){
+    btn.onclick=function(e){ e.stopPropagation(); if(deleteAccount(btn.getAttribute("data-delacc"))) render(true); };
+  });
   document.querySelectorAll('[data-assign]').forEach(function(btn){ btn.onclick=function(){ openAssignModal(btn.getAttribute("data-assign")); }; });
   document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
   document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
@@ -991,6 +1023,16 @@ function openEditOnetimeSaleModal(id){
   render();
 }
 function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
+function openEditAccountModal(accountId){
+  var acc=account(accountId); if(!acc) return;
+  STATE.modal={type:"editAccount", accountId:accountId, name:acc.name, email:acc.email, note:acc.note||""};
+  render();
+}
+function openEditCustomerModal(customerId){
+  var c=customer(customerId); if(!c) return;
+  STATE.modal={type:"addCustomer", editId:customerId, name:c.name, email:c.email, contact:c.contact||"", note:c.note||""};
+  render();
+}
 
 function paymentPickerHTML(selected,attr){
   return '<div class="field"><label>ช่องทางการจ่ายเงิน</label><div class="tabs">' +
@@ -1102,10 +1144,20 @@ function modalHTML(){
     );
   }
   if(m.type==="addCustomer"){
-    return modalWrap('เพิ่มลูกค้าใหม่','เก็บข้อมูลเท่าที่จำเป็น ไม่บังคับกรอกเบอร์โทรหรือที่อยู่',
-      '<div class="field"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custName"></div>' +
-      '<div class="field"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEmail" type="email"></div>',
-      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="custConfirm">บันทึก</button>'
+    return modalWrap(m.editId?'แก้ไขข้อมูลลูกค้า':'เพิ่มลูกค้าใหม่','เก็บข้อมูลเท่าที่จำเป็น ไม่บังคับกรอกเบอร์โทรหรือที่อยู่',
+      '<div class="field"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custName" value="'+esc(m.name||"")+'"></div>' +
+      '<div class="field"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEmail" type="email" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="field"><label>ช่องทางติดต่อ</label><input class="input" id="custContact" value="'+esc(m.contact||"")+'"></div>' +
+      '<div class="field"><label>หมายเหตุ</label><textarea class="input" id="custNote" rows="2">'+esc(m.note||"")+'</textarea></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="custConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
+    );
+  }
+  if(m.type==="editAccount"){
+    return modalWrap('แก้ไขบัญชี Netflix', null,
+      '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" id="editAccName" value="'+esc(m.name||"")+'"></div>' +
+      '<div class="field"><label>อีเมล Netflix</label><input class="input" id="editAccEmail" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="field"><label>หมายเหตุ</label><textarea class="input" id="editAccNote" rows="2">'+esc(m.note||"")+'</textarea></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="editAccConfirm">บันทึกการแก้ไข</button>'
     );
   }
   return "";
@@ -1243,9 +1295,26 @@ function mountModal(){
   if(m.type==="addCustomer"){
     document.getElementById("custConfirm").onclick=function(){
       var name=document.getElementById("custName").value.trim(), email=document.getElementById("custEmail").value.trim();
+      var contact=(document.getElementById("custContact")||{}).value||"", note=(document.getElementById("custNote")||{}).value||"";
       if(!name||!email){ toast("กรุณากรอกข้อมูลให้ครบ","bad"); return; }
-      CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:"", note:"", pin:false, since:new Date().toISOString(), otpCount:0, otpLastAt:null});
-      closeModal(); toast("เพิ่มลูกค้าใหม่แล้ว","good");
+      if(m.editId){
+        var c=customer(m.editId);
+        if(c){ c.name=name; c.email=email; c.contact=contact.trim(); c.note=note; }
+        closeModal(); toast("บันทึกการแก้ไขลูกค้าแล้ว","good");
+      }else{
+        CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:contact.trim(), note:note, pin:false, since:new Date().toISOString(), otpCount:0, otpLastAt:null});
+        closeModal(); toast("เพิ่มลูกค้าใหม่แล้ว","good");
+      }
+    };
+  }
+  if(m.type==="editAccount"){
+    document.getElementById("editAccConfirm").onclick=function(){
+      var name=document.getElementById("editAccName").value.trim(), email=document.getElementById("editAccEmail").value.trim();
+      var note=(document.getElementById("editAccNote")||{}).value||"";
+      if(!name){ toast("กรุณากรอกชื่อบัญชี","bad"); return; }
+      var acc=account(m.accountId);
+      if(acc){ acc.name=name; acc.email=email; acc.note=note; }
+      closeModal(); toast("บันทึกการแก้ไขบัญชีแล้ว","good");
     };
   }
 }
@@ -1297,12 +1366,7 @@ function mountAdminAccountDetail(accountId){
   var db=document.getElementById("delAccBtn");
   if(db) db.onclick=function(){
     if(db.disabled) return;
-    var acc=account(accountId); if(!acc) return;
-    var idx=ACCOUNTS.findIndex(function(a){return a.id===acc.id;});
-    if(idx>=0) ACCOUNTS.splice(idx,1);
-    for(var i=PROFILES.length-1;i>=0;i--){ if(PROFILES[i].accountId===acc.id) PROFILES.splice(i,1); }
-    toast("ลบบัญชี "+acc.name+" แล้ว","good");
-    go("admin-accounts");
+    if(deleteAccount(accountId)) go("admin-accounts");
   };
   mountSecrets();
 }
@@ -1313,22 +1377,33 @@ function viewAdminCustomers(){
       '<input class="input" id="custSearch" placeholder="ค้นหาชื่อหรืออีเมลลูกค้า" style="max-width:320px">' +
       '<button class="btn btn-primary btn-sm" id="addCustBtn">'+icon('plus')+'เพิ่มลูกค้าใหม่</button>' +
     '</div>' +
-    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>โควตา OTP</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>โควตา OTP</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
     '<div class="cards-mobile" id="custCards">'+custCards(CUSTOMERS)+'</div>' +
   '</div>';
   return adminShell("admin-customers","ลูกค้า",body);
 }
+function custRowActionsHTML(c){
+  return '<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" data-editcust="'+c.id+'" title="แก้ไขลูกค้า">'+icon('edit')+'</button><button class="btn btn-outline btn-sm" data-delcust="'+c.id+'" style="color:var(--bad);border-color:var(--bad-bd)" title="ลบลูกค้า">'+icon('trash')+'</button></div>';
+}
 function custRows(list){
   return list.map(function(c){
     var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
-    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+otpQuotaBadgeHTML(c)+'</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td></tr>';
+    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+otpQuotaBadgeHTML(c)+'</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td><td>'+custRowActionsHTML(c)+'</td></tr>';
   }).join("");
 }
 function custCards(list){
   return list.map(function(c){
     var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
-    return '<div class="card" style="padding:14px;margin-bottom:10px"><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none">'+esc(c.name)+'</a><div class="muted" style="font-size:11.5px">'+esc(c.email)+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span>'+active+' บริการที่ใช้งานอยู่</span><span>สมัคร '+fmtD(c.since)+'</span></div><div style="display:flex;align-items:center;gap:4px;font-size:11px;margin-top:4px" class="muted">โควตา OTP: '+otpQuotaBadgeHTML(c)+'</div></div>';
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:700;font-size:13px;text-decoration:none">'+esc(c.name)+'</a>'+custRowActionsHTML(c)+'</div><div class="muted" style="font-size:11.5px">'+esc(c.email)+'</div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span>'+active+' บริการที่ใช้งานอยู่</span><span>สมัคร '+fmtD(c.since)+'</span></div><div style="display:flex;align-items:center;gap:4px;font-size:11px;margin-top:4px" class="muted">โควตา OTP: '+otpQuotaBadgeHTML(c)+'</div></div>';
   }).join("");
+}
+function mountCustRowEvents(){
+  document.querySelectorAll('[data-editcust]').forEach(function(btn){
+    btn.onclick=function(){ openEditCustomerModal(btn.getAttribute("data-editcust")); };
+  });
+  document.querySelectorAll('[data-delcust]').forEach(function(btn){
+    btn.onclick=function(){ if(deleteCustomer(btn.getAttribute("data-delcust"))) render(true); };
+  });
 }
 function mountAdminCustomers(){
   document.getElementById("addCustBtn").onclick=function(){ STATE.modal={type:"addCustomer"}; render(); };
@@ -1338,7 +1413,9 @@ function mountAdminCustomers(){
     var list=CUSTOMERS.filter(function(c){ return !q || c.name.toLowerCase().indexOf(q)>=0 || c.email.toLowerCase().indexOf(q)>=0; });
     document.getElementById("custTbody").innerHTML = custRows(list);
     document.getElementById("custCards").innerHTML = custCards(list);
+    mountCustRowEvents();
   };
+  mountCustRowEvents();
 }
 
 function viewAdminCustomerDetail(customerId){
@@ -1416,11 +1493,7 @@ function mountAdminCustomerDetail(customerId){
   };
   var db=document.getElementById("delCustBtn"); if(db) db.onclick=function(){
     if(db.disabled) return;
-    var c=customer(customerId); if(!c) return;
-    var idx=CUSTOMERS.findIndex(function(x){return x.id===c.id;});
-    if(idx>=0) CUSTOMERS.splice(idx,1);
-    toast("ลบลูกค้า "+c.name+" แล้ว","good");
-    go("admin-customers");
+    if(deleteCustomer(customerId)) go("admin-customers");
   };
   var lb=document.getElementById("otpLogBtn"); if(lb) lb.onclick=function(){
     var c=customer(customerId); c.otpCount=(c.otpCount||0)+1; c.otpLastAt=new Date().toISOString();

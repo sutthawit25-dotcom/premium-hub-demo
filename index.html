@@ -298,7 +298,7 @@ var NEW_REVIEW_DRAFTS = {};
 function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[cid]={rating:REVIEW_MAX, comment:""}); }
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
 // หน้า "รีวิว" แยกต่างหาก ไม่ได้รวมอยู่ในหน้ารายละเอียดลูกค้าอีกต่อไป
-var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null };
+var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, editingId:null, editRating:0, editComment:"" };
 var REVIEW_MAX = 10; // คะแนนรีวิวเต็ม 10 แต้ม (เดิม 5)
 function starsHTML(rating,size){
   var s="", sz=size||12;
@@ -409,7 +409,9 @@ function icon(name){
     copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>',
     back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
     logout:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
-    bell:'<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>'
+    bell:'<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>',
+    trash:'<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/><path d="M10 11v6M14 11v6"/>',
+    edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/>'
   };
   return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||"")+'</svg>';
 }
@@ -459,25 +461,54 @@ var NOTIFY = { seen:{}, permission:(typeof Notification!=="undefined"?Notificati
 function currentExpiredRentalIds(){
   return allRows().filter(function(r){ return r.status==="EXPIRED" && r.rental; }).map(function(r){ return r.rental.id; });
 }
+function currentExpiringSoonRentalIds(){
+  return allRows().filter(function(r){ return r.status==="OCCUPIED" && r.rental && (new Date(r.rental.expiresAt).getTime()-Date.now())/3600000<=24; }).map(function(r){ return r.rental.id; });
+}
+function currentOtpQuotaReachedCustomerIds(){
+  return CUSTOMERS.filter(function(c){ return otpQuotaReached(c); }).map(function(c){ return c.id; });
+}
 function notifyBellHTML(){
-  var count = currentExpiredRentalIds().length;
-  return '<button class="btn btn-ghost btn-sm" id="notifyBell" title="จอที่หมดเวลา" style="position:relative">'+icon('bell') +
+  var count = currentExpiredRentalIds().length + currentExpiringSoonRentalIds().length + currentOtpQuotaReachedCustomerIds().length;
+  return '<button class="btn btn-ghost btn-sm" id="notifyBell" title="การแจ้งเตือน" style="position:relative">'+icon('bell') +
     (count>0? '<span style="position:absolute;top:2px;right:2px;background:var(--bad);color:#fff;border-radius:999px;min-width:15px;height:15px;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">'+count+'</span>' : '') +
   '</button>';
 }
+function pushBrowserNotification(title,body,tag){
+  if(NOTIFY.permission==="granted"){
+    try{ new Notification(title, {body:body, tag:tag}); }catch(e){}
+  }
+}
 function checkExpiryNotifications(){
-  var ids = currentExpiredRentalIds();
-  var fresh = ids.filter(function(id){ return !NOTIFY.seen[id]; });
-  ids.forEach(function(id){ NOTIFY.seen[id]=true; });
-  if(fresh.length===0) return;
-  fresh.forEach(function(id){
+  var expIds = currentExpiredRentalIds();
+  var freshExp = expIds.filter(function(id){ return !NOTIFY.seen["exp:"+id]; });
+  expIds.forEach(function(id){ NOTIFY.seen["exp:"+id]=true; });
+  freshExp.forEach(function(id){
     var r=rental(id); if(!r) return;
     var p=profile(r.profileId), cust=customer(r.customerId);
     var msg=(p?p.name:"โปรไฟล์")+' ('+(cust?cust.name:"-")+') หมดเวลาแล้ว';
     toast(msg,"bad");
-    if(NOTIFY.permission==="granted"){
-      try{ new Notification("Premium Hub — จอหมดเวลา", {body:msg, tag:id}); }catch(e){}
-    }
+    pushBrowserNotification("Flixie House — จอหมดเวลา", msg, "exp-"+id);
+  });
+
+  var soonIds = currentExpiringSoonRentalIds();
+  var freshSoon = soonIds.filter(function(id){ return !NOTIFY.seen["soon:"+id]; });
+  soonIds.forEach(function(id){ NOTIFY.seen["soon:"+id]=true; });
+  freshSoon.forEach(function(id){
+    var r=rental(id); if(!r) return;
+    var p=profile(r.profileId), cust=customer(r.customerId);
+    var msg=(p?p.name:"โปรไฟล์")+' ('+(cust?cust.name:"-")+') ใกล้หมดเวลาภายใน 24 ชม.';
+    toast(msg,"info");
+    pushBrowserNotification("Flixie House — ใกล้หมดเวลา", msg, "soon-"+id);
+  });
+
+  var otpIds = currentOtpQuotaReachedCustomerIds();
+  var freshOtp = otpIds.filter(function(id){ return !NOTIFY.seen["otp:"+id]; });
+  otpIds.forEach(function(id){ NOTIFY.seen["otp:"+id]=true; });
+  freshOtp.forEach(function(id){
+    var c=customer(id); if(!c) return;
+    var msg=c.name+' ขอ OTP ครบโควตา '+OTP_QUOTA_LIMIT+' ครั้งแล้ว';
+    toast(msg,"bad");
+    pushBrowserNotification("Flixie House — โควตา OTP เต็ม", msg, "otp-"+c.id);
   });
 }
 function requestNotifyPermission(){
@@ -953,7 +984,12 @@ function mountCopyText(){
 /* ---- modals: assign / renew / release ---- */
 function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile", paymentMethod:(r&&r.paymentMethod)||PAYMENT_METHODS[0]}; render(); }
-function openOnetimeSaleModal(){ STATE.modal={type:"onetime", mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", deviceType:"mobile", days:7, amount:planPrice("mobile",7), amountTouched:false, paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openOnetimeSaleModal(){ STATE.modal={type:"onetime", editId:null, mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", deviceType:"mobile", days:7, amount:planPrice("mobile",7), amountTouched:false, paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openEditOnetimeSaleModal(id){
+  var s=byId(ONETIME_SALES,id); if(!s) return;
+  STATE.modal={type:"onetime", editId:id, mode:"new", newName:s.customerName||"", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, note:s.note||"", deviceType:"mobile", days:7, amount:s.amount, amountTouched:true, paymentMethod:s.paymentMethod||PAYMENT_METHODS[0]};
+  render();
+}
 function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
 
 function paymentPickerHTML(selected,attr){
@@ -1017,7 +1053,7 @@ function modalHTML(){
   }
   if(m.type==="onetime"){
     var custOptions2 = CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(m.customerId===c.id?"selected":"")+'>'+esc(c.name)+' ('+esc(c.email)+')</option>'; }).join("");
-    return modalWrap('บันทึก','สำหรับการขายที่ไม่ใช่การเช่ารายวัน เช่น ขายบัญชี Netflix ขาด หรือบริการอื่นที่ตกลงกับลูกค้านอกเว็บ', '' +
+    return modalWrap(m.editId?'แก้ไขรายการขายขาด':'บันทึก','สำหรับการขายที่ไม่ใช่การเช่ารายวัน เช่น ขายบัญชี Netflix ขาด หรือบริการอื่นที่ตกลงกับลูกค้านอกเว็บ', '' +
       '<div class="field"><label>ลูกค้า</label>' +
         '<div class="tabs" style="margin-bottom:8px"><button data-omode="existing" class="'+(m.mode==="existing"?"active":"")+'">เลือกลูกค้าเดิม</button><button data-omode="new" class="'+(m.mode==="new"?"active":"")+'">ลูกค้าใหม่ / ไม่ระบุ</button></div>' +
         (m.mode==="existing"? '<select class="input" id="oneCust">'+custOptions2+'</select>' : '<input class="input" id="oneNewName" placeholder="ชื่อลูกค้า (พิมพ์เอง)" value="'+esc(m.newName)+'">') +
@@ -1033,7 +1069,7 @@ function modalHTML(){
       '<div class="field"><label>จำนวนเงิน (บาท) — คำนวณอัตโนมัติจากแพ็กเกจ ปรับแก้เองได้</label><input class="input" id="oneAmount" type="number" min="1" placeholder="0" value="'+esc(m.amount)+'"></div>' +
       '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ราคามาตรฐาน ('+deviceTypeLabel(m.deviceType)+' · '+m.days+' วัน)</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>' +
       paymentPickerHTML(m.paymentMethod,"opay"),
-      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">บันทึกยอดขาย</button>'
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึกยอดขาย')+'</button>'
     );
   }
   if(m.type==="buyPlan"){
@@ -1059,10 +1095,10 @@ function modalHTML(){
     );
   }
   if(m.type==="addMailbox"){
-    return modalWrap('เพิ่มบัญชีอีเมล ('+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เดโม่นี้ใช้ MockMailboxProvider เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อ Gmail/Microsoft จริง',
+    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เดโม่นี้ใช้ MockMailboxProvider เท่านั้น — ไม่มีการขอรหัสผ่านหรือเชื่อมต่อ Gmail/Microsoft จริง',
       '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider"><option value="GMAIL" '+(m.provider==="GMAIL"?"selected":"")+'>Gmail</option><option value="OUTLOOK" '+(m.provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail</option></select></div>' +
-      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@example.demo"></div>',
-      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">บันทึก</button>'
+      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@example.demo" value="'+esc(m.email||"")+'"></div>',
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
     );
   }
   if(m.type==="addCustomer"){
@@ -1172,9 +1208,16 @@ function mountModal(){
         if(!nm){ toast("กรุณาระบุชื่อลูกค้า","bad"); return; }
         customerName = nm;
       }
-      ONETIME_SALES.unshift({ id:"os-"+Date.now(), customerName:customerName, note:note, amount:amount, paymentMethod:m.paymentMethod, at:new Date().toISOString() });
-      closeModal();
-      toast("บันทึกยอดขายขาด "+fmtMoney(amount)+" แล้ว","good");
+      if(m.editId){
+        var existing=byId(ONETIME_SALES,m.editId);
+        if(existing){ existing.customerName=customerName; existing.note=note; existing.amount=amount; existing.paymentMethod=m.paymentMethod; }
+        closeModal();
+        toast("บันทึกการแก้ไขรายการขายขาดแล้ว","good");
+      }else{
+        ONETIME_SALES.unshift({ id:"os-"+Date.now(), customerName:customerName, note:note, amount:amount, paymentMethod:m.paymentMethod, at:new Date().toISOString() });
+        closeModal();
+        toast("บันทึกยอดขายขาด "+fmtMoney(amount)+" แล้ว","good");
+      }
     };
   }
   if(m.type==="planDetail"){
@@ -1186,8 +1229,15 @@ function mountModal(){
     document.getElementById("mbConfirm").onclick=function(){
       var email=document.getElementById("mbEmail").value.trim();
       if(!email){ toast("กรุณากรอกอีเมล","bad"); return; }
-      MAILBOXES.push({id:"mbx-new-"+Date.now(), email:email, provider:(document.getElementById("mbProvider")||{}).value||m.provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ทดสอบ", lastAt:null});
-      closeModal(); toast("เพิ่มบัญชีอีเมล (Demo) แล้ว","good");
+      var provider=(document.getElementById("mbProvider")||{}).value||m.provider;
+      if(m.editId){
+        var existing=byId(MAILBOXES,m.editId);
+        if(existing){ existing.email=email; existing.provider=provider; }
+        closeModal(); toast("บันทึกการแก้ไขบัญชีอีเมลแล้ว","good");
+      }else{
+        MAILBOXES.push({id:"mbx-new-"+Date.now(), email:email, provider:provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ทดสอบ", lastAt:null});
+        closeModal(); toast("เพิ่มบัญชีอีเมล (Demo) แล้ว","good");
+      }
     };
   }
   if(m.type==="addCustomer"){
@@ -1211,15 +1261,15 @@ function viewAdminAccountDetail(accountId){
     '<div class="card" style="padding:20px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
         '<div><h2 style="font-size:16px;font-weight:800">'+esc(acc.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(acc.email)+'</p></div>' +
-        '<button class="btn btn-outline btn-sm" '+(hasActive?"disabled title=\"ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน\"":"")+'>ลบบัญชี</button>' +
+        '<button class="btn btn-outline btn-sm" id="delAccBtn" style="color:var(--bad);border-color:var(--bad-bd)" '+(hasActive?"disabled title=\"ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน\"":"")+'>'+icon('trash')+'ลบบัญชี</button>' +
       '</div>' +
       '<div class="grid grid-2">' +
-        '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" value="'+esc(acc.name)+'"></div>' +
-        '<div class="field"><label>อีเมล Netflix</label><input class="input" value="'+esc(acc.email)+'"></div>' +
+        '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" id="accName" value="'+esc(acc.name)+'"></div>' +
+        '<div class="field"><label>อีเมล Netflix</label><input class="input" id="accEmail" value="'+esc(acc.email)+'"></div>' +
         '<div class="field"><label>รหัสผ่านจำลอง</label><div class="input" style="display:flex;align-items:center;background:var(--bg-subtle)">'+secretHTML("N3tfl1x-Demo!2026",acc.pass)+'</div></div>' +
         '<div class="field"><label>บัญชีอีเมลที่เชื่อมโยง</label>'+(mb?'<a href="#admin-mailboxes" class="input" style="display:flex;align-items:center;color:var(--accent);text-decoration:none">'+esc(mb.email)+'</a>':'<div class="input" style="display:flex;align-items:center;color:var(--faint)">ยังไม่ได้เชื่อมโยง</div>')+'</div>' +
       '</div>' +
-      '<div class="field" style="margin-top:4px"><label>หมายเหตุ</label><textarea class="input" rows="2">'+esc(acc.note||"")+'</textarea></div>' +
+      '<div class="field" style="margin-top:4px"><label>หมายเหตุ</label><textarea class="input" id="accNote" rows="2">'+esc(acc.note||"")+'</textarea></div>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" id="saveAccBtn">บันทึกการเปลี่ยนแปลง</button></div>' +
     '</div>' +
     '<div><h3 style="font-size:13px;font-weight:800;margin-bottom:10px">โปรไฟล์ในบัญชีนี้ ('+rows.length+')</h3>' +
@@ -1232,7 +1282,30 @@ function viewAdminAccountDetail(accountId){
   '</div>';
   return adminShell("admin-account-"+accountId,"รายละเอียดบัญชี",body);
 }
-function mountAdminAccountDetail(){ var b=document.getElementById("saveAccBtn"); if(b) b.onclick=function(){ toast("บันทึกข้อมูลบัญชีแล้ว","good"); }; mountSecrets(); }
+function mountAdminAccountDetail(accountId){
+  var b=document.getElementById("saveAccBtn");
+  if(b) b.onclick=function(){
+    var acc=account(accountId); if(!acc) return;
+    var an=document.getElementById("accName"), ae=document.getElementById("accEmail"), at=document.getElementById("accNote");
+    if(an && !an.value.trim()){ toast("กรุณากรอกชื่อบัญชี","bad"); return; }
+    if(an) acc.name=an.value.trim();
+    if(ae) acc.email=ae.value.trim();
+    if(at) acc.note=at.value;
+    toast("บันทึกข้อมูลบัญชีแล้ว","good");
+    render();
+  };
+  var db=document.getElementById("delAccBtn");
+  if(db) db.onclick=function(){
+    if(db.disabled) return;
+    var acc=account(accountId); if(!acc) return;
+    var idx=ACCOUNTS.findIndex(function(a){return a.id===acc.id;});
+    if(idx>=0) ACCOUNTS.splice(idx,1);
+    for(var i=PROFILES.length-1;i>=0;i--){ if(PROFILES[i].accountId===acc.id) PROFILES.splice(i,1); }
+    toast("ลบบัญชี "+acc.name+" แล้ว","good");
+    go("admin-accounts");
+  };
+  mountSecrets();
+}
 
 function viewAdminCustomers(){
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
@@ -1278,14 +1351,23 @@ function viewAdminCustomerDetail(customerId){
   var body = '<div style="display:flex;flex-direction:column;gap:18px">' +
     '<a href="#admin-customers" class="link-btn" style="font-size:12.5px">'+icon('back')+'กลับไปลูกค้าทั้งหมด</a>' +
     '<div class="card" style="padding:20px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px"><div><h2 style="font-size:16px;font-weight:800">'+esc(c.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(c.email)+'</p></div>' +
-        '<label style="display:flex;align-items:center;gap:8px;font-size:12px" class="muted">PIN ดู OTP <input type="checkbox" '+(c.pin?"checked":"")+' id="pinToggle"></label></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
+        '<div><h2 style="font-size:16px;font-weight:800">'+esc(c.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(c.email)+'</p></div>' +
+        '<div style="display:flex;align-items:center;gap:14px">' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:12px" class="muted">PIN ดู OTP <input type="checkbox" '+(c.pin?"checked":"")+' id="pinToggle"></label>' +
+          '<button class="btn btn-outline btn-sm" id="delCustBtn" style="color:var(--bad);border-color:var(--bad-bd)" '+(active.length>0?"disabled title=\"ห้ามลบลูกค้าที่ยังมีบริการใช้งานอยู่\"":"")+'>'+icon('trash')+'ลบลูกค้า</button>' +
+        '</div>' +
+      '</div>' +
       '<div class="grid grid-3" style="font-size:12.5px">' +
-        '<div><div class="muted">ช่องทางติดต่อเพิ่มเติม</div><div>'+esc(c.contact||"-")+'</div></div>' +
+        '<div class="field" style="margin:0"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custEditName" value="'+esc(c.name)+'"></div>' +
+        '<div class="field" style="margin:0"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEditEmail" value="'+esc(c.email)+'"></div>' +
+        '<div class="field" style="margin:0"><label>ช่องทางติดต่อเพิ่มเติม</label><input class="input" id="custEditContact" value="'+esc(c.contact||"")+'"></div>' +
+      '</div>' +
+      '<div class="grid grid-2" style="font-size:12.5px;margin-top:8px">' +
         '<div><div class="muted">สมัครเมื่อ</div><div>'+fmtDT(c.since)+'</div></div>' +
         '<div><div class="muted">บริการที่ใช้งานอยู่</div><div>'+active.length+' รายการ</div></div>' +
       '</div>' +
-      '<div class="field" style="margin-top:12px"><label>หมายเหตุแอดมิน (ลูกค้ามองไม่เห็น)</label><textarea class="input" rows="2">'+esc(c.note||"")+'</textarea></div>' +
+      '<div class="field" style="margin-top:12px"><label>หมายเหตุแอดมิน (ลูกค้ามองไม่เห็น)</label><textarea class="input" id="custEditNote" rows="2">'+esc(c.note||"")+'</textarea></div>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" id="saveCustBtn">บันทึก</button></div>' +
     '</div>' +
     '<div class="card" style="padding:18px">' +
@@ -1320,15 +1402,40 @@ function viewAdminCustomerDetail(customerId){
   return adminShell("admin-customer-"+customerId,"รายละเอียดลูกค้า",body);
 }
 function mountAdminCustomerDetail(customerId){
-  var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){ var c=customer(customerId); var t=document.querySelector(".admin-content textarea.input"); if(t) c.note=t.value; var pt=document.getElementById("pinToggle"); if(pt) c.pin=pt.checked; toast("บันทึกข้อมูลลูกค้าแล้ว","good"); };
+  var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){
+    var c=customer(customerId); if(!c) return;
+    var nm=document.getElementById("custEditName"), em=document.getElementById("custEditEmail"), ct=document.getElementById("custEditContact"), t=document.getElementById("custEditNote"), pt=document.getElementById("pinToggle");
+    if(nm && !nm.value.trim()){ toast("กรุณากรอกชื่อลูกค้า","bad"); return; }
+    if(nm) c.name=nm.value.trim();
+    if(em) c.email=em.value.trim();
+    if(ct) c.contact=ct.value.trim();
+    if(t) c.note=t.value;
+    if(pt) c.pin=pt.checked;
+    toast("บันทึกข้อมูลลูกค้าแล้ว","good");
+    render();
+  };
+  var db=document.getElementById("delCustBtn"); if(db) db.onclick=function(){
+    if(db.disabled) return;
+    var c=customer(customerId); if(!c) return;
+    var idx=CUSTOMERS.findIndex(function(x){return x.id===c.id;});
+    if(idx>=0) CUSTOMERS.splice(idx,1);
+    toast("ลบลูกค้า "+c.name+" แล้ว","good");
+    go("admin-customers");
+  };
   var lb=document.getElementById("otpLogBtn"); if(lb) lb.onclick=function(){
     var c=customer(customerId); c.otpCount=(c.otpCount||0)+1; c.otpLastAt=new Date().toISOString();
-    if(otpQuotaReached(c)) toast("บันทึกแล้ว — ลูกค้ารายนี้ครบโควตา "+OTP_QUOTA_LIMIT+" ครั้งแล้ว","bad");
+    if(otpQuotaReached(c)){
+      toast("บันทึกแล้ว — ลูกค้ารายนี้ครบโควตา "+OTP_QUOTA_LIMIT+" ครั้งแล้ว","bad");
+      if(!NOTIFY.seen["otp:"+c.id]){
+        NOTIFY.seen["otp:"+c.id]=true;
+        pushBrowserNotification("Flixie House — โควตา OTP เต็ม", c.name+' ขอ OTP ครบโควตา '+OTP_QUOTA_LIMIT+' ครั้งแล้ว', "otp-"+c.id);
+      }
+    }
     else toast("บันทึกการขอ OTP แล้ว ("+c.otpCount+"/"+OTP_QUOTA_LIMIT+")","good");
     render();
   };
   var rb=document.getElementById("otpResetBtn"); if(rb) rb.onclick=function(){
-    var c=customer(customerId); c.otpCount=0; c.otpLastAt=null;
+    var c=customer(customerId); c.otpCount=0; c.otpLastAt=null; NOTIFY.seen["otp:"+c.id]=false;
     toast("รีเซ็ตโควตา OTP แล้ว","good");
     render();
   };
@@ -1340,13 +1447,24 @@ function viewAdminReviews(){
   var listHtml = revs.length===0? emptyState("ยังไม่มีรีวิวในระบบ") :
     '<div class="card" style="padding:0;overflow:hidden">' + revs.map(function(r){
       var c=customer(r.customerId);
+      if(REVIEW_UI.editingId===r.id){
+        return '<div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle)">' +
+          '<div style="font-weight:700;font-size:13px;margin-bottom:8px">แก้ไขรีวิวของ '+(c?esc(c.name):'ลูกค้าที่ถูกลบ')+'</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><div style="display:flex;gap:2px;flex-wrap:wrap">'+Array.from({length:REVIEW_MAX},function(_,i){return i+1;}).map(function(n){ return '<button type="button" data-edit-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=REVIEW_UI.editRating?"#f5a623":"var(--border)")+';font-size:19px;line-height:1">★</button>'; }).join("")+'</div><span class="muted" style="font-size:12.5px;font-weight:600">'+REVIEW_UI.editRating+'/'+REVIEW_MAX+'</span></div>' +
+          '<textarea class="input" id="editRevComment" rows="2">'+esc(REVIEW_UI.editComment)+'</textarea>' +
+          '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px"><button class="btn btn-outline btn-sm" id="cancelEditRevBtn">ยกเลิก</button><button class="btn btn-primary btn-sm" id="saveEditRevBtn">บันทึกการแก้ไข</button></div>' +
+        '</div>';
+      }
       return '<div style="padding:14px 16px;border-bottom:1px solid var(--border)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
           '<div style="font-weight:700;font-size:13px">'+(c?esc(c.name):'<span class="faint">ลูกค้าที่ถูกลบ</span>')+'</div>' +
           starsHTML(r.rating) +
         '</div>' +
         '<div style="font-size:12.5px;margin-top:4px">'+esc(r.comment)+'</div>' +
-        '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(r.at)+(c?' · <a href="#admin-customer-'+c.id+'" style="color:var(--accent)">ดูลูกค้า →</a>':'')+'</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px">' +
+          '<div class="faint" style="font-size:11px">'+fmtDT(r.at)+(c?' · <a href="#admin-customer-'+c.id+'" style="color:var(--accent)">ดูลูกค้า →</a>':'')+'</div>' +
+          '<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" data-editrev="'+r.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delrev="'+r.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>' +
+        '</div>' +
       '</div>';
     }).join("") + '</div>';
 
@@ -1381,6 +1499,32 @@ function mountAdminReviews(){
     REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ", at:new Date().toISOString() });
     draft.rating=REVIEW_MAX; draft.comment="";
     render(true); toast("เพิ่มรีวิวเดโม่แล้ว","good");
+  };
+  document.querySelectorAll('[data-editrev]').forEach(function(btn){
+    btn.onclick=function(){
+      var r=byId(REVIEWS,btn.getAttribute("data-editrev")); if(!r) return;
+      REVIEW_UI.editingId=r.id; REVIEW_UI.editRating=r.rating; REVIEW_UI.editComment=r.comment;
+      render(true);
+    };
+  });
+  document.querySelectorAll('[data-delrev]').forEach(function(btn){
+    btn.onclick=function(){
+      var id=btn.getAttribute("data-delrev");
+      var idx=REVIEWS.findIndex(function(r){return r.id===id;});
+      if(idx>=0) REVIEWS.splice(idx,1);
+      if(REVIEW_UI.editingId===id) REVIEW_UI.editingId=null;
+      render(true); toast("ลบรีวิวแล้ว","good");
+    };
+  });
+  document.querySelectorAll('[data-edit-star]').forEach(function(sb){ sb.onclick=function(){ REVIEW_UI.editRating=Number(sb.getAttribute("data-edit-star")); render(true); }; });
+  var eta=document.getElementById("editRevComment"); if(eta) eta.oninput=function(){ REVIEW_UI.editComment=eta.value; };
+  var ceb=document.getElementById("cancelEditRevBtn"); if(ceb) ceb.onclick=function(){ REVIEW_UI.editingId=null; render(true); };
+  var seb=document.getElementById("saveEditRevBtn"); if(seb) seb.onclick=function(){
+    var r=byId(REVIEWS,REVIEW_UI.editingId); if(!r) return;
+    r.rating=REVIEW_UI.editRating||REVIEW_MAX;
+    r.comment=(REVIEW_UI.editComment||"").trim()||"ลูกค้าประทับใจการให้บริการ";
+    REVIEW_UI.editingId=null;
+    render(true); toast("บันทึกการแก้ไขรีวิวแล้ว","good");
   };
 }
 
@@ -1434,7 +1578,7 @@ function revenueEvents(){
     return { at:h.at, amount:(h.price!=null?h.price:planPrice(h.days)), days:h.days,
       customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"ต่ออายุ", paymentMethod:h.paymentMethod||"-" };
   })).concat(ONETIME_SALES.map(function(s){
-    return { at:s.at, amount:s.amount, days:null,
+    return { id:s.id, at:s.at, amount:s.amount, days:null,
       customerName:s.customerName||"-", profileName:s.note||"ขายขาด", kind:"ขายขาด", paymentMethod:s.paymentMethod||"-" };
   }));
   return events.sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
@@ -1485,14 +1629,14 @@ function viewAdminRevenue(){
     '</div>';
 
   var listHtml = events.length===0? "" :
-    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th>ลูกค้า</th><th>โปรไฟล์ / รายละเอียด</th><th>ประเภท</th><th>จำนวนวัน</th><th>ช่องทางชำระ</th><th>ยอดขาย</th></tr></thead><tbody>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th>ลูกค้า</th><th>โปรไฟล์ / รายละเอียด</th><th>ประเภท</th><th>จำนวนวัน</th><th>ช่องทางชำระ</th><th>ยอดขาย</th><th>จัดการ</th></tr></thead><tbody>' +
     events.slice(0,40).map(function(e){
-      return '<tr><td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td>'+esc(e.customerName)+'</td><td class="muted">'+esc(e.profileName)+'</td><td>'+esc(e.kind)+'</td><td>'+(e.days!=null?e.days+' วัน':'<span class="faint">-</span>')+'</td><td class="muted">'+esc(e.paymentMethod)+'</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td></tr>';
+      return '<tr><td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td>'+esc(e.customerName)+'</td><td class="muted">'+esc(e.profileName)+'</td><td>'+esc(e.kind)+'</td><td>'+(e.days!=null?e.days+' วัน':'<span class="faint">-</span>')+'</td><td class="muted">'+esc(e.paymentMethod)+'</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td><td>'+(e.id?('<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" data-editsale="'+e.id+'">'+icon('edit')+'</button><button class="btn btn-outline btn-sm" data-delsale="'+e.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'</button></div>'):'<span class="faint">-</span>')+'</td></tr>';
     }).join("") + '</tbody></table></div></div>' +
     '<div class="cards-mobile">' + events.slice(0,40).map(function(e){
       return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:13px">'+esc(e.customerName)+'</div><div style="font-weight:800;color:var(--accent)">'+fmtMoney(e.amount)+'</div></div>' +
       '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(e.profileName)+' · '+esc(e.kind)+(e.days!=null?(' '+e.days+' วัน'):'')+' · '+esc(e.paymentMethod)+'</div>' +
-      '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(e.at)+'</div></div>';
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div class="faint" style="font-size:11px">'+fmtDT(e.at)+'</div>'+(e.id?('<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" data-editsale="'+e.id+'">'+icon('edit')+'</button><button class="btn btn-outline btn-sm" data-delsale="'+e.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'</button></div>'):'')+'</div></div>';
     }).join("") + '</div>';
 
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
@@ -1509,19 +1653,37 @@ function viewAdminRevenue(){
 }
 function mountAdminRevenue(){
   var b=document.getElementById("addOnetimeBtn"); if(b) b.onclick=openOnetimeSaleModal;
+  document.querySelectorAll('[data-editsale]').forEach(function(btn){ btn.onclick=function(){ openEditOnetimeSaleModal(btn.getAttribute("data-editsale")); }; });
+  document.querySelectorAll('[data-delsale]').forEach(function(btn){
+    btn.onclick=function(){
+      var id=btn.getAttribute("data-delsale");
+      var idx=ONETIME_SALES.findIndex(function(s){return s.id===id;});
+      if(idx>=0) ONETIME_SALES.splice(idx,1);
+      render(true); toast("ลบรายการขายขาดแล้ว","good");
+    };
+  });
 }
 
-function viewAdminMailboxes(){
-  var pinCount = CUSTOMERS.filter(function(c){return c.pin}).length;
-  var rowsHtml = MAILBOXES.map(function(m,i){
+function mailboxActionsHTML(m){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
+}
+function mailboxRowsHTML(){
+  return MAILBOXES.map(function(m,i){
     return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
       '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
       '<td class="muted" style="font-size:12px">'+esc(m.lastResult)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
-      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></td></tr>';
+      '<td>'+mailboxActionsHTML(m)+'</td></tr>';
   }).join("");
-  var cardsHtml = MAILBOXES.map(function(m){
-    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:12.5px">'+esc(m.email)+'</span>'+demoTag()+'</div>'+mailboxBadge(m.status)+'<p class="muted" style="font-size:11.5px;margin-top:6px">'+esc(m.lastResult)+'</p><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></div>';
+}
+function mailboxCardsHTML(){
+  return MAILBOXES.map(function(m){
+    return '<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-weight:600;font-size:12.5px">'+esc(m.email)+'</span>'+demoTag()+'</div>'+mailboxBadge(m.status)+'<p class="muted" style="font-size:11.5px;margin-top:6px">'+esc(m.lastResult)+'</p>'+mailboxActionsHTML(m)+'</div>';
   }).join("");
+}
+function viewAdminMailboxes(){
+  var pinCount = CUSTOMERS.filter(function(c){return c.pin}).length;
+  var rowsHtml = mailboxRowsHTML();
+  var cardsHtml = mailboxCardsHTML();
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
     '<div class="card" style="padding:18px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
@@ -1541,13 +1703,14 @@ function viewAdminMailboxes(){
   return adminShell("admin-mailboxes","จัดการอีเมล",body);
 }
 function refreshMailboxView(){
-  document.getElementById("mbTbody").innerHTML = MAILBOXES.map(function(m,i){
-    return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
-      '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
-      '<td class="muted" style="font-size:12px">'+esc(m.lastResult)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
-      '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึงเมลล่าสุด</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'">ลบ</button></div></td></tr>';
-  }).join("");
+  var tb=document.getElementById("mbTbody"); if(tb) tb.innerHTML = mailboxRowsHTML();
+  var cd=document.getElementById("mbCards"); if(cd) cd.innerHTML = mailboxCardsHTML();
   mountMailboxRowEvents();
+}
+function openEditMailboxModal(id){
+  var m=mailbox(id); if(!m) return;
+  STATE.modal={type:"addMailbox", editId:id, provider:m.provider, email:m.email};
+  render();
 }
 function mountMailboxRowEvents(){
   document.querySelectorAll('[data-test]').forEach(function(btn){
@@ -1561,6 +1724,9 @@ function mountMailboxRowEvents(){
       var m=mailbox(btn.getAttribute("data-fetch")); m.lastResult="พบ OTP ในกล่องจดหมาย (Demo)"; m.lastAt=new Date().toISOString();
       refreshMailboxView(); toast("ดึงเมลล่าสุดแล้ว (Demo)","good");
     };
+  });
+  document.querySelectorAll('[data-editmb]').forEach(function(btn){
+    btn.onclick=function(){ openEditMailboxModal(btn.getAttribute("data-editmb")); };
   });
   document.querySelectorAll('[data-delmb]').forEach(function(btn){
     btn.onclick=function(){
@@ -1621,8 +1787,8 @@ function viewAdminSettings(){
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div><div style="font-size:13px;font-weight:600">ธีมเริ่มต้นของระบบ</div><div class="muted" style="font-size:12px">ค่าเริ่มต้นแนะนำ: อัตโนมัติ (ตามอุปกรณ์)</div></div>' +
       '<div style="display:flex;align-items:center;gap:8px"><span class="muted" style="font-size:12.5px">สลับธีม:</span>'+themeToggleHTML('tt-settings')+'</div></div>' +
     '</div>' +
-    '<div class="card" style="padding:18px"><div class="section-title">การแจ้งเตือนจอหมดเวลา '+demoTag()+'</div>' +
-      '<p class="muted" style="font-size:12.5px;margin-bottom:10px">เมื่อมีจอ/โปรไฟล์หมดเวลา ระบบจะแจ้งเตือนผ่านกระดิ่งด้านบนและป๊อปอัปของเบราว์เซอร์ทันที <strong style="color:var(--ink)">แต่ใช้ได้เฉพาะตอนเปิดแท็บเว็บนี้ค้างไว้เท่านั้น</strong> — การส่งแจ้งเตือนเข้าโทรศัพท์ตอนปิดแอป/ปิดแท็บ (เช่น LINE หรือ SMS) ต้องมีเซิร์ฟเวอร์ backend เพิ่มเติม เว็บไฟล์เดียวแบบนี้ทำเองไม่ได้</p>' +
+    '<div class="card" style="padding:18px"><div class="section-title">การแจ้งเตือนแอดมิน '+demoTag()+'</div>' +
+      '<p class="muted" style="font-size:12.5px;margin-bottom:10px">ระบบจะแจ้งเตือนผ่านกระดิ่งด้านบนและป๊อปอัปของเบราว์เซอร์ทันทีเมื่อ (1) โปรไฟล์ใกล้หมดเวลาภายใน 24 ชม. (2) โปรไฟล์หมดเวลาแล้ว และ (3) ลูกค้าขอ OTP ครบโควตาที่กำหนด <strong style="color:var(--ink)">แต่ใช้ได้เฉพาะตอนเปิดแท็บเว็บนี้ค้างไว้เท่านั้น</strong> — การส่งแจ้งเตือนเข้าโทรศัพท์ตอนปิดแอป/ปิดแท็บ (เช่น LINE หรือ SMS) ต้องมีเซิร์ฟเวอร์ backend เพิ่มเติม เว็บไฟล์เดียวแบบนี้ทำเองไม่ได้</p>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="muted" style="font-size:12.5px">สถานะการอนุญาต: <strong style="color:var(--ink)">'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":NOTIFY.permission==="denied"?"ถูกปฏิเสธ (แก้ไขได้ในตั้งค่าเบราว์เซอร์)":"ยังไม่ได้เปิด")+'</strong></div>' +
         '<button class="btn btn-primary btn-sm" id="enableNotifyBtn" '+(NOTIFY.permission==="granted"?"disabled":"")+'>'+(NOTIFY.permission==="granted"?"เปิดใช้งานแล้ว":"เปิดการแจ้งเตือน")+'</button></div>' +
     '</div>' +
@@ -1706,7 +1872,7 @@ function render(skipScroll){
   if(route!=="login" && route.indexOf("admin")!==0) mountHome();
   if(route==="login") mountLogin();
   else if(route==="admin-accounts") mountAdminAccounts();
-  else if(route.indexOf("admin-account-")===0) mountAdminAccountDetail();
+  else if(route.indexOf("admin-account-")===0) mountAdminAccountDetail(route.slice(14));
   else if(route==="admin-customers") mountAdminCustomers();
   else if(route.indexOf("admin-customer-")===0) mountAdminCustomerDetail(route.slice(15));
   else if(route==="admin-reviews") mountAdminReviews();
@@ -1716,7 +1882,10 @@ function render(skipScroll){
   else if(route==="admin-settings") mountAdminSettings();
 }
 
-currentExpiredRentalIds().forEach(function(id){ NOTIFY.seen[id]=true; }); // อย่าแจ้งเตือนย้อนหลังสำหรับข้อมูลเดโม่ที่หมดเวลาอยู่แล้วตั้งแต่โหลดหน้า
+// อย่าแจ้งเตือนย้อนหลังสำหรับข้อมูลเดโม่ที่หมดเวลา/ใกล้หมดเวลา/ครบโควตาอยู่แล้วตั้งแต่โหลดหน้าแรก
+currentExpiredRentalIds().forEach(function(id){ NOTIFY.seen["exp:"+id]=true; });
+currentExpiringSoonRentalIds().forEach(function(id){ NOTIFY.seen["soon:"+id]=true; });
+currentOtpQuotaReachedCustomerIds().forEach(function(id){ NOTIFY.seen["otp:"+id]=true; });
 setInterval(checkExpiryNotifications, 10000);
 render();
 })();

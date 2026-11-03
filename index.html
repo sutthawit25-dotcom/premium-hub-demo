@@ -278,7 +278,7 @@ var NEW_REVIEW_DRAFTS = {};
 function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[cid]={rating:REVIEW_MAX, comment:""}); }
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
 // หน้า "รีวิว" แยกต่างหาก ไม่ได้รวมอยู่ในหน้ารายละเอียดลูกค้าอีกต่อไป
-var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, editingId:null, editRating:0, editComment:"", search:"" };
+var REVIEW_UI = { mode:"existing", customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, newName:"", editingId:null, editRating:0, editComment:"", search:"" };
 var ACTIVITY_UI = { search:"" };
 var REVIEW_MAX = 10; // คะแนนรีวิวเต็ม 10 แต้ม (เดิม 5)
 function starsHTML(rating,size){
@@ -1467,8 +1467,36 @@ function viewAdminCustomers(){
     '</div>' +
     '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อที่ใช้แสดง</th><th>อีเมลเข้าสู่ระบบ</th><th>ช่องทางติดต่อ</th><th>บริการที่ใช้งานอยู่</th><th>PIN ดู OTP</th><th>สมัครเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="custTbody">' + custRows(CUSTOMERS) + '</tbody></table></div></div>' +
     '<div class="cards-mobile" id="custCards">'+custCards(CUSTOMERS)+'</div>' +
+    purchaseHistorySectionHTML() +
   '</div>';
   return adminShell("admin-customers","ลูกค้า",body);
+}
+// ประวัติการซื้อของลูกค้าทั้งหมด (เช่าใหม่ + ต่ออายุ + ขายขาด) รวมไว้ในที่เดียวสำหรับหน้าลูกค้า
+function purchaseHistorySectionHTML(){
+  var events = revenueEvents();
+  if(events.length===0) return '<div><div class="section-title">ประวัติการซื้อทั้งหมด</div>'+emptyState("ยังไม่มีประวัติการซื้อ")+'</div>';
+  var shown = events.slice(0,200);
+  var rowsHtml = shown.map(function(e){
+    var cust = e.customerId ? customer(e.customerId) : null;
+    var contactHtml = cust ? contactDisplayHTML(cust) : '<span class="faint">-</span>';
+    return '<tr><td style="font-weight:600">'+esc(e.customerName)+'</td><td class="muted">'+contactHtml+'</td>' +
+      '<td class="muted">'+esc(purchaseServiceLabel(e))+'</td><td class="muted">'+esc(e.kind)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+fmtDT(e.at)+'</td><td style="font-weight:700">'+fmtMoney(e.amount)+'</td></tr>';
+  }).join("");
+  var cardsHtml = shown.map(function(e){
+    var cust = e.customerId ? customer(e.customerId) : null;
+    var contactHtml = cust ? contactDisplayHTML(cust) : '<span class="faint">-</span>';
+    return '<div class="card" style="padding:14px;margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:13px">'+esc(e.customerName)+'</div><div style="font-weight:800;color:var(--accent)">'+fmtMoney(e.amount)+'</div></div>' +
+      '<div class="muted" style="font-size:11.5px;margin-top:2px">ช่องทาง: '+contactHtml+'</div>' +
+      '<div class="muted" style="font-size:11.5px;margin-top:2px">'+esc(purchaseServiceLabel(e))+' · '+esc(e.kind)+'</div>' +
+      '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(e.at)+'</div>' +
+    '</div>';
+  }).join("");
+  return '<div><div class="section-title">ประวัติการซื้อทั้งหมด ('+events.length+')</div>' +
+    '<div class="card tbl-desktop" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>ลูกค้า</th><th>ช่องทางติดต่อ</th><th>บริการที่ซื้อ</th><th>ประเภท</th><th>วันที่ซื้อ</th><th>ยอดขาย</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div></div>' +
+    '<div class="cards-mobile">'+cardsHtml+'</div>' +
+  '</div>';
 }
 function custRowActionsHTML(c){
   return '<div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" data-editcust="'+c.id+'" title="แก้ไขลูกค้า">'+icon('edit')+'</button><button class="btn btn-outline btn-sm" data-delcust="'+c.id+'" style="color:var(--bad);border-color:var(--bad-bd)" title="ลบลูกค้า">'+icon('trash')+'</button></div>';
@@ -1619,9 +1647,20 @@ function viewAdminReviews(){
     '</div>' +
     '<div class="card" style="padding:16px">' +
       '<div class="section-title" style="margin-bottom:10px">เพิ่มรีวิว '+demoTag()+'</div>' +
-      '<div class="field" style="margin-bottom:10px"><label>ลูกค้า</label><select class="input" id="revCustSel">' +
-        CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(REVIEW_UI.customerId===c.id?"selected":"")+'>'+esc(c.name)+'</option>'; }).join("") +
-      '</select></div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:10px">' +
+        '<button type="button" class="btn btn-sm '+(REVIEW_UI.mode==="existing"?"btn-primary":"btn-outline")+'" data-rvmode="existing">เลือกลูกค้าเดิม</button>' +
+        '<button type="button" class="btn btn-sm '+(REVIEW_UI.mode==="new"?"btn-primary":"btn-outline")+'" data-rvmode="new">พิมพ์ชื่อลูกค้าใหม่</button>' +
+      '</div>' +
+      (REVIEW_UI.mode==="new" ?
+        '<div class="field" style="margin-bottom:10px"><label>ชื่อลูกค้า</label><input class="input" id="revNewName" placeholder="พิมพ์ชื่อลูกค้า" value="'+esc(REVIEW_UI.newName||"")+'"></div>'
+        :
+        (CUSTOMERS.length===0 ?
+          '<p class="muted" style="font-size:12px;margin-bottom:10px">ยังไม่มีลูกค้าในระบบ — สลับไป "พิมพ์ชื่อลูกค้าใหม่" ด้านบนได้เลย</p>'
+          :
+          '<div class="field" style="margin-bottom:10px"><label>ลูกค้า</label><select class="input" id="revCustSel">' +
+            CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(REVIEW_UI.customerId===c.id?"selected":"")+'>'+esc(c.name)+'</option>'; }).join("") +
+          '</select></div>')
+      ) +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><div style="display:flex;gap:2px;flex-wrap:wrap">'+Array.from({length:REVIEW_MAX},function(_,i){return i+1;}).map(function(n){ return '<button type="button" data-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=draft.rating?"#f5a623":"var(--border)")+';font-size:19px;line-height:1">★</button>'; }).join("")+'</div><span class="muted" style="font-size:12.5px;font-weight:600">'+draft.rating+'/'+REVIEW_MAX+'</span></div>' +
       '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า">'+esc(draft.comment)+'</textarea>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิว</button></div>' +
@@ -1639,14 +1678,25 @@ function viewAdminReviews(){
 function mountAdminReviews(){
   var rsearch=document.getElementById("revSearch");
   if(rsearch){ rsearch.oninput=function(){ REVIEW_UI.search=rsearch.value; render(true); }; }
+  document.querySelectorAll('[data-rvmode]').forEach(function(b){ b.onclick=function(){ REVIEW_UI.mode=b.getAttribute("data-rvmode"); render(true); }; });
   var sel=document.getElementById("revCustSel");
   if(sel) sel.onchange=function(){ REVIEW_UI.customerId=sel.value; render(); };
+  var nn=document.getElementById("revNewName"); if(nn) nn.oninput=function(){ REVIEW_UI.newName=nn.value; };
   var draft=reviewDraft(REVIEW_UI.customerId);
   document.querySelectorAll('[data-star]').forEach(function(sb){ sb.onclick=function(){ draft.rating=Number(sb.getAttribute("data-star")); render(true); }; });
   var ta=document.getElementById("newRevComment"); if(ta) ta.oninput=function(){ draft.comment=ta.value; };
   var ar=document.getElementById("addReviewBtn");
   if(ar) ar.onclick=function(){
-    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ", at:new Date().toISOString() });
+    var custId=REVIEW_UI.customerId;
+    if(REVIEW_UI.mode==="new"){
+      var nm=((document.getElementById("revNewName")||{}).value||REVIEW_UI.newName||"").trim();
+      if(!nm){ toast("กรุณาพิมพ์ชื่อลูกค้า","bad"); return; }
+      var nc={id:"cus-new-"+Date.now(), name:nm, email:nm.replace(/\s+/g,"").toLowerCase()+"@example.com", contactType:"", contact:"", note:"", pin:false, since:new Date().toISOString()};
+      CUSTOMERS.push(nc); custId=nc.id; REVIEW_UI.customerId=nc.id;
+    }
+    if(!custId){ toast("กรุณาเลือกหรือพิมพ์ชื่อลูกค้า","bad"); return; }
+    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:custId, rating:draft.rating||REVIEW_MAX, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ", at:new Date().toISOString() });
+    REVIEW_UI.newName="";
     draft.rating=REVIEW_MAX; draft.comment="";
     render(true); toast("เพิ่มรีวิวแล้ว","good");
   };
@@ -1722,16 +1772,23 @@ function revenueEvents(){
   var events = RENTALS.map(function(r){
     var cust=customer(r.customerId), p=profile(r.profileId);
     return { at:r.startedAt, amount:(r.price!=null?r.price:planPrice(r.days)), days:r.days,
+      customerId:r.customerId||null, deviceType:r.deviceType||null,
       customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"เช่าใหม่", paymentMethod:r.paymentMethod||"-" };
   }).concat(RENEWALS.map(function(h){
     var r=rental(h.rentalId), cust=r?customer(r.customerId):null, p=r?profile(r.profileId):null;
     return { at:h.at, amount:(h.price!=null?h.price:planPrice(h.days)), days:h.days,
+      customerId:r?r.customerId:null, deviceType:r?r.deviceType:null,
       customerName:cust?cust.name:"-", profileName:p?p.name:"-", kind:"ต่ออายุ", paymentMethod:h.paymentMethod||"-" };
   })).concat(ONETIME_SALES.map(function(s){
-    return { id:s.id, at:s.at, amount:s.amount, days:null,
+    return { id:s.id, at:s.at, amount:s.amount, days:null, customerId:null, deviceType:null,
       customerName:s.customerName||"-", profileName:s.note||"ขายขาด", kind:"ขายขาด", paymentMethod:s.paymentMethod||"-" };
   }));
   return events.sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
+}
+// รายละเอียด "บริการที่ซื้อ" อ่านง่าย เช่น "มือถือ · 7 วัน" หรือกลับไปใช้ชื่อโปรไฟล์/หมายเหตุถ้าไม่มีข้อมูลอุปกรณ์
+function purchaseServiceLabel(e){
+  if(e.deviceType) return deviceTypeLabel(e.deviceType)+(e.days!=null?' · '+e.days+' วัน':'');
+  return e.profileName||"-";
 }
 var REVENUE_RANGE = 14;
 function viewAdminRevenue(){

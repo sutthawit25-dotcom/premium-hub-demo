@@ -42,7 +42,12 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "invalid_provider" }, 400);
   }
 
-  const store = await loadStore(env);
+  let store;
+  try {
+    store = await loadStore(env);
+  } catch (e) {
+    return json({ error: "kv_read_failed", message: String((e && e.message) || e).slice(0, 300) }, 500);
+  }
 
   if (provider === "OUTLOOK_FORWARD") {
     const sourceMailboxId = body && body.sourceMailboxId;
@@ -59,13 +64,18 @@ export async function onRequestPost({ request, env }) {
   const appPassword = body && body.appPassword;
   if (!mailboxId || !email || !appPassword) return json({ error: "missing_fields" }, 400);
 
-  store[mailboxId] = {
-    email,
-    provider,
-    enc: await encryptSecret(appPassword, env.ADMIN_SECRET),
-    savedAt: Date.now(),
-  };
-  await env.STATE_KV.put(KV_KEY, JSON.stringify(store));
+  let enc;
+  try {
+    enc = await encryptSecret(String(appPassword).replace(/\s+/g, ""), env.ADMIN_SECRET);
+  } catch (e) {
+    return json({ error: "encrypt_failed", message: String((e && e.message) || e).slice(0, 300) }, 500);
+  }
+  store[mailboxId] = { email, provider, enc, savedAt: Date.now() };
+  try {
+    await env.STATE_KV.put(KV_KEY, JSON.stringify(store));
+  } catch (e) {
+    return json({ error: "kv_write_failed", message: String((e && e.message) || e).slice(0, 300) }, 500);
+  }
   return json({ ok: true });
 }
 

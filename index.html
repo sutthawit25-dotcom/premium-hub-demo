@@ -2024,7 +2024,7 @@ function postMailboxCreds(payload){
     return r.text().then(function(t){
       var parsed=null; try{ parsed=JSON.parse(t); }catch(e){ parsed=null; }
       if(parsed && parsed.ok) return {ok:true};
-      var detail = parsed ? (parsed.error||"unknown") : ("HTTP "+r.status+(t?(": "+t.slice(0,140)):" (ไม่มีเนื้อหาตอบกลับ)"));
+      var detail = parsed ? ((parsed.error||"unknown")+(parsed.message?(": "+parsed.message):"")) :("HTTP "+r.status+(t?(": "+t.slice(0,140)):" (ไม่มีเนื้อหาตอบกลับ)"));
       return {ok:false, detail:detail};
     });
   }).catch(function(){ return {ok:false, detail:"เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"}; });

@@ -816,6 +816,16 @@ function editInlineHTML(profileId,field,value,width,masked){
 var DEVICE_OPTIONS = ["-","มือถือ","ไอแพด/แท็บเล็ต","คอมพิวเตอร์/แล็ปท็อป","Smart TV","กล่องทีวี/Android TV"];
 // จำนวนวันที่เลือกได้แบบกดเลือก (อิงจากแพ็กเกจมาตรฐาน 1/7/14/30 วัน)
 var DAYS_OPTIONS = ["1","7","14","30"];
+// ช่องทางติดต่อลูกค้าแบบเลือกได้ ไม่ต้องพิมพ์ชื่อช่องทางเอง
+var CONTACT_CHANNELS = ["Facebook","LINE","อีเมล","เบอร์โทร","Instagram","อื่นๆ"];
+function contactChannelOptionsHTML(selected){
+  return CONTACT_CHANNELS.map(function(ch){ return '<option value="'+esc(ch)+'" '+(selected===ch?"selected":"")+'>'+esc(ch)+'</option>'; }).join("");
+}
+function contactDisplayHTML(c){
+  if(!c.contact && !c.contactType) return "-";
+  var ch = c.contactType || "อื่นๆ";
+  return c.contact ? (esc(ch)+': '+esc(c.contact)) : esc(ch);
+}
 function editSelectHTML(entityId,field,value,options,width){
   var w = width==="100%" ? "100%" : (width||120)+"px";
   var cur = String(value==null?"":value);
@@ -1055,7 +1065,7 @@ function openEditAccountModal(accountId){
 }
 function openEditCustomerModal(customerId){
   var c=customer(customerId); if(!c) return;
-  STATE.modal={type:"addCustomer", editId:customerId, name:c.name, email:c.email, contact:c.contact||"", note:c.note||""};
+  STATE.modal={type:"addCustomer", editId:customerId, name:c.name, email:c.email, contactType:c.contactType||"Facebook", contact:c.contact||"", note:c.note||""};
   render();
 }
 
@@ -1174,7 +1184,8 @@ function modalHTML(){
     return modalWrap(m.editId?'แก้ไขข้อมูลลูกค้า':'เพิ่มลูกค้าใหม่','เก็บข้อมูลเท่าที่จำเป็น ไม่บังคับกรอกเบอร์โทรหรือที่อยู่',
       '<div class="field"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custName" value="'+esc(m.name||"")+'"></div>' +
       '<div class="field"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEmail" type="email" value="'+esc(m.email||"")+'"></div>' +
-      '<div class="field"><label>ช่องทางติดต่อ</label><input class="input" id="custContact" value="'+esc(m.contact||"")+'"></div>' +
+      '<div class="field"><label>ช่องทางติดต่อ</label><select class="input" id="custContactType">'+contactChannelOptionsHTML(m.contactType||"Facebook")+'</select></div>' +
+      '<div class="field"><label>รายละเอียดช่องทางติดต่อ (ไลน์ไอดี/เบอร์/ลิงก์โปรไฟล์)</label><input class="input" id="custContact" value="'+esc(m.contact||"")+'"></div>' +
       '<div class="field"><label>หมายเหตุ</label><textarea class="input" id="custNote" rows="2">'+esc(m.note||"")+'</textarea></div>',
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="custConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
     );
@@ -1352,14 +1363,15 @@ function mountModal(){
   if(m.type==="addCustomer"){
     document.getElementById("custConfirm").onclick=function(){
       var name=document.getElementById("custName").value.trim(), email=document.getElementById("custEmail").value.trim();
+      var contactType=(document.getElementById("custContactType")||{}).value||"Facebook";
       var contact=(document.getElementById("custContact")||{}).value||"", note=(document.getElementById("custNote")||{}).value||"";
       if(!name||!email){ toast("กรุณากรอกข้อมูลให้ครบ","bad"); return; }
       if(m.editId){
         var c=customer(m.editId);
-        if(c){ c.name=name; c.email=email; c.contact=contact.trim(); c.note=note; }
+        if(c){ c.name=name; c.email=email; c.contactType=contactType; c.contact=contact.trim(); c.note=note; }
         closeModal(); toast("บันทึกการแก้ไขลูกค้าแล้ว","good");
       }else{
-        CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contact:contact.trim(), note:note, pin:false, since:new Date().toISOString()});
+        CUSTOMERS.push({id:"cus-new-"+Date.now(), name:name, email:email, contactType:contactType, contact:contact.trim(), note:note, pin:false, since:new Date().toISOString()});
         closeModal(); toast("เพิ่มลูกค้าใหม่แล้ว","good");
       }
     };
@@ -1464,7 +1476,7 @@ function custRowActionsHTML(c){
 function custRows(list){
   return list.map(function(c){
     var active=RENTALS.filter(function(r){return r.customerId===c.id && !r.closedAt}).length;
-    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+esc(c.contact||"-")+'</td><td>'+active+' รายการ</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td><td>'+custRowActionsHTML(c)+'</td></tr>';
+    return '<tr><td><a href="#admin-customer-'+c.id+'" style="color:var(--accent);font-weight:600;text-decoration:none">'+esc(c.name)+'</a></td><td class="muted">'+esc(c.email)+'</td><td class="muted">'+contactDisplayHTML(c)+'</td><td>'+active+' รายการ</td><td>'+(c.pin?'<span style="color:var(--good)">เปิดใช้งาน</span>':'<span class="faint">ปิดอยู่</span>')+'</td><td class="muted">'+fmtD(c.since)+'</td><td>'+custRowActionsHTML(c)+'</td></tr>';
   }).join("");
 }
 function custCards(list){
@@ -1514,7 +1526,8 @@ function viewAdminCustomerDetail(customerId){
       '<div class="grid grid-3" style="font-size:12.5px">' +
         '<div class="field" style="margin:0"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custEditName" value="'+esc(c.name)+'"></div>' +
         '<div class="field" style="margin:0"><label>อีเมลเข้าสู่ระบบ</label><input class="input" id="custEditEmail" value="'+esc(c.email)+'"></div>' +
-        '<div class="field" style="margin:0"><label>ช่องทางติดต่อเพิ่มเติม</label><input class="input" id="custEditContact" value="'+esc(c.contact||"")+'"></div>' +
+        '<div class="field" style="margin:0"><label>ช่องทางติดต่อ</label><select class="input" id="custEditContactType">'+contactChannelOptionsHTML(c.contactType||"Facebook")+'</select></div>' +
+        '<div class="field" style="margin:0"><label>รายละเอียดช่องทางติดต่อ</label><input class="input" id="custEditContact" value="'+esc(c.contact||"")+'"></div>' +
       '</div>' +
       '<div class="grid grid-2" style="font-size:12.5px;margin-top:8px">' +
         '<div><div class="muted">สมัครเมื่อ</div><div>'+fmtDT(c.since)+'</div></div>' +
@@ -1551,10 +1564,11 @@ function viewAdminCustomerDetail(customerId){
 function mountAdminCustomerDetail(customerId){
   var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){
     var c=customer(customerId); if(!c) return;
-    var nm=document.getElementById("custEditName"), em=document.getElementById("custEditEmail"), ct=document.getElementById("custEditContact"), t=document.getElementById("custEditNote"), pt=document.getElementById("pinToggle");
+    var nm=document.getElementById("custEditName"), em=document.getElementById("custEditEmail"), ct=document.getElementById("custEditContact"), ctt=document.getElementById("custEditContactType"), t=document.getElementById("custEditNote"), pt=document.getElementById("pinToggle");
     if(nm && !nm.value.trim()){ toast("กรุณากรอกชื่อลูกค้า","bad"); return; }
     if(nm) c.name=nm.value.trim();
     if(em) c.email=em.value.trim();
+    if(ctt) c.contactType=ctt.value;
     if(ct) c.contact=ct.value.trim();
     if(t) c.note=t.value;
     if(pt) c.pin=pt.checked;

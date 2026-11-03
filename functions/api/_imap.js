@@ -100,6 +100,7 @@ class ImapClient {
 function imapQuote(s) {
   return '"' + String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
 }
+export { imapQuote };
 
 export async function connectImap(host, port) {
   const socket = connect({ hostname: host, port: port }, { secureTransport: "on", allowHalfOpen: false });
@@ -138,8 +139,15 @@ function parseSearchUids(lines) {
 // Finds the UID of the most recent email that looks like it's from Netflix.
 // Tries a tighter sender match first, then a looser one, since different
 // Netflix senders (account@, info@, etc.) all contain "netflix" somewhere.
-export async function imapFindLatestNetflixUid(client) {
-  const queries = ['FROM "netflix.com"', 'FROM "netflix"'];
+// `toTag`, when given, additionally requires the message's To: header to
+// contain that text — used for a "virtual" mailbox whose real messages were
+// forwarded (by the user, via a normal Outlook/Hotmail forwarding rule) into
+// a shared Gmail inbox at a tagged address like shop+acct1@gmail.com, so
+// several forwarded Hotmail accounts can share one Gmail IMAP login while
+// still keeping their OTPs separated.
+export async function imapFindLatestNetflixUid(client, toTag) {
+  const toClause = toTag ? " TO " + imapQuote(toTag) : "";
+  const queries = ['FROM "netflix.com"' + toClause, 'FROM "netflix"' + toClause];
   for (const q of queries) {
     const res = await client.command("UID SEARCH " + q);
     if (!res.ok) continue;

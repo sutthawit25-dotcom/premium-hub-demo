@@ -20,6 +20,11 @@ async function loadStore(env) {
 }
 
 // POST /api/mailbox-creds { mailboxId, email, provider, appPassword }
+// provider "OUTLOOK_FORWARD" is a "virtual" mailbox: instead of an
+// app-password, { sourceMailboxId, forwardTag } point at a real GMAIL
+// mailbox entry that this Outlook/Hotmail account's Netflix mail has been
+// set up (by the admin, via a normal Outlook.com forwarding rule) to
+// forward into — see _mailbox-resolve.js for why.
 export async function onRequestPost({ request, env }) {
   if (!env.STATE_KV || !env.ADMIN_SECRET) return json({ error: "server_not_configured" }, 500);
   if (!(await requireAuth(request, env))) return json({ error: "unauthorized" }, 401);
@@ -33,11 +38,27 @@ export async function onRequestPost({ request, env }) {
   const mailboxId = body && body.mailboxId;
   const email = body && body.email;
   const provider = body && body.provider;
-  const appPassword = body && body.appPassword;
-  if (!mailboxId || !email || !appPassword) return json({ error: "missing_fields" }, 400);
-  if (provider !== "GMAIL" && provider !== "OUTLOOK") return json({ error: "invalid_provider" }, 400);
+  if (provider !== "GMAIL" && provider !== "OUTLOOK" && provider !== "OUTLOOK_FORWARD") {
+    return json({ error: "invalid_provider" }, 400);
+  }
 
   const store = await loadStore(env);
+
+  if (provider === "OUTLOOK_FORWARD") {
+    const sourceMailboxId = body && body.sourceMailboxId;
+    const forwardTag = body && body.forwardTag;
+    if (!mailboxId || !email || !sourceMailboxId || !forwardTag) return json({ error: "missing_fields" }, 400);
+    if (!store[sourceMailboxId] || store[sourceMailboxId].provider !== "GMAIL") {
+      return json({ error: "invalid_source_mailbox" }, 400);
+    }
+    store[mailboxId] = { email, provider, sourceMailboxId, forwardTag, savedAt: Date.now() };
+    await env.STATE_KV.put(KV_KEY, JSON.stringify(store));
+    return json({ ok: true });
+  }
+
+  const appPassword = body && body.appPassword;
+  if (!mailboxId || !email || !appPassword) return json({ error: "missing_fields" }, 400);
+
   store[mailboxId] = {
     email,
     provider,

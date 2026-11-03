@@ -1175,11 +1175,9 @@ function modalHTML(){
     );
   }
   if(m.type==="addMailbox"){
-    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+(m.provider==="GMAIL"?"Gmail":"Outlook / Hotmail")+')', 'เชื่อมต่อกล่องเมลจริงผ่าน IMAP เพื่อดึงรหัส OTP ของ Netflix อัตโนมัติ — ต้องใช้ "รหัสผ่านแอป (App Password)" ของ Gmail/Outlook ไม่ใช่รหัสผ่านเข้าบัญชีปกติ (ต้องเปิดยืนยัน 2 ขั้นตอนก่อนจึงจะสร้างรหัสผ่านแอปได้)',
-      '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider"><option value="GMAIL" '+(m.provider==="GMAIL"?"selected":"")+'>Gmail</option><option value="OUTLOOK" '+(m.provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail</option></select></div>' +
-      '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@gmail.com" value="'+esc(m.email||"")+'"></div>' +
-      '<div class="field"><label>รหัสผ่านแอป (App Password)</label><input class="input" type="password" id="mbAppPass" placeholder="'+(m.editId?"เว้นไว้ถ้าไม่เปลี่ยน":"xxxx xxxx xxxx xxxx")+'" autocomplete="new-password"></div>' +
-      '<p class="muted" style="font-size:11.5px;margin-top:-6px">ระบบจะเก็บรหัสผ่านแอปนี้แบบเข้ารหัสไว้ที่เซิร์ฟเวอร์ ใช้สำหรับดึง OTP เท่านั้น ไม่แสดงผลซ้ำที่หน้านี้อีก</p>',
+    var mbProviderLabel = {GMAIL:"Gmail", OUTLOOK:"Outlook / Hotmail", OUTLOOK_FORWARD:"Outlook / Hotmail - ส่งต่อผ่าน Gmail"}[m.provider] || "Gmail";
+    return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+mbProviderLabel+')', 'เชื่อมต่อกล่องเมลจริงเพื่อดึงรหัส OTP ของ Netflix อัตโนมัติ',
+      addMailboxModalBodyHTML(m),
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
     );
   }
@@ -1333,14 +1331,45 @@ function mountModal(){
     if(pdb) pdb.onclick=function(){ STATE.modal={type:"buyPlan", planId:m.planId}; render(); };
   }
   if(m.type==="addMailbox"){
-    var pr=document.getElementById("mbProvider"); if(pr) pr.onchange=function(){ m.provider=pr.value; };
-    document.getElementById("mbConfirm").onclick=function(){
-      var email=document.getElementById("mbEmail").value.trim();
+    var pr=document.getElementById("mbProvider"); if(pr) pr.onchange=function(){ m.provider=pr.value; render(); };
+    var srcSel=document.getElementById("mbSourceGmail"); if(srcSel) srcSel.onchange=function(){ m.sourceMailboxId=srcSel.value; updateForwardPreview(); };
+    var tagInput=document.getElementById("mbForwardTag"); if(tagInput) tagInput.oninput=function(){ m.forwardTag=tagInput.value; updateForwardPreview(); };
+    updateForwardPreview();
+    var confirmBtn=document.getElementById("mbConfirm");
+    if(confirmBtn) confirmBtn.onclick=function(){
+      var emailEl=document.getElementById("mbEmail");
+      var email=emailEl?emailEl.value.trim():"";
       if(!email){ toast("กรุณากรอกอีเมล","bad"); return; }
-      var provider=(document.getElementById("mbProvider")||{}).value||m.provider;
-      var appPass=(document.getElementById("mbAppPass")||{}).value||"";
-      var btn=document.getElementById("mbConfirm"); btn.disabled=true;
+      var provider=(document.getElementById("mbProvider")||{}).value||m.provider||"GMAIL";
+      var btn=confirmBtn; btn.disabled=true;
       var mailboxId = m.editId || ("mbx-new-"+Date.now());
+
+      if(provider==="OUTLOOK_FORWARD"){
+        var sourceMailboxId=(document.getElementById("mbSourceGmail")||{}).value||"";
+        var forwardTag=((document.getElementById("mbForwardTag")||{}).value||"").trim().replace(/[^a-zA-Z0-9]/g,"");
+        if(!sourceMailboxId){ toast("กรุณาเลือก Gmail ปลายทาง","bad"); btn.disabled=false; return; }
+        if(!forwardTag){ toast("กรุณากรอกแท็กแยกบัญชี","bad"); btn.disabled=false; return; }
+        fetch("/api/mailbox-creds", {
+          method:"POST",
+          headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},
+          body:JSON.stringify({mailboxId:mailboxId, email:email, provider:provider, sourceMailboxId:sourceMailboxId, forwardTag:forwardTag})
+        }).then(function(r){ return r.json().catch(function(){return {};}); }).then(function(res){
+          btn.disabled=false;
+          if(res && res.ok){
+            if(m.editId){
+              var existing=byId(MAILBOXES,m.editId);
+              if(existing){ existing.email=email; existing.provider=provider; existing.sourceMailboxId=sourceMailboxId; existing.forwardTag=forwardTag; }
+              closeModal(); toast("บันทึกการแก้ไขบัญชีอีเมลแล้ว","good");
+            }else{
+              MAILBOXES.push({id:mailboxId, email:email, provider:provider, sourceMailboxId:sourceMailboxId, forwardTag:forwardTag, status:"NOT_CONNECTED", lastResult:"ยังไม่ดึง OTP", lastAt:null});
+              closeModal(); toast("เพิ่มบัญชีอีเมลแล้ว — อย่าลืมตั้งค่า Forwarding ใน Outlook ด้วย","good");
+            }
+          } else { toast("บันทึกไม่สำเร็จ ("+((res&&res.error)||"unknown")+")","bad"); }
+        }).catch(function(){ btn.disabled=false; toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง","bad"); });
+        return;
+      }
+
+      var appPass=(document.getElementById("mbAppPass")||{}).value||"";
       function finishSave(){
         if(m.editId){
           var existing=byId(MAILBOXES,m.editId);
@@ -1876,6 +1905,44 @@ function mountAdminRevenue(){
   });
 }
 
+function addMailboxModalBodyHTML(m){
+  var provider = m.provider || "GMAIL";
+  var providerSelect = '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider">' +
+    '<option value="GMAIL" '+(provider==="GMAIL"?"selected":"")+'>Gmail</option>' +
+    '<option value="OUTLOOK" '+(provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail (รหัสผ่านแอป)</option>' +
+    '<option value="OUTLOOK_FORWARD" '+(provider==="OUTLOOK_FORWARD"?"selected":"")+'>Outlook / Hotmail (ส่งต่อผ่าน Gmail - แนะนำ)</option>' +
+    '</select></div>';
+
+  if(provider==="OUTLOOK_FORWARD"){
+    var gmails = MAILBOXES.filter(function(x){ return x.provider==="GMAIL"; });
+    if(!gmails.length){
+      return providerSelect + '<div class="summary-box" style="background:var(--bad-bg);color:var(--bad)">ต้องเพิ่มบัญชี Gmail ที่เชื่อมต่อ OTP ไว้แล้วอย่างน้อย 1 บัญชีก่อน ถึงจะใช้วิธี "ส่งต่อผ่าน Gmail" นี้ได้ — ปิดหน้านี้แล้วไปเพิ่ม Gmail ก่อนครับ</div>';
+    }
+    var tag = m.forwardTag || "";
+    return providerSelect +
+      '<div class="field"><label>อีเมล Hotmail/Outlook ของบัญชีนี้ (ไว้เรียกดูในระบบเท่านั้น)</label><input class="input" id="mbEmail" placeholder="name@hotmail.com" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="field"><label>ส่งต่อไปที่ Gmail บัญชีไหน</label><select class="input" id="mbSourceGmail">'+gmails.map(function(x){ return '<option value="'+esc(x.id)+'" '+(x.id===m.sourceMailboxId?"selected":"")+'>'+esc(x.email)+'</option>'; }).join("")+'</select></div>' +
+      '<div class="field"><label>แท็กแยกบัญชี (ตัวอักษร/ตัวเลขอังกฤษ ไม่เว้นวรรค)</label><input class="input" id="mbForwardTag" placeholder="เช่น acc1" value="'+esc(tag)+'"></div>' +
+      '<div class="summary-box" id="mbForwardPreview" style="font-size:12.5px"></div>' +
+      '<p class="muted" style="font-size:11.5px;margin-top:-4px">วิธีใช้: 1) เข้า outlook.com ด้วยบัญชีนี้ตามปกติ 2) ไปที่ Settings → Mail → Forwarding 3) เปิด "Enable forwarding" แล้ววางที่อยู่ด้านบน 4) บันทึก — ไม่ต้องสมัคร Azure หรือใช้บัตรใดๆ เลย</p>';
+  }
+
+  return providerSelect +
+    '<div class="field"><label>อีเมล</label><input class="input" id="mbEmail" placeholder="name@gmail.com" value="'+esc(m.email||"")+'"></div>' +
+    '<div class="field"><label>รหัสผ่านแอป (App Password)</label><input class="input" type="password" id="mbAppPass" placeholder="'+(m.editId?"เว้นไว้ถ้าไม่เปลี่ยน":"xxxx xxxx xxxx xxxx")+'" autocomplete="new-password"></div>' +
+    '<p class="muted" style="font-size:11.5px;margin-top:-6px">ระบบจะเก็บรหัสผ่านแอปนี้แบบเข้ารหัสไว้ที่เซิร์ฟเวอร์ ใช้สำหรับดึง OTP เท่านั้น ไม่แสดงผลซ้ำที่หน้านี้อีก</p>' +
+    (provider==="OUTLOOK" ? '<p class="muted" style="font-size:11.5px;margin-top:-6px;color:var(--bad)">⚠️ Microsoft ยกเลิกรหัสผ่านแอปสำหรับบัญชี Hotmail/Outlook ส่วนตัวแล้ว วิธีนี้อาจเชื่อมต่อไม่ได้ — แนะนำเลือก "ส่งต่อผ่าน Gmail" แทน</p>' : '');
+}
+function updateForwardPreview(){
+  var sel=document.getElementById("mbSourceGmail"), tagInput=document.getElementById("mbForwardTag"), box=document.getElementById("mbForwardPreview");
+  if(!sel||!tagInput||!box) return;
+  var gm=mailbox(sel.value);
+  var tag=(tagInput.value||"").trim().replace(/[^a-zA-Z0-9]/g,"");
+  if(!gm||!tag){ box.innerHTML='<span class="muted">กรอกแท็กเพื่อดูที่อยู่สำหรับตั้งค่า Forward</span>'; return; }
+  var addr=gm.email.split("@")[0]+"+"+tag+"@gmail.com";
+  box.innerHTML='ที่อยู่สำหรับตั้งค่า Forward: <strong style="letter-spacing:.3px">'+esc(addr)+'</strong> <button type="button" style="border:none;background:transparent;color:var(--accent);cursor:pointer;padding:3px 6px;vertical-align:middle" data-copy-text="'+esc(addr)+'">'+icon('copy')+'</button>';
+  mountCopyText();
+}
 function mailboxActionsHTML(m){
   return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึง OTP ล่าสุด</button><button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
 }
@@ -1891,6 +1958,8 @@ var OTP_ERROR_MESSAGES = {
   no_netflix_email: "ไม่พบอีเมลจาก Netflix ในกล่องจดหมาย",
   no_code_found: "พบอีเมลจาก Netflix แต่หารหัสในเนื้ออีเมลไม่เจอ",
   imap_connection_closed: "การเชื่อมต่อถูกปิดกลางทาง ลองใหม่อีกครั้ง",
+  source_mailbox_missing: "บัญชี Gmail ปลายทางที่ตั้งไว้ถูกลบไปแล้ว กรุณาแก้ไขบัญชีนี้ใหม่",
+  invalid_source_mailbox: "บัญชี Gmail ปลายทางไม่ถูกต้อง",
 };
 function otpErrorText(code){ return OTP_ERROR_MESSAGES[code] || ("เกิดข้อผิดพลาด ("+code+")"); }
 function mailboxResultHTML(m){
@@ -1900,10 +1969,13 @@ function mailboxResultHTML(m){
   }
   return esc(m.lastResult||"ยังไม่ดึง OTP");
 }
+function mailboxProviderLabel(provider){
+  return provider==="GMAIL" ? "Gmail" : (provider==="OUTLOOK_FORWARD" ? "Outlook (ส่งต่อผ่าน Gmail)" : "Outlook");
+}
 function mailboxRowsHTML(){
   return MAILBOXES.map(function(m,i){
     return '<tr><td class="muted">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:600">'+esc(m.email)+'</span>'+demoTag()+'</div></td>' +
-      '<td class="muted">'+(m.provider==="GMAIL"?"Gmail":"Outlook")+'</td><td>'+mailboxBadge(m.status)+'</td>' +
+      '<td class="muted">'+mailboxProviderLabel(m.provider)+'</td><td>'+mailboxBadge(m.status)+'</td>' +
       '<td class="muted" style="font-size:12px">'+mailboxResultHTML(m)+(m.lastAt?('<div class="faint" style="font-size:10.5px">'+fmtDT(m.lastAt)+'</div>'):'')+'</td>' +
       '<td>'+mailboxActionsHTML(m)+'</td></tr>';
   }).join("");
@@ -1920,13 +1992,13 @@ function viewAdminMailboxes(){
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
     '<div class="card" style="padding:18px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
-        '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail / Outlook / Hotmail จริงผ่าน IMAP ด้วยรหัสผ่านแอป แล้วกด "ดึง OTP ล่าสุด" เพื่อรับรหัสจากอีเมล Netflix มาคัดลอกส่งลูกค้าได้ทันที</p></div>' +
-        '<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" id="addOutlookBtn">+ Outlook / Hotmail</button><button class="btn btn-primary btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
+        '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail โดยตรง หรือ Outlook/Hotmail แบบส่งต่อผ่าน Gmail แล้วกด "ดึง OTP ล่าสุด" เพื่อรับรหัสจากอีเมล Netflix มาคัดลอกส่งลูกค้าได้ทันที</p></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" id="addOutlookForwardBtn">+ Hotmail (ส่งต่อผ่าน Gmail)</button><button class="btn btn-outline btn-sm" id="addOutlookBtn">+ Outlook (รหัสผ่านแอป)</button><button class="btn btn-primary btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
       '</div>' +
       '<div class="grid grid-4">' +
         '<div class="card stat"><div class="v num">'+MAILBOXES.length+'</div><div class="l">บัญชีทั้งหมด</div></div>' +
         '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="GMAIL"}).length+'</div><div class="l">Gmail</div></div>' +
-        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="OUTLOOK"}).length+'</div><div class="l">Outlook / Hotmail</div></div>' +
+        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="OUTLOOK_FORWARD"}).length+'</div><div class="l">Hotmail (ส่งต่อ)</div></div>' +
         '<div class="card stat"><div class="v num">'+pinCount+'</div><div class="l">เปิด PIN ลูกค้า</div></div>' +
       '</div>' +
     '</div>' +
@@ -1943,7 +2015,7 @@ function refreshMailboxView(){
 }
 function openEditMailboxModal(id){
   var m=mailbox(id); if(!m) return;
-  STATE.modal={type:"addMailbox", editId:id, provider:m.provider, email:m.email};
+  STATE.modal={type:"addMailbox", editId:id, provider:m.provider, email:m.email, sourceMailboxId:m.sourceMailboxId, forwardTag:m.forwardTag};
   render();
 }
 function mailboxApiFetch(path, mailboxId){
@@ -2003,6 +2075,7 @@ function mountMailboxRowEvents(){
 function mountAdminMailboxes(){
   document.getElementById("addGmailBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"GMAIL"}; render(); };
   document.getElementById("addOutlookBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK"}; render(); };
+  document.getElementById("addOutlookForwardBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK_FORWARD"}; render(); };
   mountMailboxRowEvents();
 }
 

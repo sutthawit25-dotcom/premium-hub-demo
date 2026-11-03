@@ -1003,7 +1003,7 @@ function modalHTML(){
   }
   if(m.type==="onetime"){
     var custOptions2 = CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(m.customerId===c.id?"selected":"")+'>'+esc(c.name)+' ('+esc(c.email)+')</option>'; }).join("");
-    return modalWrap('บันทึกขายขาด','สำหรับการขายที่ไม่ใช่การเช่ารายวัน เช่น ขายบัญชี Netflix ขาด หรือบริการอื่นที่ตกลงกับลูกค้านอกเว็บ', '' +
+    return modalWrap('บันทึก','สำหรับการขายที่ไม่ใช่การเช่ารายวัน เช่น ขายบัญชี Netflix ขาด หรือบริการอื่นที่ตกลงกับลูกค้านอกเว็บ', '' +
       '<div class="field"><label>ลูกค้า</label>' +
         '<div class="tabs" style="margin-bottom:8px"><button data-omode="existing" class="'+(m.mode==="existing"?"active":"")+'">เลือกลูกค้าเดิม</button><button data-omode="new" class="'+(m.mode==="new"?"active":"")+'">ลูกค้าใหม่ / ไม่ระบุ</button></div>' +
         (m.mode==="existing"? '<select class="input" id="oneCust">'+custOptions2+'</select>' : '<input class="input" id="oneNewName" placeholder="ชื่อลูกค้า (พิมพ์เอง)" value="'+esc(m.newName)+'">') +
@@ -1441,7 +1441,7 @@ function viewAdminRevenue(){
   var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
       '<p class="muted" style="font-size:12.5px;margin:0">ยอดเช่า/ต่ออายุคำนวณอัตโนมัติจากราคาแพ็กเกจ ส่วนการขายขาดให้กดบันทึกเอง '+demoTag()+'</p>' +
-      '<button class="btn btn-primary btn-sm" id="addOnetimeBtn">'+icon('plus')+'บันทึกขายขาด</button>' +
+      '<button class="btn btn-primary btn-sm" id="addOnetimeBtn">'+icon('plus')+'บันทึก</button>' +
     '</div>' +
     cardsHtml +
     (payHtml? '<div><div class="section-title">แยกตามช่องทางการจ่ายเงิน</div>'+payHtml+'</div>' : '') +

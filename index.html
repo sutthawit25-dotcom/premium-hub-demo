@@ -278,7 +278,7 @@ var NEW_REVIEW_DRAFTS = {};
 function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[cid]={rating:REVIEW_MAX, comment:""}); }
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
 // หน้า "รีวิว" แยกต่างหาก ไม่ได้รวมอยู่ในหน้ารายละเอียดลูกค้าอีกต่อไป
-var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, editingId:null, editRating:0, editComment:"" };
+var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null, editingId:null, editRating:0, editComment:"", search:"" };
 var REVIEW_MAX = 10; // คะแนนรีวิวเต็ม 10 แต้ม (เดิม 5)
 function starsHTML(rating,size){
   var s="", sz=size||12;
@@ -1526,8 +1526,10 @@ function viewAdminReviews(){
   var revs = REVIEWS.slice().sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
   var avg = revs.length? (revs.reduce(function(s,r){return s+r.rating;},0)/revs.length) : 0;
   var draft = reviewDraft(REVIEW_UI.customerId);
-  var listHtml = revs.length===0? emptyState("ยังไม่มีรีวิวในระบบ") :
-    '<div class="card" style="padding:0;overflow:hidden">' + revs.map(function(r){
+  var q = (REVIEW_UI.search||"").trim().toLowerCase();
+  var visibleRevs = q? revs.filter(function(r){ var c=customer(r.customerId); return c && c.name.toLowerCase().indexOf(q)>=0; }) : revs;
+  var listHtml = visibleRevs.length===0? emptyState(q?"ไม่พบรีวิวของลูกค้าที่ค้นหา":"ยังไม่มีรีวิวในระบบ") :
+    '<div class="card" style="padding:0;overflow:hidden">' + visibleRevs.map(function(r){
       var c=customer(r.customerId);
       if(REVIEW_UI.editingId===r.id){
         return '<div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle)">' +
@@ -1566,11 +1568,19 @@ function viewAdminReviews(){
       '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า">'+esc(draft.comment)+'</textarea>' +
       '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิว</button></div>' +
     '</div>' +
-    '<div><div class="section-title">รีวิวทั้งหมด ('+revs.length+')</div>'+listHtml+'</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">' +
+        '<div class="section-title">'+(q?"ผลการค้นหา ("+visibleRevs.length+")":"รีวิวทั้งหมด ("+revs.length+")")+'</div>' +
+        '<input class="input" id="revSearch" placeholder="ค้นหาจากชื่อลูกค้า" style="max-width:260px" value="'+esc(REVIEW_UI.search)+'">' +
+      '</div>' +
+      listHtml +
+    '</div>' +
   '</div>';
   return adminShell("admin-reviews","รีวิวลูกค้า",body);
 }
 function mountAdminReviews(){
+  var rsearch=document.getElementById("revSearch");
+  if(rsearch){ rsearch.oninput=function(){ REVIEW_UI.search=rsearch.value; render(true); }; }
   var sel=document.getElementById("revCustSel");
   if(sel) sel.onchange=function(){ REVIEW_UI.customerId=sel.value; render(); };
   var draft=reviewDraft(REVIEW_UI.customerId);

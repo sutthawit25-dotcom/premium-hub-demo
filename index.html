@@ -219,7 +219,17 @@
 var NOW = Date.now();
 function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
 
-var SHOP = { name:"Premium Hub", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contact:"https://line.me/ti/p/~premiumhub" };
+var SHOP = { name:"Premium Hub", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~premiumhub", contactFacebook:"https://facebook.com/premiumhub" };
+// ปุ่มติดต่อแอดมิน แสดงทั้งช่องทาง LINE และ Facebook คู่กันเสมอ
+function contactButtonsHTML(opts){
+  opts = opts || {};
+  var cls2 = opts.secondaryClass || "btn-secondary";
+  var wrap = opts.wrapStyle || "display:flex;gap:8px;flex-wrap:wrap";
+  return '<div style="'+wrap+'">' +
+    '<a href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer" class="btn btn-primary'+(opts.full?" ":"")+'" style="'+(opts.btnStyle||"")+'">'+(opts.lineLabel||"ติดต่อแอดมินทาง LINE")+'</a>' +
+    '<a href="'+esc(SHOP.contactFacebook)+'" target="_blank" rel="noreferrer" class="btn '+cls2+'" style="'+(opts.btnStyle||"")+'">'+(opts.fbLabel||"ติดต่อแอดมินทาง Facebook")+'</a>' +
+  '</div>';
+}
 // แพ็กเกจแบ่งตามประเภทอุปกรณ์: มือถือ/ไอแพด/คอม กับ Smart TV/กล่อง TV/Android TV ราคาไม่เท่ากัน
 var DEVICE_TYPES = [
   {id:"mobile", label:"มือถือ / ไอแพด / คอมพิวเตอร์", short:"มือถือ/คอม", emoji:"📱"},
@@ -286,16 +296,16 @@ var MAILBOXES = [
   {id:"mbx-3", email:"streambox.0c@outlook.demo", provider:"OUTLOOK", status:"ERROR", lastResult:"Provider error (Demo): หมดเวลาเชื่อมต่อ", lastAt:hoursFromNow(-5)}
 ];
 var PROFILES = [
-  {id:"pf-1",accountId:"acc-1",name:"FH - User 1",pin:"••••",device:"สมาร์ททีวี",rentalId:"rt-1"},
+  {id:"pf-1",accountId:"acc-1",name:"FH - User 1",pin:"••••",device:"Smart TV",rentalId:"rt-1"},
   {id:"pf-2",accountId:"acc-1",name:"FH - User 2",pin:"••••",device:"มือถือ",rentalId:"rt-2"},
   {id:"pf-3",accountId:"acc-1",name:"FH - User 3",pin:null,device:"-",rentalId:null},
-  {id:"pf-4",accountId:"acc-1",name:"FH - User 4",pin:"••••",device:"แล็ปท็อป",rentalId:"rt-4"},
+  {id:"pf-4",accountId:"acc-1",name:"FH - User 4",pin:"••••",device:"คอมพิวเตอร์/แล็ปท็อป",rentalId:"rt-4"},
   {id:"pf-5",accountId:"acc-1",name:"FH - User 5",pin:null,device:"-",rentalId:null},
-  {id:"pf-6",accountId:"acc-2",name:"FH - User 1",pin:"••••",device:"สมาร์ททีวี",rentalId:"rt-6"},
+  {id:"pf-6",accountId:"acc-2",name:"FH - User 1",pin:"••••",device:"Smart TV",rentalId:"rt-6"},
   {id:"pf-7",accountId:"acc-2",name:"FH - User 2",pin:null,device:"-",rentalId:null},
   {id:"pf-8",accountId:"acc-2",name:"FH - User 3",pin:"••••",device:"มือถือ",rentalId:"rt-8"},
   {id:"pf-9",accountId:"acc-2",name:"FH - User 4",pin:null,device:"-",rentalId:"rt-11"},
-  {id:"pf-10",accountId:"acc-2",name:"FH - User 5",pin:"••••",device:"แท็บเล็ต",rentalId:"rt-10"}
+  {id:"pf-10",accountId:"acc-2",name:"FH - User 5",pin:"••••",device:"ไอแพด/แท็บเล็ต",rentalId:"rt-10"}
 ];
 var RENTALS = [
   {id:"rt-1",profileId:"pf-1",customerId:"cus-1",startedAt:hoursFromNow(-24*3),expiresAt:hoursFromNow(24*4),days:7,price:99,closedAt:null},
@@ -557,7 +567,7 @@ function viewHome(){
       '<h1 style="font-size:30px;line-height:1.3;font-weight:800">บริการ Netflix โปรไฟล์พร้อมใช้ จัดการวันหมดอายุให้อัตโนมัติ</h1>' +
       '<p class="muted" style="max-width:520px">'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วติดต่อแอดมินเพื่อให้มอบหมายโปรไฟล์ให้คุณ</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">' +
-        '<a href="'+SHOP.contact+'" target="_blank" rel="noreferrer" class="btn btn-primary">ติดต่อแอดมิน</a>' +
+        contactButtonsHTML({lineLabel:"ติดต่อแอดมิน (LINE)",fbLabel:"ติดต่อแอดมิน (Facebook)"}) +
         '<a href="#login" class="btn btn-secondary">เข้าสู่ระบบลูกค้า</a>' +
       '</div>' +
     '</section>' +
@@ -687,8 +697,8 @@ function viewServiceDetail(rentalId){
       (status==="EXPIRED"?'<p style="margin-top:12px;background:var(--bad-bg);color:var(--bad);padding:9px 12px;border-radius:8px;font-size:12.5px">รายการนี้หมดเวลาแล้ว กรุณาติดต่อแอดมินเพื่อต่ออายุ</p>':'') +
       '<div style="display:flex;gap:8px;margin-top:16px">' +
         '<a href="#otp-'+r.id+'" class="btn btn-primary" '+(status==="EXPIRED"?'style="opacity:.5;pointer-events:none"':'')+'>สถานะ OTP</a>' +
-        '<a href="'+SHOP.contact+'" target="_blank" rel="noreferrer" class="btn btn-secondary">ติดต่อแอดมินเพื่อต่ออายุ</a>' +
       '</div>' +
+      contactButtonsHTML({lineLabel:"ต่ออายุทาง LINE",fbLabel:"ต่ออายุทาง Facebook",wrapStyle:"display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"}) +
     '</div>' +
     '<div style="margin-top:20px"><div class="section-title">ประวัติการต่ออายุ</div>' +
       (hist.length===0? emptyState("ยังไม่มีประวัติการต่ออายุ"): '<div class="card">' + hist.map(function(h,i){
@@ -730,7 +740,7 @@ function otpBodyHTML(expired){
   }
   return '<div class="card" style="background:var(--bg-subtle);padding:20px">' +
     '<div class="muted" style="font-size:12.5px;line-height:1.6">ระบบไม่เปิดให้ขอรหัส OTP ด้วยตัวเองนะคะ/ครับ<br>กรุณาติดต่อแอดมินเพื่อขอรับรหัสทุกครั้งที่ต้องใช้งาน</div>' +
-    '<a href="'+SHOP.contact+'" target="_blank" rel="noreferrer" class="btn btn-primary" style="width:100%;height:44px;margin-top:14px">ติดต่อแอดมินเพื่อขอรหัส</a>' +
+    contactButtonsHTML({wrapStyle:"display:flex;flex-direction:column;gap:8px;margin-top:14px",btnStyle:"width:100%;height:44px"}) +
   '</div>';
 }
 function mountOtp(rentalId){ /* ไม่มีการโต้ตอบในหน้านี้แล้ว — ตัวนับเวลาคงเหลือจะอัปเดตเองผ่าน tickCountdowns() */ }
@@ -855,6 +865,21 @@ function editInlineHTML(profileId,field,value,width){
     '<button class="btn btn-primary" style="padding:0 10px;height:36px;flex:none;min-width:36px" data-save-field="'+field+'" data-save-id="'+profileId+'" title="บันทึก">✓</button>' +
   '</div>';
 }
+// ตัวเลือกหมวดหมู่อุปกรณ์แบบกดเลือก ไม่ต้องพิมพ์เอง
+var DEVICE_OPTIONS = ["-","มือถือ","ไอแพด/แท็บเล็ต","คอมพิวเตอร์/แล็ปท็อป","Smart TV","กล่องทีวี/Android TV"];
+// จำนวนวันที่เลือกได้แบบกดเลือก (อิงจากแพ็กเกจมาตรฐาน 1/7/14/30 วัน)
+var DAYS_OPTIONS = ["1","7","14","30"];
+function editSelectHTML(entityId,field,value,options,width){
+  var w = width==="100%" ? "100%" : (width||120)+"px";
+  var cur = String(value==null?"":value);
+  var hasCur = options.indexOf(cur)>=0;
+  var opts = (hasCur||!cur? "" : '<option value="'+esc(cur)+'">'+esc(cur)+' (เดิม)</option>') +
+    options.map(function(o){ return '<option value="'+esc(o)+'" '+(cur===o?"selected":"")+'>'+esc(o)+(field==="days"?" วัน":"")+'</option>'; }).join("");
+  return '<div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">' +
+    '<select class="input" style="height:36px;font-size:13px;width:'+w+';padding:7px 6px;min-width:0" data-edit-field="'+field+'" data-edit-id="'+entityId+'">'+opts+'</select>' +
+    '<button class="btn btn-primary" style="padding:0 10px;height:36px;flex:none;min-width:36px" data-save-field="'+field+'" data-save-id="'+entityId+'" title="บันทึก">✓</button>' +
+  '</div>';
+}
 function copyChipHTML(value){
   return '<span style="display:inline-flex;align-items:center;gap:0;max-width:100%">' +
     '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(value)+'</span>' +
@@ -873,8 +898,8 @@ function accountsTableRows(rows){
       '<td>'+(r.customer? esc(r.customer.name): '<span class="faint">-</span>')+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? (fmtDT(r.rental.expiresAt)+'<br>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")) : "-")+'</td>' +
-      '<td class="num">'+(r.rental? r.rental.days : "-")+'</td>' +
-      '<td>'+editInlineHTML(p.id,"device",p.device||"","84")+'</td>' +
+      '<td class="num">'+(r.rental? editSelectHTML(r.rental.id,"days",r.rental.days,DAYS_OPTIONS,78) : '<span class="faint">-</span>')+'</td>' +
+      '<td>'+editSelectHTML(p.id,"device",p.device||"-",DEVICE_OPTIONS,120)+'</td>' +
       '<td>'+rowActionsHTML(r)+'</td>' +
     '</tr>';
   }).join("");
@@ -887,13 +912,13 @@ function accountsCardsHTML(rows){
       '<div class="grid grid-2" style="font-size:11.5px">' +
         '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+copyChipHTML(acc.email)+'</div>' +
         '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
-        '<div class="muted">จำนวนวัน</div><div style="text-align:right">'+(r.rental?r.rental.days:"-")+'</div>' +
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
       '</div>' +
       '<div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px">' +
         '<div style="flex:1"><div class="muted" style="margin-bottom:3px">PIN</div>'+editInlineHTML(p.id,"pin",p.pin||"","100%")+'</div>' +
-        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">อุปกรณ์</div>'+editInlineHTML(p.id,"device",p.device||"","100%")+'</div>' +
+        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">อุปกรณ์</div>'+editSelectHTML(p.id,"device",p.device||"-",DEVICE_OPTIONS,"100%")+'</div>' +
       '</div>' +
+      '<div style="margin-top:8px;font-size:11.5px"><div class="muted" style="margin-bottom:3px">จำนวนวันที่เช่า</div>'+(r.rental? editSelectHTML(r.rental.id,"days",r.rental.days,DAYS_OPTIONS,"100%") : '<span class="faint">-</span>')+'</div>' +
       '<div style="margin-top:10px">'+rowActionsHTML(r)+'</div>' +
     '</div>';
   }).join("");
@@ -994,8 +1019,14 @@ function mountAdminAccounts(){
     btn.onclick=function(){
       var field=btn.getAttribute("data-save-field"), id=btn.getAttribute("data-save-id");
       var input=document.querySelector('[data-edit-field="'+field+'"][data-edit-id="'+id+'"]');
+      if(!input) return;
+      if(field==="days"){
+        var r=rental(id);
+        if(r){ r.days=Number(input.value); toast("บันทึกจำนวนวันที่เช่าแล้ว","good"); render(true); }
+        return;
+      }
       var p=profile(id);
-      if(p && input){ p[field]=input.value.trim(); toast((field==="pin"?"บันทึก PIN แล้ว":"บันทึกอุปกรณ์แล้ว"),"good"); render(true); }
+      if(p){ p[field]=input.value.trim(); toast((field==="pin"?"บันทึก PIN แล้ว":"บันทึกอุปกรณ์แล้ว"),"good"); render(true); }
     };
   });
   document.querySelectorAll('[data-copy-field]').forEach(function(btn){
@@ -1518,7 +1549,8 @@ function viewAdminSettings(){
     '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
       '<div class="grid grid-2">' +
         '<div class="field"><label>ชื่อร้าน</label><input class="input" value="'+esc(SHOP.name)+'"></div>' +
-        '<div class="field"><label>ช่องทางติดต่อ (ลิงก์)</label><input class="input" value="'+esc(SHOP.contact)+'"></div>' +
+        '<div class="field"><label>ช่องทางติดต่อ LINE (ลิงก์)</label><input class="input" value="'+esc(SHOP.contactLine)+'"></div>' +
+        '<div class="field"><label>ช่องทางติดต่อ Facebook (ลิงก์)</label><input class="input" value="'+esc(SHOP.contactFacebook)+'"></div>' +
       '</div><div class="field"><label>คำอธิบายร้านสั้น ๆ</label><textarea class="input" rows="2">'+esc(SHOP.tagline)+'</textarea></div>' +
     '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title">รูปแบบการแสดงผล</div>' +

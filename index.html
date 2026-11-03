@@ -829,11 +829,11 @@ function accountsTableRows(rows){
     var p=r.profile, acc=r.account;
     return '<tr>' +
       '<td style="font-weight:600">'+esc(p.name)+'</td>' +
-      '<td class="muted" style="font-size:12px">'+copyChipHTML(acc.email)+'</td>' +
-      '<td>'+secretHTML(acc.email.replace("@","@pw-"), acc.pass)+'</td>' +
+      '<td class="muted" style="font-size:12px">'+secretHTML(acc.email)+'</td>' +
+      '<td>'+secretHTML(acc.pass)+'</td>' +
       '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60")+'</td>' +
       '<td>'+statusBadge(r.status)+'</td>' +
-      '<td>'+(r.customer? esc(r.customer.name): '<span class="faint">-</span>')+'</td>' +
+      '<td>'+(r.customer? secretHTML(r.customer.name): '<span class="faint">-</span>')+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? (fmtDT(r.rental.expiresAt)+'<br>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")) : "-")+'</td>' +
       '<td class="num">'+(r.rental? editSelectHTML(r.rental.id,"days",r.rental.days,DAYS_OPTIONS,78) : '<span class="faint">-</span>')+'</td>' +
@@ -848,8 +848,9 @@ function accountsCardsHTML(rows){
     return '<div style="padding:14px;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:13px">'+esc(p.name)+'</div>'+statusBadge(r.status)+'</div>' +
       '<div class="grid grid-2" style="font-size:11.5px">' +
-        '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+copyChipHTML(acc.email)+'</div>' +
-        '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
+        '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+secretHTML(acc.email)+'</div>' +
+        '<div class="muted">รหัสผ่าน</div><div style="text-align:right">'+secretHTML(acc.pass)+'</div>' +
+        '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?secretHTML(r.customer.name):"-")+'</div>' +
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
       '</div>' +
       '<div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px">' +
@@ -865,8 +866,10 @@ function rowActionsHTML(r){
   if(r.status==="AVAILABLE") return '<button class="btn btn-primary btn-sm" data-assign="'+r.profile.id+'">เพิ่มลูกค้า</button>';
   return '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" data-renew="'+r.rental.id+'">ต่ออายุ</button><button class="btn btn-outline btn-sm" data-release="'+r.rental.id+'">คืนเป็นว่าง</button></div>';
 }
+var SECRET_MASK = "••••••••"; // ค่าที่แสดงเป็นค่าเริ่มต้นสำหรับข้อมูลที่ต้องซ่อนไว้ (อีเมล/รหัสผ่าน/ชื่อลูกค้า) กดรูปตาเพื่อดูค่าจริง
 function secretHTML(real,masked){
   var id="s"+Math.random().toString(36).slice(2,9);
+  masked = masked==null ? SECRET_MASK : masked;
   return '<span class="secret" data-real="'+esc(real)+'" data-masked="'+esc(masked)+'" id="'+id+'"><span class="val">'+esc(masked)+'</span>' +
     '<button data-secret-toggle="'+id+'">'+icon('eye')+'</button>' +
     '<button data-secret-copy="'+id+'">'+icon('copy')+'</button></span>';
@@ -926,7 +929,7 @@ function viewAdminAccounts(){
     var collapsed = !!ADMIN_UI.collapsed[g.account.id];
     return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle);cursor:pointer" data-toggle-group="'+g.account.id+'">' +
-        '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(g.account.email)+'</div></div>' +
+        '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px" data-stop-toggle>'+secretHTML(g.account.email)+'</div></div>' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap" data-stop-toggle>' +
           '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
           '<button class="btn btn-outline btn-sm" data-editacc="'+g.account.id+'" title="แก้ไขบัญชี">'+icon('edit')+'</button>' +
@@ -1361,13 +1364,13 @@ function viewAdminAccountDetail(accountId){
     '<a href="#admin-accounts" class="link-btn" style="font-size:12.5px">'+icon('back')+'กลับไปบัญชีทั้งหมด</a>' +
     '<div class="card" style="padding:20px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
-        '<div><h2 style="font-size:16px;font-weight:800">'+esc(acc.name)+'</h2><p class="muted" style="font-size:12.5px">'+esc(acc.email)+'</p></div>' +
+        '<div><h2 style="font-size:16px;font-weight:800">'+esc(acc.name)+'</h2><p class="muted" style="font-size:12.5px">'+secretHTML(acc.email)+'</p></div>' +
         '<button class="btn btn-outline btn-sm" id="delAccBtn" style="color:var(--bad);border-color:var(--bad-bd)" '+(hasActive?"disabled title=\"ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน\"":"")+'>'+icon('trash')+'ลบบัญชี</button>' +
       '</div>' +
       '<div class="grid grid-2">' +
         '<div class="field"><label>ชื่อบัญชีภายในร้าน</label><input class="input" id="accName" value="'+esc(acc.name)+'"></div>' +
         '<div class="field"><label>อีเมล Netflix</label><input class="input" id="accEmail" value="'+esc(acc.email)+'"></div>' +
-        '<div class="field"><label>รหัสผ่านจำลอง</label><div class="input" style="display:flex;align-items:center;background:var(--bg-subtle)">'+secretHTML("N3tfl1x-Demo!2026",acc.pass)+'</div></div>' +
+        '<div class="field"><label>รหัสผ่าน Netflix</label><div class="input" style="display:flex;align-items:center;background:var(--bg-subtle)">'+secretHTML(acc.pass)+'</div></div>' +
         '<div class="field"><label>บัญชีอีเมลที่เชื่อมโยง</label>'+(mb?'<a href="#admin-mailboxes" class="input" style="display:flex;align-items:center;color:var(--accent);text-decoration:none">'+esc(mb.email)+'</a>':'<div class="input" style="display:flex;align-items:center;color:var(--faint)">ยังไม่ได้เชื่อมโยง</div>')+'</div>' +
       '</div>' +
       '<div class="field" style="margin-top:4px"><label>หมายเหตุ</label><textarea class="input" id="accNote" rows="2">'+esc(acc.note||"")+'</textarea></div>' +
@@ -1376,7 +1379,7 @@ function viewAdminAccountDetail(accountId){
     '<div><h3 style="font-size:13px;font-weight:800;margin-bottom:10px">โปรไฟล์ในบัญชีนี้ ('+rows.length+')</h3>' +
       '<div class="grid grid-2">' + rows.map(function(r){
         return '<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-weight:700;font-size:13px">'+esc(r.profile.name)+'</div>'+statusBadge(r.status)+'</div>' +
-        '<div class="muted" style="font-size:11.5px">'+(r.customer?("ลูกค้า: "+esc(r.customer.name)):"ยังไม่มีลูกค้า")+'</div>' +
+        '<div class="muted" style="font-size:11.5px">'+(r.customer?("ลูกค้า: "+secretHTML(r.customer.name)):"ยังไม่มีลูกค้า")+'</div>' +
         (r.rental?'<div class="faint" style="font-size:11px;margin-top:3px">หมดอายุ '+fmtDT(r.rental.expiresAt)+'</div>':'')+'</div>';
       }).join("") + '</div>' +
     '</div>' +

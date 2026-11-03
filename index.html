@@ -795,10 +795,12 @@ function viewAdminDashboard(){
   return adminShell("admin","แดชบอร์ด",body);
 }
 
-function editInlineHTML(profileId,field,value,width){
+function editInlineHTML(profileId,field,value,width,masked){
   var w = width==="100%" ? "100%" : (width||64)+"px";
+  var toggleBtn = masked ? '<button type="button" style="border:none;background:var(--bg-subtle);color:var(--muted);cursor:pointer;border-radius:7px;flex:none;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center" data-toggle-field-visibility="'+field+'" data-toggle-field-id="'+profileId+'" title="แสดง/ซ่อน">'+icon('eye')+'</button>' : '';
   return '<div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">' +
-    '<input class="input" style="height:36px;font-size:13px;width:'+w+';padding:7px 8px;min-width:0" value="'+esc(value||"")+'" data-edit-field="'+field+'" data-edit-id="'+profileId+'">' +
+    '<input class="input" type="'+(masked?"password":"text")+'" style="height:36px;font-size:13px;width:'+w+';padding:7px 8px;min-width:0" value="'+esc(value||"")+'" data-edit-field="'+field+'" data-edit-id="'+profileId+'">' +
+    toggleBtn +
     '<button style="border:none;background:var(--bg-subtle);color:var(--muted);cursor:pointer;border-radius:7px;flex:none;min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center" data-copy-field="'+field+'" data-copy-id="'+profileId+'" title="คัดลอก">'+icon('copy')+'</button>' +
     '<button class="btn btn-primary" style="padding:0 10px;height:36px;flex:none;min-width:36px" data-save-field="'+field+'" data-save-id="'+profileId+'" title="บันทึก">✓</button>' +
   '</div>';
@@ -831,7 +833,7 @@ function accountsTableRows(rows){
       '<td style="font-weight:600">'+esc(p.name)+'</td>' +
       '<td class="muted" style="font-size:12px">'+secretHTML(acc.email)+'</td>' +
       '<td>'+secretHTML(acc.pass)+'</td>' +
-      '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60")+'</td>' +
+      '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60",true)+'</td>' +
       '<td>'+statusBadge(r.status)+'</td>' +
       '<td>'+(r.customer? secretHTML(r.customer.name): '<span class="faint">-</span>')+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
@@ -854,7 +856,7 @@ function accountsCardsHTML(rows){
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
       '</div>' +
       '<div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px">' +
-        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">PIN</div>'+editInlineHTML(p.id,"pin",p.pin||"","100%")+'</div>' +
+        '<div style="flex:1"><div class="muted" style="margin-bottom:3px">PIN</div>'+editInlineHTML(p.id,"pin",p.pin||"","100%",true)+'</div>' +
         '<div style="flex:1"><div class="muted" style="margin-bottom:3px">อุปกรณ์</div>'+editSelectHTML(p.id,"device",p.device||"-",DEVICE_OPTIONS,"100%")+'</div>' +
       '</div>' +
       '<div style="margin-top:8px;font-size:11.5px"><div class="muted" style="margin-bottom:3px">จำนวนวันที่เช่า</div>'+(r.rental? editSelectHTML(r.rental.id,"days",r.rental.days,DAYS_OPTIONS,"100%") : '<span class="faint">-</span>')+'</div>' +
@@ -929,7 +931,7 @@ function viewAdminAccounts(){
     var collapsed = !!ADMIN_UI.collapsed[g.account.id];
     return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg-subtle);cursor:pointer" data-toggle-group="'+g.account.id+'">' +
-        '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px" data-stop-toggle>'+secretHTML(g.account.email)+'</div></div>' +
+        '<div><div style="font-weight:700;font-size:13px">'+esc(g.account.name)+'</div><div class="muted" style="font-size:11.5px">'+esc(g.account.email)+'</div></div>' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap" data-stop-toggle>' +
           '<a href="#admin-account-'+g.account.id+'" style="color:var(--accent);font-size:11.5px;font-weight:600">ดูรายละเอียดบัญชี →</a>' +
           '<button class="btn btn-outline btn-sm" data-editacc="'+g.account.id+'" title="แก้ไขบัญชี">'+icon('edit')+'</button>' +
@@ -987,6 +989,14 @@ function mountAdminAccounts(){
   document.querySelectorAll('[data-assign]').forEach(function(btn){ btn.onclick=function(){ openAssignModal(btn.getAttribute("data-assign")); }; });
   document.querySelectorAll('[data-renew]').forEach(function(btn){ btn.onclick=function(){ openRenewModal(btn.getAttribute("data-renew")); }; });
   document.querySelectorAll('[data-release]').forEach(function(btn){ btn.onclick=function(){ openReleaseConfirm(btn.getAttribute("data-release")); }; });
+  document.querySelectorAll('[data-toggle-field-visibility]').forEach(function(btn){
+    btn.onclick=function(){
+      var field=btn.getAttribute("data-toggle-field-visibility"), id=btn.getAttribute("data-toggle-field-id");
+      var input=document.querySelector('[data-edit-field="'+field+'"][data-edit-id="'+id+'"]');
+      if(!input) return;
+      input.type = input.type==="password" ? "text" : "password";
+    };
+  });
   document.querySelectorAll('[data-save-field]').forEach(function(btn){
     btn.onclick=function(){
       var field=btn.getAttribute("data-save-field"), id=btn.getAttribute("data-save-id");

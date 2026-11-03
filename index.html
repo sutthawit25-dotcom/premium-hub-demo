@@ -285,6 +285,8 @@ var REVIEWS = [
 var NEW_REVIEW_DRAFTS = {};
 function reviewDraft(cid){ return NEW_REVIEW_DRAFTS[cid] || (NEW_REVIEW_DRAFTS[cid]={rating:5, comment:""}); }
 function reviewsForCustomer(cid){ return REVIEWS.filter(function(r){ return r.customerId===cid; }).sort(function(a,b){ return new Date(b.at)-new Date(a.at); }); }
+// หน้า "รีวิว" แยกต่างหาก ไม่ได้รวมอยู่ในหน้ารายละเอียดลูกค้าอีกต่อไป
+var REVIEW_UI = { customerId: CUSTOMERS.length? CUSTOMERS[0].id : null };
 function starsHTML(rating,size){
   var s="", sz=size||14;
   for(var i=1;i<=5;i++){ s += '<span style="color:'+(i<=rating?"#f5a623":"var(--border)")+';font-size:'+sz+'px;line-height:1">★</span>'; }
@@ -750,6 +752,7 @@ var ADMIN_NAV = [
   {href:"admin",label:"แดชบอร์ด"},
   {href:"admin-accounts",label:"บัญชี Netflix"},
   {href:"admin-customers",label:"ลูกค้า"},
+  {href:"admin-reviews",label:"รีวิว"},
   {href:"admin-rentals",label:"รายการใช้งาน"},
   {href:"admin-revenue",label:"รายได้"},
   {href:"admin-mailboxes",label:"จัดการอีเมล"},
@@ -1306,33 +1309,66 @@ function viewAdminCustomerDetail(customerId){
     '<div>' + (function(){
       var revs=reviewsForCustomer(c.id);
       var avg = revs.length? (revs.reduce(function(s,r){return s+r.rating},0)/revs.length) : 0;
-      var draft=reviewDraft(c.id);
-      return '<div class="section-title" style="display:flex;align-items:center;gap:8px">ประวัติการรีวิวจากลูกค้า '+demoTag()+'</div>' +
-      '<div class="card" style="padding:16px">' +
-        (revs.length? '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)"><div style="font-size:22px;font-weight:800">'+avg.toFixed(1)+'</div>'+starsHTML(Math.round(avg),16)+'<div class="muted" style="font-size:12px">จาก '+revs.length+' รีวิว</div></div>' : '') +
-        (revs.length===0? emptyState("ยังไม่มีรีวิวจากลูกค้ารายนี้") :
-        '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">'+revs.map(function(r){
-          return '<div style="border-bottom:1px solid var(--border);padding-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center">'+starsHTML(r.rating)+'<span class="faint" style="font-size:11px">'+fmtD(r.at)+'</span></div><div style="font-size:12.5px;margin-top:4px">'+esc(r.comment)+'</div></div>';
-        }).join("")+'</div>') +
-        '<div style="border-top:1px solid var(--border);padding-top:12px">' +
-          '<div class="muted" style="font-size:11.5px;margin-bottom:6px">เพิ่มรีวิวตัวอย่าง (เดโม่ — จำลองรีวิวจากลูกค้า)</div>' +
-          '<div style="display:flex;gap:4px;margin-bottom:8px">'+[1,2,3,4,5].map(function(n){ return '<button type="button" data-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=draft.rating?"#f5a623":"var(--border)")+';font-size:22px;line-height:1">★</button>'; }).join("")+'</div>' +
-          '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า (ตัวอย่าง)">'+esc(draft.comment)+'</textarea>' +
-          '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิวเดโม่</button></div>' +
-        '</div>' +
-      '</div>';
+      return '<div class="section-title">รีวิวจากลูกค้า</div>' +
+      '<a href="#admin-reviews" class="card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:inherit">' +
+        (revs.length?
+          '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:20px;font-weight:800">'+avg.toFixed(1)+'</div>'+starsHTML(Math.round(avg),15)+'<div class="muted" style="font-size:12px">จาก '+revs.length+' รีวิว</div></div>' :
+          '<div class="muted" style="font-size:12.5px">ยังไม่มีรีวิวจากลูกค้ารายนี้</div>') +
+        '<span style="color:var(--accent);font-size:12.5px;font-weight:600;white-space:nowrap">ดู/เพิ่มรีวิวทั้งหมด →</span>' +
+      '</a>';
     })() + '</div>' +
   '</div>';
   return adminShell("admin-customer-"+customerId,"รายละเอียดลูกค้า",body);
 }
 function mountAdminCustomerDetail(customerId){
   var b=document.getElementById("saveCustBtn"); if(b) b.onclick=function(){ var c=customer(customerId); var t=document.querySelector(".admin-content textarea.input"); if(t) c.note=t.value; var pt=document.getElementById("pinToggle"); if(pt) c.pin=pt.checked; toast("บันทึกข้อมูลลูกค้าแล้ว","good"); };
-  var draft=reviewDraft(customerId);
+}
+function viewAdminReviews(){
+  var revs = REVIEWS.slice().sort(function(a,b){ return new Date(b.at)-new Date(a.at); });
+  var avg = revs.length? (revs.reduce(function(s,r){return s+r.rating;},0)/revs.length) : 0;
+  var draft = reviewDraft(REVIEW_UI.customerId);
+  var listHtml = revs.length===0? emptyState("ยังไม่มีรีวิวในระบบ") :
+    '<div class="card" style="padding:0;overflow:hidden">' + revs.map(function(r){
+      var c=customer(r.customerId);
+      return '<div style="padding:14px 16px;border-bottom:1px solid var(--border)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<div style="font-weight:700;font-size:13px">'+(c?esc(c.name):'<span class="faint">ลูกค้าที่ถูกลบ</span>')+'</div>' +
+          starsHTML(r.rating) +
+        '</div>' +
+        '<div style="font-size:12.5px;margin-top:4px">'+esc(r.comment)+'</div>' +
+        '<div class="faint" style="font-size:11px;margin-top:4px">'+fmtDT(r.at)+(c?' · <a href="#admin-customer-'+c.id+'" style="color:var(--accent)">ดูลูกค้า →</a>':'')+'</div>' +
+      '</div>';
+    }).join("") + '</div>';
+
+  var body = '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div class="grid grid-4">' +
+      statCard(REVIEWS.length,"รีวิวทั้งหมด") +
+      statCard(revs.length?avg.toFixed(1):"-","คะแนนเฉลี่ย","good") +
+      statCard(revs.filter(function(r){return r.rating>=4;}).length,"รีวิว 4 ดาวขึ้นไป","info") +
+      statCard(revs.filter(function(r){return r.rating<=2;}).length,"รีวิว 2 ดาวลงมา","bad") +
+    '</div>' +
+    '<div class="card" style="padding:16px">' +
+      '<div class="section-title" style="margin-bottom:10px">เพิ่มรีวิวตัวอย่าง '+demoTag()+'</div>' +
+      '<div class="field" style="margin-bottom:10px"><label>ลูกค้า</label><select class="input" id="revCustSel">' +
+        CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(REVIEW_UI.customerId===c.id?"selected":"")+'>'+esc(c.name)+'</option>'; }).join("") +
+      '</select></div>' +
+      '<div style="display:flex;gap:4px;margin-bottom:8px">'+[1,2,3,4,5].map(function(n){ return '<button type="button" data-star="'+n+'" style="background:none;border:none;cursor:pointer;padding:2px;color:'+(n<=draft.rating?"#f5a623":"var(--border)")+';font-size:22px;line-height:1">★</button>'; }).join("")+'</div>' +
+      '<textarea class="input" id="newRevComment" rows="2" placeholder="ความคิดเห็นของลูกค้า (ตัวอย่าง)">'+esc(draft.comment)+'</textarea>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn btn-primary btn-sm" id="addReviewBtn">บันทึกรีวิวเดโม่</button></div>' +
+    '</div>' +
+    '<div><div class="section-title">รีวิวทั้งหมด ('+revs.length+')</div>'+listHtml+'</div>' +
+  '</div>';
+  return adminShell("admin-reviews","รีวิวลูกค้า",body);
+}
+function mountAdminReviews(){
+  var sel=document.getElementById("revCustSel");
+  if(sel) sel.onchange=function(){ REVIEW_UI.customerId=sel.value; render(); };
+  var draft=reviewDraft(REVIEW_UI.customerId);
   document.querySelectorAll('[data-star]').forEach(function(sb){ sb.onclick=function(){ draft.rating=Number(sb.getAttribute("data-star")); render(true); }; });
   var ta=document.getElementById("newRevComment"); if(ta) ta.oninput=function(){ draft.comment=ta.value; };
   var ar=document.getElementById("addReviewBtn");
   if(ar) ar.onclick=function(){
-    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:customerId, rating:draft.rating||5, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ (ตัวอย่าง)", at:new Date().toISOString() });
+    REVIEWS.unshift({ id:"rv-"+Date.now(), customerId:REVIEW_UI.customerId, rating:draft.rating||5, comment:(draft.comment||"").trim()||"ลูกค้าประทับใจการให้บริการ (ตัวอย่าง)", at:new Date().toISOString() });
     draft.rating=5; draft.comment="";
     render(true); toast("เพิ่มรีวิวเดโม่แล้ว","good");
   };
@@ -1591,6 +1627,7 @@ function render(skipScroll){
   else if(route.indexOf("admin-account-")===0) html=viewAdminAccountDetail(route.slice(14));
   else if(route==="admin-customers") html=viewAdminCustomers();
   else if(route.indexOf("admin-customer-")===0) html=viewAdminCustomerDetail(route.slice(15));
+  else if(route==="admin-reviews") html=viewAdminReviews();
   else if(route==="admin-rentals") html=viewAdminRentals();
   else if(route==="admin-revenue") html=viewAdminRevenue();
   else if(route==="admin-mailboxes") html=viewAdminMailboxes();
@@ -1611,6 +1648,7 @@ function render(skipScroll){
   else if(route.indexOf("admin-account-")===0) mountAdminAccountDetail();
   else if(route==="admin-customers") mountAdminCustomers();
   else if(route.indexOf("admin-customer-")===0) mountAdminCustomerDetail(route.slice(15));
+  else if(route==="admin-reviews") mountAdminReviews();
   else if(route==="admin-rentals") mountAdminRentals();
   else if(route==="admin-mailboxes") mountAdminMailboxes();
   else if(route==="admin-settings") mountAdminSettings();

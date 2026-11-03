@@ -330,23 +330,23 @@ var RENTALS = [
   {id:"rt-h2",profileId:"pf-5",customerId:"cus-5",startedAt:hoursFromNow(-24*20),expiresAt:hoursFromNow(-24*17),days:3,price:49,paymentMethod:"เงินสด",closedAt:hoursFromNow(-24*16.5)}
 ];
 var RENEWALS = [
-  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,paymentMethod:"โอนเงิน",actor:"admin@premiumhub.demo",at:hoursFromNow(-24*3)},
-  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),paymentMethod:"พร้อมเพย์",actor:"admin@premiumhub.demo",at:hoursFromNow(-24*19)}
+  {id:"rn-1",rentalId:"rt-6",prevExpires:hoursFromNow(24*5),newExpires:hoursFromNow(24*20),days:15,price:169,paymentMethod:"โอนเงิน",actor:"super@admin",at:hoursFromNow(-24*3)},
+  {id:"rn-2",rentalId:"rt-h2",prevExpires:hoursFromNow(-24*19),newExpires:hoursFromNow(-24*17),days:2,price:planPrice("mobile",2),paymentMethod:"พร้อมเพย์",actor:"super@admin",at:hoursFromNow(-24*19)}
 ];
 // รายการ "ขายขาด" ที่ไม่ผูกกับรอบเช่า/วันหมดอายุ — บันทึกเองจากหน้า "รายได้"
 var ONETIME_SALES = [
   {id:"os-1", customerName:"ธนากร วงศ์ไพศาล", note:"ขายบัญชี Netflix ขาด 1 บัญชี", amount:350, paymentMethod:"โอนเงิน", at:hoursFromNow(-24*6)}
 ];
 var ACTIVITY = [
-  {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
-  {id:"al-2",type:"RENEWED",actor:"admin@premiumhub.demo",target:"FH - User 1 (NF - Hub B)",detail:"ต่ออายุเพิ่ม 15 วัน จาก 5 วันที่เหลือ",at:hoursFromNow(-24*3)},
+  {id:"al-1",type:"CUSTOMER_ASSIGNED",actor:"super@admin",target:"FH - User 1 (NF - Hub A)",detail:"เพิ่มลูกค้า กมลวรรณ ศรีสุข เข้าโปรไฟล์ ใช้งาน 7 วัน",at:hoursFromNow(-24*3)},
+  {id:"al-2",type:"RENEWED",actor:"super@admin",target:"FH - User 1 (NF - Hub B)",detail:"ต่ออายุเพิ่ม 15 วัน จาก 5 วันที่เหลือ",at:hoursFromNow(-24*3)},
   {id:"al-3",type:"OTP_REQUESTED",actor:"kamonwan.demo@example.com",target:"FH - User 1 (NF - Hub A)",detail:"ลูกค้าขอรหัสเดโม่",at:hoursFromNow(-0.2)},
   {id:"al-4",type:"EXPIRED",actor:"system",target:"FH - User 5 (NF - Hub A)",detail:"รายการหมดเวลาอัตโนมัติตามเวลาเซิร์ฟเวอร์",at:hoursFromNow(-24*3)},
-  {id:"al-5",type:"RELEASED",actor:"admin@premiumhub.demo",target:"FH - User 3 (NF - Hub A)",detail:"คืนโปรไฟล์เป็นว่างหลังหมดเวลา",at:hoursFromNow(-24*32)},
-  {id:"al-6",type:"SECRET_VIEWED",actor:"admin@premiumhub.demo",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
-  {id:"al-7",type:"ACCOUNT_UPDATED",actor:"admin@premiumhub.demo",target:"NF - Hub B",detail:"แก้ไขหมายเหตุบัญชี",at:hoursFromNow(-24*6)}
+  {id:"al-5",type:"RELEASED",actor:"super@admin",target:"FH - User 3 (NF - Hub A)",detail:"คืนโปรไฟล์เป็นว่างหลังหมดเวลา",at:hoursFromNow(-24*32)},
+  {id:"al-6",type:"SECRET_VIEWED",actor:"super@admin",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
+  {id:"al-7",type:"ACCOUNT_UPDATED",actor:"super@admin",target:"NF - Hub B",detail:"แก้ไขหมายเหตุบัญชี",at:hoursFromNow(-24*6)}
 ];
-var DEMO_ACC = { admin:{email:"admin@premiumhub.demo",pass:"DemoAdmin#2026"} };
+var ADMIN_ACC = { email:"super@admin", pass:"Flixie@House1910" };
 
 /* -------------------------------------------------------------- utils */
 function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
@@ -633,26 +633,22 @@ function viewLogin(){
       '<div style="font-weight:700;font-size:13px;margin-bottom:2px">เข้าสู่ระบบแอดมิน</div>' +
       '<p class="muted" style="font-size:12px;margin-bottom:14px">สำหรับผู้ดูแลร้านเท่านั้น ลูกค้าสั่งซื้อผ่านการทักแชทหาแอดมิน ไม่ต้องสมัครสมาชิก</p>' +
       '<form id="loginForm" style="display:flex;flex-direction:column;gap:12px">' +
-        '<div class="field"><label for="le">อีเมล</label><input class="input" id="le" type="email" placeholder="name@example.com"></div>' +
+        '<div class="field"><label for="le">อีเมล / ชื่อผู้ใช้</label><input class="input" id="le" placeholder="อีเมลหรือชื่อผู้ใช้แอดมิน"></div>' +
         '<div class="field"><label for="lp">รหัสผ่าน</label><input class="input" id="lp" type="password" placeholder="••••••••"></div>' +
         '<button class="btn btn-primary" type="submit" style="margin-top:2px">เข้าสู่ระบบ</button>' +
       '</form>' +
-      '<div class="card" style="margin-top:16px;padding:11px;background:var(--bg-subtle)">' +
-        '<div style="font-weight:700;font-size:11.5px;margin-bottom:6px">บัญชีทดลอง (Demo)</div>' +
-        '<button class="link-btn" id="fillAdmin" style="display:block;font-size:11.5px">แอดมิน: '+DEMO_ACC.admin.email+'</button>' +
-      '</div>' +
     '</div>' +
     '<a href="#home" class="link-btn" style="margin-top:14px;font-size:12px">'+icon('back')+'กลับหน้าร้าน</a>' +
   '</main>' +
   siteFooterHTML();
 }
 function mountLogin(){
-  document.getElementById("fillAdmin").onclick=function(){ document.getElementById("le").value=DEMO_ACC.admin.email; document.getElementById("lp").value=DEMO_ACC.admin.pass; };
   document.getElementById("loginForm").onsubmit=function(e){
     e.preventDefault();
-    var email=document.getElementById("le").value, pass=document.getElementById("lp").value;
+    var email=document.getElementById("le").value.trim(), pass=document.getElementById("lp").value;
     if(!email||!pass){ toast("กรุณากรอกอีเมลและรหัสผ่าน","bad"); return; }
-    toast("เข้าสู่ระบบสำเร็จ (Demo)","good");
+    if(email!==ADMIN_ACC.email || pass!==ADMIN_ACC.pass){ toast("อีเมลหรือรหัสผ่านไม่ถูกต้อง","bad"); return; }
+    toast("เข้าสู่ระบบสำเร็จ","good");
     setTimeout(function(){ go("admin"); }, 350);
   };
 }
@@ -710,7 +706,7 @@ function adminShell(route, title, bodyHtml){
           themeToggleHTML('tt-admin-'+Math.random().toString(36).slice(2)) +
           '<div style="display:flex;align-items:center;gap:7px;border-left:1px solid var(--border);padding-left:10px" data-desktop-only>' +
             '<div style="width:28px;height:28px;border-radius:999px;background:var(--bg-subtle);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800">AD</div>' +
-            '<div><div style="font-size:11px;font-weight:700">แอดมิน</div><div class="faint" style="font-size:10px">admin@premiumhub.demo</div></div>' +
+            '<div><div style="font-size:11px;font-weight:700">แอดมิน</div><div class="faint" style="font-size:10px">super@admin</div></div>' +
           '</div>' +
         '</div>' +
       '</header>' +
@@ -1195,7 +1191,7 @@ function mountModal(){
       r.expiresAt = new Date(base.getTime()+m.days*86400000).toISOString();
       r.deviceType = m.deviceType;
       r.paymentMethod = m.paymentMethod;
-      RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, paymentMethod:m.paymentMethod, actor:"admin@premiumhub.demo", at:new Date().toISOString() });
+      RENEWALS.push({ id:"rn-new-"+Date.now(), rentalId:r.id, prevExpires:prevExpires, newExpires:r.expiresAt, days:m.days, price:price, paymentMethod:m.paymentMethod, actor:"super@admin", at:new Date().toISOString() });
       closeModal();
       toast("ต่ออายุเพิ่ม "+m.days+" วันแล้ว ยอดขาย "+fmtMoney(price)+" ถูกบันทึกในหน้า “รายได้” แล้ว","good");
     };

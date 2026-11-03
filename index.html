@@ -219,7 +219,11 @@
 var NOW = Date.now();
 function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
 
-var SHOP = { name:"Premium Hub", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~premiumhub", contactFacebook:"https://facebook.com/premiumhub" };
+var SHOP = { name:"Flixie House", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~premiumhub", contactFacebook:"https://facebook.com/premiumhub" };
+// สั่งซื้อผ่านการทักแชทหาแอดมินเท่านั้น (ไม่มีระบบสมัครสมาชิก/ล็อกอินของลูกค้า) ทุกคนที่เข้าหน้าร้านถือเป็น Guest
+function siteFooterHTML(){
+  return '<footer class="site">'+esc(SHOP.name)+' — ระบบนี้เป็น MVP Demo ใช้ข้อมูลและ OTP จำลองเท่านั้น<div style="margin-top:4px;font-size:10px;opacity:.65">สงวนลิขสิทธิ์ CATBAYE</div></footer>';
+}
 // ปุ่มติดต่อแอดมิน แสดงทั้งช่องทาง LINE และ Facebook คู่กันเสมอ
 function contactButtonsHTML(opts){
   opts = opts || {};
@@ -333,8 +337,7 @@ var ACTIVITY = [
   {id:"al-6",type:"SECRET_VIEWED",actor:"admin@premiumhub.demo",target:"NF - Hub A",detail:"เปิดดูรหัสผ่านบัญชี",at:hoursFromNow(-24)},
   {id:"al-7",type:"ACCOUNT_UPDATED",actor:"admin@premiumhub.demo",target:"NF - Hub B",detail:"แก้ไขหมายเหตุบัญชี",at:hoursFromNow(-24*6)}
 ];
-var DEMO_ACC = { customer:{email:"kamonwan.demo@example.com",pass:"DemoCustomer#2026"}, admin:{email:"admin@premiumhub.demo",pass:"DemoAdmin#2026"} };
-var SESSION_CUSTOMER = "cus-1";
+var DEMO_ACC = { admin:{email:"admin@premiumhub.demo",pass:"DemoAdmin#2026"} };
 
 /* -------------------------------------------------------------- utils */
 function byId(arr,id){ for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
@@ -537,10 +540,10 @@ function publicTopbar(opts){
   opts=opts||{};
   return '' +
   '<header class="topbar gutter">' +
-    '<a href="#'+(opts.homeHref||'home')+'" style="text-decoration:none"><div class="brand"><div class="mark">P</div>'+esc(SHOP.name)+'</div></a>' +
+    '<a href="#'+(opts.homeHref||'home')+'" style="text-decoration:none"><div class="brand"><div class="mark">F</div>'+esc(SHOP.name)+'</div></a>' +
     '<div style="display:flex;align-items:center;gap:8px">' +
       themeToggleHTML('tt-'+Math.random().toString(36).slice(2)) +
-      (opts.showLogin!==false?'<a href="#login" class="btn btn-outline btn-sm">เข้าสู่ระบบ</a>':'') +
+      (opts.showLogin!==false?'<a href="#login" class="btn btn-outline btn-sm">เข้าสู่ระบบแอดมิน</a>':'') +
       (opts.showLogout?'<a href="#home" class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>':'') +
     '</div>' +
   '</header>';
@@ -567,10 +570,9 @@ function viewHome(){
     '<section class="hero" style="display:flex;flex-direction:column;gap:14px">' +
       '<span class="pill">ร้านพรีเมียม Netflix</span>' +
       '<h1 style="font-size:30px;line-height:1.3;font-weight:800">บริการ Netflix โปรไฟล์พร้อมใช้ จัดการวันหมดอายุให้อัตโนมัติ</h1>' +
-      '<p class="muted" style="max-width:520px">'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วติดต่อแอดมินเพื่อให้มอบหมายโปรไฟล์ให้คุณ</p>' +
+      '<p class="muted" style="max-width:520px">'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วทักแชทหาแอดมินเพื่อสั่งซื้อได้ทันที ไม่ต้องสมัครสมาชิก</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">' +
-        contactButtonsHTML({lineLabel:"ติดต่อแอดมิน (LINE)",fbLabel:"ติดต่อแอดมิน (Facebook)"}) +
-        '<a href="#login" class="btn btn-secondary">เข้าสู่ระบบลูกค้า</a>' +
+        contactButtonsHTML({lineLabel:"สั่งซื้อทาง LINE",fbLabel:"สั่งซื้อทาง Facebook"}) +
       '</div>' +
     '</section>' +
     '<section style="margin-top:36px">' +
@@ -582,170 +584,44 @@ function viewHome(){
       '</div>' +
     '</section>' +
     '<section class="grid grid-3" style="margin-top:28px">' +
-      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('search')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">จัดการได้ทุกโปรไฟล์</div><div class="muted" style="font-size:12.5px">แอดมินเลือกโปรไฟล์ ลูกค้า และจำนวนวัน ระบบคำนวณวันหมดอายุให้เอง</div></div></div>' +
-      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('monitor')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ตรวจสอบเวลาคงเหลือได้</div><div class="muted" style="font-size:12.5px">ลูกค้าดูวันเริ่ม วันหมดอายุ และเวลาคงเหลือของบริการตนเองได้ตลอดเวลา</div></div></div>' +
+      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('search')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ไม่ต้องสมัครสมาชิก</div><div class="muted" style="font-size:12.5px">ทักแชทบอกแพ็กเกจที่ต้องการ แอดมินจัดการให้ทุกขั้นตอน สั่งซื้อได้ทันทีแบบ Guest</div></div></div>' +
+      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('monitor')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ตอบไว ดูแลต่อเนื่อง</div><div class="muted" style="font-size:12.5px">แจ้งวันหมดอายุและรหัส OTP ให้ทุกครั้งที่ต้องใช้งาน ผ่าน LINE หรือ Facebook</div></div></div>' +
       '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('eye')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">โปร่งใส ตรวจสอบได้</div><div class="muted" style="font-size:12.5px">ทุกการเปลี่ยนแปลงถูกบันทึกเป็นประวัติกิจกรรม พร้อมผู้ดำเนินการและเวลา</div></div></div>' +
     '</section>' +
   '</main>' +
-  '<footer class="site">'+esc(SHOP.name)+' — ระบบนี้เป็น MVP Demo ใช้ข้อมูลและ OTP จำลองเท่านั้น</footer>';
+  siteFooterHTML();
 }
 
 function viewLogin(){
   return publicTopbar({showLogin:false}) +
   '<main class="gutter" style="max-width:380px;margin:40px auto;display:flex;flex-direction:column;align-items:center;gap:0">' +
     '<div class="card" style="padding:22px;width:100%">' +
-      '<div class="tabs" id="loginTabs" style="width:100%">' +
-        '<button data-role="customer" class="active" style="flex:1">ลูกค้า</button>' +
-        '<button data-role="admin" style="flex:1">แอดมิน</button>' +
-      '</div>' +
-      '<form id="loginForm" style="margin-top:16px;display:flex;flex-direction:column;gap:12px">' +
+      '<div style="font-weight:700;font-size:13px;margin-bottom:2px">เข้าสู่ระบบแอดมิน</div>' +
+      '<p class="muted" style="font-size:12px;margin-bottom:14px">สำหรับผู้ดูแลร้านเท่านั้น ลูกค้าสั่งซื้อผ่านการทักแชทหาแอดมิน ไม่ต้องสมัครสมาชิก</p>' +
+      '<form id="loginForm" style="display:flex;flex-direction:column;gap:12px">' +
         '<div class="field"><label for="le">อีเมล</label><input class="input" id="le" type="email" placeholder="name@example.com"></div>' +
         '<div class="field"><label for="lp">รหัสผ่าน</label><input class="input" id="lp" type="password" placeholder="••••••••"></div>' +
         '<button class="btn btn-primary" type="submit" style="margin-top:2px">เข้าสู่ระบบ</button>' +
       '</form>' +
       '<div class="card" style="margin-top:16px;padding:11px;background:var(--bg-subtle)">' +
         '<div style="font-weight:700;font-size:11.5px;margin-bottom:6px">บัญชีทดลอง (Demo)</div>' +
-        '<button class="link-btn" id="fillCustomer" style="display:block;font-size:11.5px">ลูกค้า: '+DEMO_ACC.customer.email+'</button>' +
-        '<button class="link-btn" id="fillAdmin" style="display:block;font-size:11.5px;margin-top:3px">แอดมิน: '+DEMO_ACC.admin.email+'</button>' +
+        '<button class="link-btn" id="fillAdmin" style="display:block;font-size:11.5px">แอดมิน: '+DEMO_ACC.admin.email+'</button>' +
       '</div>' +
     '</div>' +
     '<a href="#home" class="link-btn" style="margin-top:14px;font-size:12px">'+icon('back')+'กลับหน้าร้าน</a>' +
-  '</main>';
+  '</main>' +
+  siteFooterHTML();
 }
 function mountLogin(){
-  var role="customer";
-  document.querySelectorAll('#loginTabs button').forEach(function(b){
-    b.onclick=function(){ role=b.getAttribute("data-role"); document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.remove("active")}); b.classList.add("active"); };
-  });
-  document.getElementById("fillCustomer").onclick=function(){ document.getElementById("le").value=DEMO_ACC.customer.email; document.getElementById("lp").value=DEMO_ACC.customer.pass; role="customer"; document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.toggle("active",x.getAttribute("data-role")==="customer")}); };
-  document.getElementById("fillAdmin").onclick=function(){ document.getElementById("le").value=DEMO_ACC.admin.email; document.getElementById("lp").value=DEMO_ACC.admin.pass; role="admin"; document.querySelectorAll('#loginTabs button').forEach(function(x){x.classList.toggle("active",x.getAttribute("data-role")==="admin")}); };
+  document.getElementById("fillAdmin").onclick=function(){ document.getElementById("le").value=DEMO_ACC.admin.email; document.getElementById("lp").value=DEMO_ACC.admin.pass; };
   document.getElementById("loginForm").onsubmit=function(e){
     e.preventDefault();
     var email=document.getElementById("le").value, pass=document.getElementById("lp").value;
     if(!email||!pass){ toast("กรุณากรอกอีเมลและรหัสผ่าน","bad"); return; }
     toast("เข้าสู่ระบบสำเร็จ (Demo)","good");
-    setTimeout(function(){ go(role==="admin"?"admin":"my-services"); }, 350);
+    setTimeout(function(){ go("admin"); }, 350);
   };
 }
-
-function customerTopbar(){
-  return '<header class="topbar gutter">' +
-    '<a href="#my-services" style="text-decoration:none"><div class="brand"><div class="mark">P</div>'+esc(SHOP.name)+'</div></a>' +
-    '<div style="display:flex;align-items:center;gap:8px">' + themeToggleHTML('tt-cust-'+Math.random().toString(36).slice(2)) +
-      '<a href="#home" class="btn btn-outline btn-sm">'+icon('logout')+'<span>ออกจากระบบ</span></a>' +
-    '</div></header>';
-}
-
-function viewMyServices(){
-  var cust = customer(SESSION_CUSTOMER);
-  var mine = RENTALS.filter(function(r){ return r.customerId===cust.id && !r.closedAt; });
-  var body;
-  if(mine.length===0){
-    body = emptyState("ยังไม่มีบริการที่ใช้งานอยู่","ติดต่อแอดมินเพื่อเริ่มใช้งานบริการ Netflix");
-  }else{
-    body = '<div class="grid grid-2">' + mine.map(function(r){
-      var p=profile(r.profileId), acc=account(p.accountId), status=deriveStatus(r);
-      return '<div class="card" style="padding:18px">' +
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">' +
-          '<div style="display:flex;align-items:center;gap:10px">'+nfMark(36)+
-          '<div><div style="font-weight:700;font-size:13.5px">Netflix</div><div class="muted" style="font-size:12px">โปรไฟล์ '+esc(p.name)+'</div></div></div>' +
-          statusBadge(status) +
-        '</div>' +
-        '<div class="grid" style="grid-template-columns:1fr 1fr;gap:6px 0;font-size:12.5px">' +
-          '<div class="muted">วันเริ่ม</div><div style="text-align:right">'+fmtDT(r.startedAt)+'</div>' +
-          '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+fmtDT(r.expiresAt)+'</div>' +
-          '<div class="muted">เวลาคงเหลือ</div><div style="text-align:right">'+countdownSpan(r.expiresAt,status==="EXPIRED")+'</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:8px;margin-top:14px">' +
-          '<a href="#otp-'+r.id+'" class="btn btn-primary" style="flex:1" '+(status==="EXPIRED"?'onclick="return false" aria-disabled="true" style=\'opacity:.5;pointer-events:none;flex:1\'':'')+'>สถานะ OTP</a>' +
-          '<a href="#service-'+r.id+'" class="btn btn-secondary" style="flex:1">ดูรายละเอียด</a>' +
-        '</div>' +
-        (status==="EXPIRED"?'<p style="color:var(--bad);font-size:11.5px;margin-top:10px">รายการนี้หมดเวลาแล้ว กรุณาติดต่อแอดมินเพื่อต่ออายุ</p>':'') +
-        '<p class="faint" style="font-size:11px;margin-top:8px">บัญชีอ้างอิง: '+esc(acc.name)+'</p>' +
-      '</div>';
-    }).join("") + '</div>';
-  }
-  return customerTopbar() +
-  '<main class="gutter" style="max-width:860px;margin:0 auto;padding:22px 0 40px">' +
-    '<div style="margin-bottom:18px"><h1 style="font-size:19px;font-weight:800">บริการของฉัน</h1><p class="muted" style="font-size:13px">สวัสดีคุณ '+esc(cust.name)+'</p></div>' +
-    body +
-  '</main>';
-}
-
-function viewServiceDetail(rentalId){
-  var r=rental(rentalId);
-  if(!r || r.customerId!==SESSION_CUSTOMER){
-    return customerTopbar() + '<main class="gutter" style="max-width:520px;margin:30px auto">' + emptyState("ไม่พบรายการ","รายการนี้อาจไม่ใช่ของคุณ") + '</main>';
-  }
-  var p=profile(r.profileId), status=deriveStatus(r), cust=customer(SESSION_CUSTOMER);
-  var hist = RENEWALS.filter(function(h){ return h.rentalId===r.id; });
-  return customerTopbar() +
-  '<main class="gutter" style="max-width:640px;margin:0 auto;padding:22px 0 40px">' +
-    '<a href="#my-services" class="link-btn" style="font-size:12.5px;margin-bottom:14px;display:inline-flex">'+icon('back')+'กลับไปบริการของฉัน</a>' +
-    '<div class="card" style="padding:22px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
-        '<div style="display:flex;gap:12px;align-items:center">'+nfMark(44)+
-        '<div><div style="font-weight:800;font-size:15px">Netflix — '+esc(p.name)+'</div><div class="muted" style="font-size:12.5px">ผู้ใช้งาน: '+esc(cust.name)+'</div></div></div>' +
-        statusBadge(status) +
-      '</div>' +
-      '<div class="card" style="background:var(--bg-subtle);padding:14px" class="grid grid-2">' +
-        '<div class="grid grid-2" style="font-size:12.5px">' +
-          '<div><div class="muted">วันเริ่มใช้งาน</div><div style="font-weight:600">'+fmtDT(r.startedAt)+'</div></div>' +
-          '<div><div class="muted">วันหมดอายุ</div><div style="font-weight:600">'+fmtDT(r.expiresAt)+'</div></div>' +
-          '<div><div class="muted">จำนวนวันที่ใช้งาน</div><div style="font-weight:600">'+r.days+' วัน</div></div>' +
-          '<div><div class="muted">เวลาคงเหลือ</div><div>'+countdownSpan(r.expiresAt,status==="EXPIRED")+'</div></div>' +
-        '</div>' +
-      '</div>' +
-      (status==="EXPIRED"?'<p style="margin-top:12px;background:var(--bad-bg);color:var(--bad);padding:9px 12px;border-radius:8px;font-size:12.5px">รายการนี้หมดเวลาแล้ว กรุณาติดต่อแอดมินเพื่อต่ออายุ</p>':'') +
-      '<div style="display:flex;gap:8px;margin-top:16px">' +
-        '<a href="#otp-'+r.id+'" class="btn btn-primary" '+(status==="EXPIRED"?'style="opacity:.5;pointer-events:none"':'')+'>สถานะ OTP</a>' +
-      '</div>' +
-      contactButtonsHTML({lineLabel:"ต่ออายุทาง LINE",fbLabel:"ต่ออายุทาง Facebook",wrapStyle:"display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"}) +
-    '</div>' +
-    '<div style="margin-top:20px"><div class="section-title">ประวัติการต่ออายุ</div>' +
-      (hist.length===0? emptyState("ยังไม่มีประวัติการต่ออายุ"): '<div class="card">' + hist.map(function(h,i){
-        return '<div style="padding:12px 16px;'+(i<hist.length-1?'border-bottom:1px solid var(--border)':'')+';display:flex;justify-content:space-between;font-size:12.5px">' +
-          '<div><div style="font-weight:600">เพิ่ม '+h.days+' วัน</div><div class="muted" style="font-size:11.5px">'+fmtDT(h.prevExpires)+' → '+fmtDT(h.newExpires)+'</div></div>' +
-          '<div class="faint" style="font-size:11px">'+fmtDT(h.at)+'</div></div>';
-      }).join("") + '</div>') +
-    '</div>' +
-  '</main>';
-}
-
-function viewOtp(rentalId){
-  var r=rental(rentalId);
-  if(!r || r.customerId!==SESSION_CUSTOMER){
-    return customerTopbar() + '<main class="gutter" style="max-width:420px;margin:30px auto">' + emptyState("ไม่พบรายการ หรือคุณไม่มีสิทธิ์เข้าถึง") + '</main>';
-  }
-  var p=profile(r.profileId), acc=account(p.accountId), cust=customer(SESSION_CUSTOMER), status=deriveStatus(r);
-  return customerTopbar() +
-  '<main class="gutter" style="max-width:460px;margin:0 auto;padding:22px 0 40px">' +
-    '<a href="#service-'+r.id+'" class="link-btn" style="font-size:12.5px;margin-bottom:14px;display:inline-flex">'+icon('back')+'กลับไปรายละเอียดบริการ</a>' +
-    '<div class="card" style="padding:24px;text-align:center" id="otpCard" data-rental="'+r.id+'" data-expired="'+(status==="EXPIRED"?1:0)+'">' +
-      '<div style="display:flex;justify-content:center;gap:7px;align-items:center;margin-bottom:8px">'+demoTag()+'<span class="faint" style="font-size:10.5px;font-weight:700;letter-spacing:.06em">ระบบสาธิต</span></div>' +
-      '<h1 style="font-size:16px;font-weight:800">สถานะ OTP</h1>' +
-      '<p class="muted" style="font-size:12.5px;margin-top:3px">Netflix — โปรไฟล์ '+esc(p.name)+' · '+esc(cust.name)+'</p>' +
-      '<p class="faint" style="font-size:11px">บัญชีอ้างอิง: '+esc(acc.name)+'</p>' +
-      '<div id="otpBody" style="margin-top:20px">' + otpBodyHTML(status==="EXPIRED") + '</div>' +
-      '<div class="card" style="background:var(--bg-subtle);padding:14px;margin-top:14px;text-align:left">' +
-        '<div class="grid" style="grid-template-columns:1fr auto;gap:6px 0;font-size:12.5px">' +
-          '<div class="muted">วันหมดอายุบริการ</div><div style="text-align:right;font-weight:600">'+fmtDT(r.expiresAt)+'</div>' +
-          '<div class="muted">เวลาคงเหลือ</div><div style="text-align:right">'+countdownSpan(r.expiresAt,status==="EXPIRED")+'</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-  '</main>';
-}
-function otpBodyHTML(expired){
-  if(expired){
-    return '<div class="card" style="background:var(--bad-bg);border-color:var(--bad-bd);padding:20px"><div style="color:var(--bad);font-weight:700;font-size:13px">รายการนี้หมดเวลาแล้ว</div><div class="muted" style="font-size:12px;margin-top:3px">กรุณาติดต่อแอดมินเพื่อต่ออายุ</div></div>';
-  }
-  return '<div class="card" style="background:var(--bg-subtle);padding:20px">' +
-    '<div class="muted" style="font-size:12.5px;line-height:1.6">ระบบไม่เปิดให้ขอรหัส OTP ด้วยตัวเองนะคะ/ครับ<br>กรุณาติดต่อแอดมินเพื่อขอรับรหัสทุกครั้งที่ต้องใช้งาน</div>' +
-    contactButtonsHTML({wrapStyle:"display:flex;flex-direction:column;gap:8px;margin-top:14px",btnStyle:"width:100%;height:44px"}) +
-  '</div>';
-}
-function mountOtp(rentalId){ /* ไม่มีการโต้ตอบในหน้านี้แล้ว — ตัวนับเวลาคงเหลือจะอัปเดตเองผ่าน tickCountdowns() */ }
 
 /* ================================================================ ADMIN */
 var ADMIN_NAV = [
@@ -774,7 +650,7 @@ function railNavHTML(active){
 function adminShell(route, title, bodyHtml){
   var active=adminActiveKey(route);
   var rail = '<aside class="rail">' +
-      '<div class="brand"><div class="mark">P</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
+      '<div class="brand"><div class="mark">F</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
       '<nav>'+railNavHTML(active)+'</nav>' +
       '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</aside>';
@@ -782,7 +658,7 @@ function adminShell(route, title, bodyHtml){
   if(STATE.drawerOpen){
     drawer = '<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding-right:8px">' +
-        '<div class="brand" style="padding:16px"><div class="mark">P</div>'+esc(SHOP.name)+'</div>' +
+        '<div class="brand" style="padding:16px"><div class="mark">F</div>'+esc(SHOP.name)+'</div>' +
         '<button class="btn btn-ghost btn-sm" id="drawerClose">'+icon('close')+'</button>' +
       '</div><nav style="padding:0 10px">'+railNavHTML(active)+'</nav>' +
       '<div class="foot"><a href="#home" style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
@@ -1619,9 +1495,6 @@ function render(skipScroll){
 
   if(route==="home") html=viewHome();
   else if(route==="login") html=viewLogin();
-  else if(route==="my-services") html=viewMyServices();
-  else if(route.indexOf("service-")===0) html=viewServiceDetail(route.slice(8));
-  else if(route.indexOf("otp-")===0) html=viewOtp(route.slice(4));
   else if(route==="admin") html=viewAdminDashboard();
   else if(route==="admin-accounts") html=viewAdminAccounts();
   else if(route.indexOf("admin-account-")===0) html=viewAdminAccountDetail(route.slice(14));
@@ -1643,7 +1516,6 @@ function render(skipScroll){
   mountModal();
 
   if(route==="login") mountLogin();
-  else if(route.indexOf("otp-")===0) mountOtp(route.slice(4));
   else if(route==="admin-accounts") mountAdminAccounts();
   else if(route.indexOf("admin-account-")===0) mountAdminAccountDetail();
   else if(route==="admin-customers") mountAdminCustomers();

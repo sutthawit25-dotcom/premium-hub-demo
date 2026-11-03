@@ -223,7 +223,7 @@ function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
 var SHOP = { name:"Flixie House", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~phxjj2550", contactFacebook:"https://www.facebook.com/share/18NsTRxELm/?mibextid=wwXIfr" };
 // สั่งซื้อผ่านการทักแชทหาแอดมินเท่านั้น (ไม่มีระบบสมัครสมาชิก/ล็อกอินของลูกค้า) ทุกคนที่เข้าหน้าร้านถือเป็น Guest
 function siteFooterHTML(){
-  return '<footer class="site">'+esc(SHOP.name)+' — ระบบนี้เป็น MVP Demo ใช้ข้อมูลและ OTP จำลองเท่านั้น<div style="margin-top:4px;font-size:10px;opacity:.65">สงวนลิขสิทธิ์ CATBAYE</div></footer>';
+  return '<footer class="site">'+esc(SHOP.name)+' — ระบบนี้เป็น MVP Demo ใช้ข้อมูลและ OTP จำลองเท่านั้น<div style="margin-top:4px;font-size:10px;opacity:.65">สงวนลิขสิทธิ์ CATBYTE</div></footer>';
 }
 // ปุ่มติดต่อแอดมิน แสดงทั้งช่องทาง LINE และ Facebook คู่กันเสมอ
 function contactButtonsHTML(opts){
@@ -939,7 +939,7 @@ function mountCopyText(){
 /* ---- modals: assign / renew / release ---- */
 function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:"existing", customerId:CUSTOMERS[0].id, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile", paymentMethod:(r&&r.paymentMethod)||PAYMENT_METHODS[0]}; render(); }
-function openOnetimeSaleModal(){ STATE.modal={type:"onetime", mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", amount:"", paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openOnetimeSaleModal(){ STATE.modal={type:"onetime", mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", deviceType:"mobile", days:7, amount:planPrice("mobile",7), amountTouched:false, paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openReleaseConfirm(rentalId){ STATE.modal={type:"release", rentalId:rentalId}; render(); }
 
 function paymentPickerHTML(selected,attr){
@@ -1009,16 +1009,15 @@ function modalHTML(){
         (m.mode==="existing"? '<select class="input" id="oneCust">'+custOptions2+'</select>' : '<input class="input" id="oneNewName" placeholder="ชื่อลูกค้า (พิมพ์เอง)" value="'+esc(m.newName)+'">') +
       '</div>' +
       '<div class="field"><label>รายละเอียดการขาย</label><input class="input" id="oneNote" placeholder="เช่น ขายบัญชี Netflix ขาด 1 บัญชี" value="'+esc(m.note)+'"></div>' +
-      '<div class="field"><label>เลือกจากแพ็กเกจราคา (ไม่บังคับ — กดเพื่อใส่ราคาให้อัตโนมัติ)</label>' +
-        DEVICE_TYPES.map(function(dt){
-          return '<div style="margin-bottom:6px"><div class="faint" style="font-size:11px;margin-bottom:4px">'+dt.emoji+' '+esc(dt.label)+'</div><div class="chiprow">' +
-            PLANS.filter(function(pl){return pl.device===dt.id;}).map(function(pl){
-              return '<button type="button" class="chip" data-oplan="'+pl.id+'">'+pl.name+' · '+fmtMoney(pl.price)+'</button>';
-            }).join("") +
-          '</div></div>';
-        }).join("") +
-      '</div>' +
-      '<div class="field"><label>จำนวนเงิน (บาท)</label><input class="input" id="oneAmount" type="number" min="1" placeholder="0" value="'+esc(m.amount)+'"></div>' +
+      '<div class="field"><label>ประเภทอุปกรณ์ (มีผลกับราคา)</label><div class="tabs">' +
+        DEVICE_TYPES.map(function(dt){ return '<button data-odevice="'+dt.id+'" class="'+(m.deviceType===dt.id?"active":"")+'">'+dt.emoji+' '+dt.short+'</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="field"><label>จำนวนวัน</label><div class="chiprow">' +
+        [1,7,14,30].map(function(d){ return '<button class="chip '+(m.days===d?"active":"")+'" data-odays="'+d+'">'+d+' วัน</button>'; }).join("") +
+        '<input class="input" id="oneCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
+      '</div></div>' +
+      '<div class="field"><label>จำนวนเงิน (บาท) — คำนวณอัตโนมัติจากแพ็กเกจ ปรับแก้เองได้</label><input class="input" id="oneAmount" type="number" min="1" placeholder="0" value="'+esc(m.amount)+'"></div>' +
+      '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ราคามาตรฐาน ('+deviceTypeLabel(m.deviceType)+' · '+m.days+' วัน)</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>' +
       paymentPickerHTML(m.paymentMethod,"opay"),
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">บันทึกยอดขาย</button>'
     );
@@ -1108,16 +1107,22 @@ function mountModal(){
   if(m.type==="onetime"){
     document.querySelectorAll('[data-omode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-omode"); render(); }; });
     document.querySelectorAll('[data-opay]').forEach(function(b){ b.onclick=function(){ m.paymentMethod=b.getAttribute("data-opay"); render(); }; });
-    document.querySelectorAll('[data-oplan]').forEach(function(b){ b.onclick=function(){
-      var pl=byId(PLANS,b.getAttribute("data-oplan")); if(!pl) return;
-      m.amount=pl.price;
-      if(!m.note||!m.note.trim()) m.note="ขายแพ็กเกจ "+deviceTypeLabel(pl.device)+" "+pl.name;
+    document.querySelectorAll('[data-odevice]').forEach(function(b){ b.onclick=function(){
+      m.deviceType=b.getAttribute("data-odevice");
+      if(!m.amountTouched) m.amount=planPrice(m.deviceType,m.days);
       render();
     }; });
+    document.querySelectorAll('[data-odays]').forEach(function(b){ b.onclick=function(){
+      m.days=Number(b.getAttribute("data-odays"));
+      if(!m.amountTouched) m.amount=planPrice(m.deviceType,m.days);
+      render();
+    }; });
+    var ocd=document.getElementById("oneCustomDays");
+    if(ocd) ocd.oninput=function(){ var n=Number(ocd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; if(!m.amountTouched) m.amount=planPrice(m.deviceType,m.days); render(); } };
     var oc=document.getElementById("oneCust"); if(oc) oc.onchange=function(){ m.customerId=oc.value; };
     var onn=document.getElementById("oneNewName"); if(onn) onn.oninput=function(){ m.newName=onn.value; };
     var on2=document.getElementById("oneNote"); if(on2) on2.oninput=function(){ m.note=on2.value; };
-    var oa=document.getElementById("oneAmount"); if(oa) oa.oninput=function(){ m.amount=oa.value; };
+    var oa=document.getElementById("oneAmount"); if(oa) oa.oninput=function(){ m.amount=oa.value; m.amountTouched=true; };
     document.getElementById("oneConfirm").onclick=function(){
       var amount=Number((document.getElementById("oneAmount")||{}).value||m.amount);
       if(!amount || amount<=0){ toast("กรุณากรอกจำนวนเงินให้ถูกต้อง","bad"); return; }

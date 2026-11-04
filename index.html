@@ -397,6 +397,9 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){retu
 
 var THAI_M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 function toBangkok(d){ return new Date(d.getTime() + 7*3600*1000); }
+// <input type="datetime-local"> ใช้เวลาไทย (UTC+7) เสมอ ไม่ขึ้นกับเขตเวลาของเครื่องที่เปิดเว็บ
+function msToBkkInput(ms){ var d=toBangkok(new Date(ms)); return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")+"T"+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0"); }
+function bkkInputToMs(v){ var m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v||""); if(!m) return null; return Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5])-7*3600*1000; }
 function fmtDT(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear()+" เวลา "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
 function fmtD(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear(); }
 function fmtT(iso){ var d=toBangkok(new Date(iso)); return String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
@@ -1119,7 +1122,7 @@ function mountCopyText(){
 }
 
 /* ---- modals: assign / renew / release ---- */
-function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:(CUSTOMERS.length?"existing":"new"), customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", days:7, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
+function openAssignModal(profileId){ STATE.modal={type:"assign", profileId:profileId, mode:(CUSTOMERS.length?"existing":"new"), customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", days:7, startMs:null, deviceType:"mobile", paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openRenewModal(rentalId){ var r=rental(rentalId); STATE.modal={type:"renew", rentalId:rentalId, days:7, deviceType:(r&&r.deviceType)||"mobile", paymentMethod:(r&&r.paymentMethod)||PAYMENT_METHODS[0]}; render(); }
 function openOnetimeSaleModal(){ STATE.modal={type:"onetime", editId:null, mode:"existing", customerId:CUSTOMERS.length?CUSTOMERS[0].id:null, newName:"", note:"", deviceType:"mobile", days:7, amount:planPrice("mobile",7), amountTouched:false, paymentMethod:PAYMENT_METHODS[0]}; render(); }
 function openEditOnetimeSaleModal(id){
@@ -1148,7 +1151,7 @@ function modalHTML(){
   var m=STATE.modal; if(!m) return "";
   if(m.type==="assign"){
     var p=profile(m.profileId), acc=account(p.accountId);
-    var start=new Date();
+    var start=new Date(m.startMs!=null ? m.startMs : Date.now());
     var exp=new Date(start.getTime()+m.days*86400000);
     var custOptions = CUSTOMERS.map(function(c){ return '<option value="'+c.id+'" '+(m.customerId===c.id?"selected":"")+'>'+esc(c.name)+' ('+esc(c.email)+')</option>'; }).join("");
     var custLabel = m.mode==="existing" ? (byId(CUSTOMERS,m.customerId)||{}).name : (m.newName||"(ยังไม่ได้ระบุชื่อ)");
@@ -1165,7 +1168,8 @@ function modalHTML(){
         '<input class="input" id="assignCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
       '</div></div>' +
       paymentPickerHTML(m.paymentMethod,"apay") +
-      '<div class="field"><label>วันและเวลาเริ่มต้น</label><input class="input" disabled value="'+fmtDT(start.toISOString())+'"><p class="faint" style="font-size:10.5px;margin-top:3px">ใช้เวลาปัจจุบันจากเซิร์ฟเวอร์โดยอัตโนมัติ</p></div>' +
+      '<div class="field"><label>วันและเวลาเริ่มต้น (แก้ไขได้)</label><input class="input" type="datetime-local" id="assignStart" value="'+msToBkkInput(start.getTime())+'">' +
+        '<p class="faint" style="font-size:10.5px;margin-top:3px">'+(m.startMs!=null ? 'ตั้งเวลาเองไว้ (เวลาไทย) · <a href="#" id="assignStartNow" style="color:var(--accent)">ใช้เวลาปัจจุบัน</a>' : 'ค่าเริ่มต้นคือเวลาปัจจุบัน แตะเพื่อเปลี่ยนวัน/เวลาเริ่มได้ (เวลาไทย)')+'</p></div>' +
       '<div class="field"><label>วันและเวลาหมดอายุ (คำนวณให้อัตโนมัติ)</label><input class="input" disabled value="'+fmtDT(exp.toISOString())+'"></div>' +
       '<div class="summary-box">ใช้งาน '+m.days+' วัน เริ่ม '+fmtDT(start.toISOString())+' หมดเวลา '+fmtDT(exp.toISOString())+' · ลูกค้า: '+esc(custLabel)+'</div>' +
       '<div class="summary-box" style="background:var(--good-bg);color:var(--good);display:flex;justify-content:space-between;align-items:center"><span>ยอดที่ต้องเก็บจากลูกค้า (คำนวณอัตโนมัติ — '+deviceTypeLabel(m.deviceType)+')</span><strong style="font-size:16px">'+fmtMoney(planPrice(m.deviceType,m.days))+'</strong></div>',
@@ -1309,6 +1313,9 @@ function mountModal(){
     var cd=document.getElementById("assignCustomDays");
     if(cd) cd.oninput=function(){ var n=Number(cd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
     var sel=document.getElementById("assignCust"); if(sel) sel.onchange=function(){ m.customerId=sel.value; };
+    var stIn=document.getElementById("assignStart");
+    if(stIn) stIn.onchange=function(){ var ms=bkkInputToMs(stIn.value); m.startMs=(ms==null?null:ms); render(); };
+    var stNow=document.getElementById("assignStartNow"); if(stNow) stNow.onclick=function(e){ e.preventDefault(); m.startMs=null; render(); };
     var nn=document.getElementById("assignNewName"); if(nn) nn.oninput=function(){ m.newName=nn.value; };
     document.getElementById("assignConfirm").onclick=function(){
       var custId=m.mode==="existing"? (document.getElementById("assignCust")?document.getElementById("assignCust").value:m.customerId) : null;
@@ -1319,7 +1326,7 @@ function mountModal(){
         CUSTOMERS.push(nc); custId=nc.id;
       }
       var p=profile(m.profileId);
-      var start=new Date(), exp=new Date(start.getTime()+m.days*86400000);
+      var start=new Date(m.startMs!=null ? m.startMs : Date.now()), exp=new Date(start.getTime()+m.days*86400000);
       var nr={id:"rt-new-"+Date.now(), profileId:p.id, customerId:custId, startedAt:start.toISOString(), expiresAt:exp.toISOString(), days:m.days, deviceType:m.deviceType, price:planPrice(m.deviceType,m.days), paymentMethod:m.paymentMethod, closedAt:null};
       RENTALS.push(nr); p.rentalId=nr.id;
       var custForLog=customer(custId);

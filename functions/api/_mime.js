@@ -117,11 +117,28 @@ function extractCode(text) {
   return standalone ? standalone[1] : null;
 }
 
+// Every Delivered-To header (Gmail adds one per hop, so a message forwarded
+// from Outlook into shop+acc1@gmail.com carries that tagged address there,
+// while its To: header still shows the original Hotmail recipient).
+function allDeliveredTo(rawText) {
+  const { headersText } = splitHeadersBody(rawText);
+  const unfolded = headersText.replace(/\r\n[ \t]+/g, " ");
+  const out = [];
+  const re = /^Delivered-To:\s*(.+)$/gim;
+  let m;
+  while ((m = re.exec(unfolded))) out.push(m[1].trim().replace(/^<|>$/g, "").toLowerCase());
+  return out;
+}
+
 export function parseNetflixOtpEmail(rawBytes) {
   const rawText = bytesToLatin1String(rawBytes);
   const subject = decodeRfc2047(headerValue(rawText, "subject"));
   const date = headerValue(rawText, "date");
+  const to = decodeRfc2047(headerValue(rawText, "to"));
+  const deliveredTo = allDeliveredTo(rawText);
+  const tagged = deliveredTo.filter((a) => /\+[^@]+@/.test(a))[0] || null;
+  const tagMatch = tagged ? /\+([^@]+)@/.exec(tagged) : null;
   const bodyAllText = collectTextParts(rawText, 0);
   const code = extractCode(subject) || extractCode(bodyAllText);
-  return { code: code, subject: subject, date: date };
+  return { code, subject, date, to, deliveredTo: tagged, tag: tagMatch ? tagMatch[1] : null };
 }

@@ -145,16 +145,31 @@ function parseSearchUids(lines) {
 // a shared Gmail inbox at a tagged address like shop+acct1@gmail.com, so
 // several forwarded Hotmail accounts can share one Gmail IMAP login while
 // still keeping their OTPs separated.
-export async function imapFindLatestNetflixUid(client, toTag) {
-  const toClause = toTag ? " TO " + imapQuote(toTag) : "";
-  const queries = ['FROM "netflix.com"' + toClause, 'FROM "netflix"' + toClause];
+//
+// `deliveredTo` is the full tagged address (shop+acc1@gmail.com). Outlook's
+// forwarding keeps the original To: header, so the tag only shows up in the
+// envelope recipient — Gmail's own "deliveredto:" search (via X-GM-RAW)
+// matches that exactly, so acc1 never picks up acc10's mail. Non-Gmail
+// servers fall back to a plain To: search on the full address.
+export async function imapSearchNetflixUids(client, deliveredTo) {
+  const queries = deliveredTo
+    ? [
+        "X-GM-RAW " + imapQuote("from:netflix deliveredto:" + deliveredTo),
+        'FROM "netflix" TO ' + imapQuote(deliveredTo),
+      ]
+    : ['FROM "netflix.com"', 'FROM "netflix"'];
   for (const q of queries) {
     const res = await client.command("UID SEARCH " + q);
     if (!res.ok) continue;
     const uids = parseSearchUids(res.lines);
-    if (uids.length) return Math.max.apply(null, uids);
+    if (uids.length) return uids.sort((a, b) => a - b);
   }
-  return null;
+  return [];
+}
+
+export async function imapFindLatestNetflixUid(client, deliveredTo) {
+  const uids = await imapSearchNetflixUids(client, deliveredTo);
+  return uids.length ? uids[uids.length - 1] : null;
 }
 
 export async function imapFetchRaw(client, uid) {

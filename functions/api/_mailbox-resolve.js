@@ -32,7 +32,13 @@ export async function resolveMailboxImap(store, mailboxId, adminSecret) {
     } catch (e) {
       return { error: "decrypt_failed" };
     }
-    return { host, email: source.email, appPassword, toTag: creds.forwardTag || null };
+    // Full tagged address, e.g. shop+acc1@gmail.com (never just "acc1",
+    // which would also match acc10).
+    const at = String(source.email).lastIndexOf("@");
+    const toTag = creds.forwardTag && at > 0
+      ? (source.email.slice(0, at) + "+" + creds.forwardTag + source.email.slice(at)).toLowerCase()
+      : null;
+    return { host, email: source.email, appPassword, toTag };
   }
 
   const host = PROVIDER_HOSTS[creds.provider];

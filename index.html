@@ -1059,6 +1059,57 @@ function mountAdminAccounts(){
   mountCopyText();
   mountSecrets();
 }
+/* ---- รายการ OTP ทุกบัญชีจาก Gmail กลาง ---- */
+function openOtpListModal(mailboxId){ STATE.modal={type:"otpList", mailboxId:mailboxId, loading:true, items:null, error:null}; render(); loadOtpList(); }
+function loadOtpList(){
+  var m=STATE.modal; if(!m || m.type!=="otpList") return;
+  m.loading=true; m.error=null; render();
+  fetch("/api/otp-list",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},body:JSON.stringify({mailboxId:m.mailboxId, limit:15})})
+    .then(function(r){
+      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return null; }
+      return r.json().catch(function(){ return {ok:false,error:"bad_response"}; });
+    })
+    .catch(function(){ return {ok:false,error:"network_error"}; })
+    .then(function(res){
+      var cur=STATE.modal; if(!cur || cur.type!=="otpList" || !res) return;
+      cur.loading=false; cur.loadedAt=Date.now();
+      if(res.ok){ cur.items=res.items||[]; } else { cur.error=res.error==="network_error"?"เชื่อมต่อเซิร์ฟเวอร์ไม่ได้":otpErrorText(res.error); }
+      render();
+    });
+}
+function otpAgoText(ms){
+  var min=Math.floor(ms/60000);
+  if(min<1) return "เมื่อสักครู่"; if(min<60) return min+" นาทีที่แล้ว";
+  var h=Math.floor(min/60); if(h<24) return h+" ชั่วโมงที่แล้ว"; return Math.floor(h/24)+" วันที่แล้ว";
+}
+function otpListBodyHTML(m){
+  if(m.loading && !m.items) return '<p class="muted" style="font-size:13px">กำลังโหลดอีเมลจาก Netflix...</p>';
+  if(m.error) return '<div class="summary-box" style="background:var(--bad-bg);color:var(--bad)">'+esc(m.error)+'</div>';
+  var items=m.items||[];
+  if(!items.length) return '<p class="muted" style="font-size:13px">ยังไม่มีอีเมลจาก Netflix ในกล่องนี้ ลองขอรหัสจาก Netflix แล้วกดรีเฟรช</p>';
+  var forwards=MAILBOXES.filter(function(x){ return x.provider==="OUTLOOK_FORWARD" && x.sourceMailboxId===m.mailboxId; });
+  var now=Date.now();
+  var rows=items.map(function(it){
+    var mb=null;
+    if(it.tag) forwards.forEach(function(x){ if((x.forwardTag||"").toLowerCase()===String(it.tag).toLowerCase()) mb=x; });
+    var t=it.date?new Date(it.date).getTime():NaN;
+    var fresh=!isNaN(t) && now-t < 15*60000; // รหัส Netflix ใช้ได้ประมาณ 15 นาที
+    var who = it.tag
+      ? '<span class="badge '+(mb?'badge-good':'badge-neutral')+'" style="font-weight:800">'+esc(it.tag)+'</span> <strong style="font-size:13px;word-break:break-all">'+esc(mb?mb.email:"ยังไม่ได้ผูกแท็กนี้กับบัญชีใด")+'</strong>'
+      : '<span class="badge badge-neutral">ไม่มีแท็ก</span> <span class="muted" style="font-size:12px;word-break:break-all">ถึง: '+esc(it.to||"-")+'</span>';
+    var when = isNaN(t) ? "-" : otpAgoText(now-t)+' · '+fmtDT(new Date(t).toISOString());
+    var codeHTML = it.code
+      ? '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:22px;font-weight:800;letter-spacing:3px;font-variant-numeric:tabular-nums">'+esc(it.code)+'</span><button type="button" class="btn btn-outline btn-sm" data-copy-text="'+esc(it.code)+'">'+icon('copy')+'คัดลอก</button></div>'
+      : '<span class="muted" style="font-size:12px">ไม่มีรหัสในเมลนี้'+(it.subject?(' ('+esc(it.subject)+')'):'')+'</span>';
+    return '<div style="border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;'+(fresh?'':'opacity:.55')+'">' +
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+who+(fresh?' <span class="badge badge-good">ใหม่</span>':'')+'</div>' +
+      codeHTML +
+      '<div class="muted" style="font-size:11.5px">'+esc(when)+(fresh?'':' · อาจหมดอายุแล้ว')+'</div>' +
+    '</div>';
+  }).join("");
+  return '<p class="muted" style="font-size:12px;margin:0">เรียงจากล่าสุด แท็กบอกว่าเมลส่งต่อมาจาก Hotmail บัญชีไหน'+(m.loading?' · กำลังรีเฟรช...':'')+'</p>' +
+    '<div style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto">'+rows+'</div>';
+}
 function mountCopyText(){
   document.querySelectorAll('[data-copy-text]').forEach(function(btn){
     btn.onclick=function(){
@@ -1197,6 +1248,12 @@ function modalHTML(){
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
     );
   }
+  if(m.type==="otpList"){
+    var olMb=mailbox(m.mailboxId);
+    return modalWrap('รายการ OTP ทุกบัญชี', olMb?olMb.email:null, otpListBodyHTML(m),
+      '<button class="btn btn-outline" data-close>ปิด</button><button class="btn btn-primary" id="otpListRefresh"'+(m.loading?' disabled':'')+'>'+(m.loading?'กำลังโหลด...':'รีเฟรช')+'</button>'
+    );
+  }
   if(m.type==="addCustomer"){
     return modalWrap(m.editId?'แก้ไขข้อมูลลูกค้า':'เพิ่มลูกค้าใหม่','เก็บข้อมูลเท่าที่จำเป็น ไม่บังคับกรอกเบอร์โทรหรือที่อยู่',
       '<div class="field"><label>ชื่อที่ใช้แสดง</label><input class="input" id="custName" value="'+esc(m.name||"")+'"></div>' +
@@ -1239,6 +1296,10 @@ function mountModal(){
   var scrim=document.getElementById("modalScrim");
   scrim.onclick=function(e){ if(e.target===scrim) closeModal(); };
   document.querySelectorAll('[data-close]').forEach(function(b){ b.onclick=closeModal; });
+  if(m.type==="otpList"){
+    var olr=document.getElementById("otpListRefresh"); if(olr) olr.onclick=loadOtpList;
+    mountCopyText();
+  }
 
   if(m.type==="assign"){
     document.querySelectorAll('[data-amode]').forEach(function(b){ b.onclick=function(){ m.mode=b.getAttribute("data-amode"); render(); }; });
@@ -1952,7 +2013,11 @@ function updateForwardPreview(){
   mountCopyText();
 }
 function mailboxActionsHTML(m){
-  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button><button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึง OTP ล่าสุด</button><button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
+  // Gmail กลางรับเมลจากทุกบัญชี — ปุ่ม "ดึง OTP ล่าสุด" ตรงนี้จะได้รหัสของบัญชีไหนก็ไม่รู้ จึงเปลี่ยนเป็นรายการที่บอกว่ารหัสไหนเป็นของบัญชีไหน
+  var fetchBtn = m.provider==="GMAIL"
+    ? '<button class="btn btn-primary btn-sm" data-otplist="'+m.id+'">รายการ OTP ทุกบัญชี</button>'
+    : '<button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึง OTP ล่าสุด</button>';
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button>'+fetchBtn+'<button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
 }
 var OTP_ERROR_MESSAGES = {
   no_credentials: "ยังไม่ได้ตั้งรหัสผ่านแอป กดแก้ไขเพื่อเพิ่ม",
@@ -2094,6 +2159,9 @@ function mountMailboxRowEvents(){
         refreshMailboxView();
       });
     };
+  });
+  document.querySelectorAll('[data-otplist]').forEach(function(btn){
+    btn.onclick=function(){ openOtpListModal(btn.getAttribute("data-otplist")); };
   });
   document.querySelectorAll('[data-fetch]').forEach(function(btn){
     btn.onclick=function(){

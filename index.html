@@ -326,6 +326,10 @@
   .sv-edit .sv-desc{grid-area:s}
   .sv-on{display:flex; align-items:center; gap:6px; font-size:12.5px; height:38px; white-space:nowrap}
   @media (max-width:720px){ .sv-edit{grid-template-columns:34px 1fr 1fr; grid-template-areas:none} .sv-edit > *{grid-area:auto!important} .sv-edit .sv-desc{grid-column:1 / -1} }
+  .swal2-popup.cb-swal{font-family:var(--font-th); border-radius:20px; border:1px solid var(--border)}
+  .swal2-popup.cb-swal .swal2-title{font-size:20px; font-weight:800}
+  .swal2-popup.cb-swal .swal2-html-container{color:var(--muted); font-size:14px}
+  .swal2-popup.cb-swal .swal2-styled{border-radius:11px; font-weight:700; padding:10px 22px}
   .faq{display:flex; flex-direction:column; gap:8px}
   .faq details{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:0 18px}
   .faq summary{cursor:pointer; list-style:none; padding:15px 0; font-weight:700; font-size:14px; display:flex; justify-content:space-between; gap:12px}
@@ -339,6 +343,7 @@
 <body>
 <div id="app"></div>
 <div class="toast-host" id="toastHost"></div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js"></script>
 
 <script>
 //---------------------------------------------------------------------
@@ -2788,23 +2793,26 @@ function schedulePersist(){
   PERSIST_TIMER=setTimeout(persistStateNow, 1500);
 }
 function persistStateNow(){
-  var t=adminToken(); if(!t || !HYDRATED) return;
+  var t=adminToken(); if(!t || !HYDRATED) return Promise.resolve(false);
+  if(PERSIST_TIMER){ clearTimeout(PERSIST_TIMER); PERSIST_TIMER=null; }
   var body=JSON.stringify(snapshotState());
-  if(body===LAST_SAVED_JSON) return;
+  if(body===LAST_SAVED_JSON) return Promise.resolve(true);
   return fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:body })
     .then(function(r){
-      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return; }
+      if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return false; }
       if(r.ok){
         LAST_SAVED_JSON=body;
         if(SAVE_FAIL_WARNED){ SAVE_FAIL_WARNED=false; toast("บันทึกข้อมูลขึ้นเซิร์ฟเวอร์สำเร็จแล้ว","good"); }
-        return;
+        return true;
       }
       if(!SAVE_FAIL_WARNED){ SAVE_FAIL_WARNED=true; toast("บันทึกข้อมูลขึ้นเซิร์ฟเวอร์ไม่สำเร็จ (โควต้าบันทึกรายวันอาจเต็ม) อย่าเพิ่งปิดหน้านี้ ระบบจะลองใหม่อัตโนมัติ","bad"); }
       if(SAVE_RETRY_TIMER) clearTimeout(SAVE_RETRY_TIMER);
       SAVE_RETRY_TIMER=setTimeout(persistStateNow, 5*60*1000);
+      return false;
     })
     .catch(function(){
       if(!PERSIST_FAIL_WARNED){ PERSIST_FAIL_WARNED=true; toast("บันทึกขึ้นฐานข้อมูลไม่ได้ (ไม่พบระบบหลังบ้านบนโดเมนนี้) ข้อมูลจะหายเมื่อรีเฟรช","bad"); }
+      return false;
     });
 }
 function hydrateFromBackend(){
@@ -3611,26 +3619,61 @@ function mountSecrets(){
   });
 }
 
-function deleteAccount(accId){
+/* ---------- ยืนยันการลบ (SweetAlert2) + บันทึกขึ้นเซิร์ฟเวอร์ทันที ---------- */
+function swalTheme(){
+  var cs=getComputedStyle(document.documentElement);
+  return { background:cs.getPropertyValue("--surface").trim()||"#fff", color:cs.getPropertyValue("--ink").trim()||"#111" };
+}
+function confirmDelete(title, text, confirmText){
+  if(window.Swal && Swal.fire){
+    var th=swalTheme();
+    return Swal.fire({ title:title, html:text?esc(text).replace(/\n/g,"<br>"):"", icon:"warning", showCancelButton:true, focusCancel:true, reverseButtons:true,
+      confirmButtonText:confirmText||"ลบเลย", cancelButtonText:"ยกเลิก", confirmButtonColor:"#dc2626", cancelButtonColor:"#64748b",
+      background:th.background, color:th.color, customClass:{popup:"cb-swal"} }).then(function(r){ return !!r.isConfirmed; });
+  }
+  try{ return Promise.resolve(window.confirm(title+(text?"\n"+text:""))); }catch(e){ return Promise.resolve(true); }
+}
+// ลบแล้วบันทึกทันที รอผลจากเซิร์ฟเวอร์ แล้วบอกตามจริงว่าบันทึกได้หรือไม่
+function deleteAndSave(doneText){
+  return persistStateNow().then(function(ok){
+    var th=swalTheme();
+    if(ok){
+      if(window.Swal) Swal.fire({ icon:"success", title:doneText, timer:1400, showConfirmButton:false, background:th.background, color:th.color, customClass:{popup:"cb-swal"} });
+      else toast(doneText,"good");
+    } else {
+      var msg="ลบในหน้าจอแล้ว แต่บันทึกขึ้นเซิร์ฟเวอร์ไม่สำเร็จ ระบบจะลองบันทึกใหม่อัตโนมัติ อย่าเพิ่งปิดหน้านี้";
+      if(window.Swal) Swal.fire({ icon:"error", title:"ยังบันทึกไม่สำเร็จ", text:msg, background:th.background, color:th.color, customClass:{popup:"cb-swal"} });
+      else toast(msg,"bad");
+    }
+    return ok;
+  });
+}
+function deleteAccount(accId, after){
   var acc=account(accId); if(!acc) return false;
   var hasActive = allRows().filter(function(r){return r.account.id===accId;}).some(function(r){return r.status!=="AVAILABLE";});
   if(hasActive){ toast("ห้ามลบบัญชีที่ยังมีรายการใช้งานปัจจุบัน","bad"); return false; }
-  if(!confirm('ยืนยันลบบัญชี "'+acc.name+'"?\nโปรไฟล์ทั้งหมดในบัญชีนี้จะถูกลบไปด้วย และไม่สามารถย้อนกลับได้')) return false;
-  var idx=ACCOUNTS.findIndex(function(a){return a.id===acc.id;});
-  if(idx>=0) ACCOUNTS.splice(idx,1);
-  for(var i=PROFILES.length-1;i>=0;i--){ if(PROFILES[i].accountId===acc.id) PROFILES.splice(i,1); }
-  toast("ลบบัญชี "+acc.name+" แล้ว","good");
-  return true;
+  confirmDelete('ลบบัญชี "'+acc.name+'" ?','โปรไฟล์ทั้งหมดในบัญชีนี้จะถูกลบไปด้วย\nลบแล้วกู้คืนไม่ได้','ลบบัญชี').then(function(yes){
+    if(!yes) return;
+    var idx=ACCOUNTS.findIndex(function(a){return a.id===acc.id;});
+    if(idx>=0) ACCOUNTS.splice(idx,1);
+    for(var i=PROFILES.length-1;i>=0;i--){ if(PROFILES[i].accountId===acc.id) PROFILES.splice(i,1); }
+    if(after) after(); else render(true);
+    deleteAndSave("ลบบัญชี "+acc.name+" แล้ว");
+  });
+  return false;
 }
-function deleteCustomer(custId){
+function deleteCustomer(custId, after){
   var c=customer(custId); if(!c) return false;
   var activeCount = RENTALS.filter(function(r){return r.customerId===custId && !r.closedAt;}).length;
   if(activeCount>0){ toast("ห้ามลบลูกค้าที่ยังมีบริการใช้งานอยู่","bad"); return false; }
-  if(!confirm('ยืนยันลบลูกค้า "'+c.name+'"?\nข้อมูลและประวัติที่เกี่ยวข้องจะหายไป และไม่สามารถย้อนกลับได้')) return false;
-  var idx=CUSTOMERS.findIndex(function(x){return x.id===c.id;});
-  if(idx>=0) CUSTOMERS.splice(idx,1);
-  toast("ลบลูกค้า "+c.name+" แล้ว","good");
-  return true;
+  confirmDelete('ลบลูกค้า "'+c.name+'" ?','ข้อมูลลูกค้าคนนี้จะหายไป\nลบแล้วกู้คืนไม่ได้','ลบลูกค้า').then(function(yes){
+    if(!yes) return;
+    var idx=CUSTOMERS.findIndex(function(x){return x.id===c.id;});
+    if(idx>=0) CUSTOMERS.splice(idx,1);
+    if(after) after(); else render(true);
+    deleteAndSave("ลบลูกค้า "+c.name+" แล้ว");
+  });
+  return false;
 }
 
 var ADMIN_UI = { search:"", statusFilter:"ALL", collapsed:{} };
@@ -4263,7 +4306,7 @@ function mountAdminAccountDetail(accountId){
   var db=document.getElementById("delAccBtn");
   if(db) db.onclick=function(){
     if(db.disabled) return;
-    if(deleteAccount(accountId)) go("admin-accounts");
+    deleteAccount(accountId, function(){ go("admin-accounts"); });
   };
   mountSecrets();
 }
@@ -4416,7 +4459,7 @@ function mountAdminCustomerDetail(customerId){
   };
   var db=document.getElementById("delCustBtn"); if(db) db.onclick=function(){
     if(db.disabled) return;
-    if(deleteCustomer(customerId)) go("admin-customers");
+    deleteCustomer(customerId, function(){ go("admin-customers"); });
   };
 }
 function viewAdminReviews(){
@@ -4521,10 +4564,12 @@ function mountAdminReviews(){
   document.querySelectorAll('[data-delrev]').forEach(function(btn){
     btn.onclick=function(){
       var id=btn.getAttribute("data-delrev");
-      var idx=REVIEWS.findIndex(function(r){return r.id===id;});
-      if(idx>=0) REVIEWS.splice(idx,1);
-      if(REVIEW_UI.editingId===id) REVIEW_UI.editingId=null;
-      render(true); toast("ลบรีวิวแล้ว","good");
+      confirmDelete("ลบรีวิวนี้ ?","ลบแล้วกู้คืนไม่ได้","ลบรีวิว").then(function(yes){ if(!yes) return;
+        var idx=REVIEWS.findIndex(function(r){return r.id===id;});
+        if(idx>=0) REVIEWS.splice(idx,1);
+        if(REVIEW_UI.editingId===id) REVIEW_UI.editingId=null;
+        render(true); deleteAndSave("ลบรีวิวแล้ว");
+      });
     };
   });
   document.querySelectorAll('[data-edit-star]').forEach(function(sb){ sb.onclick=function(){ REVIEW_UI.editRating=Number(sb.getAttribute("data-edit-star")); render(true); }; });
@@ -4675,9 +4720,11 @@ function mountAdminRevenue(){
   document.querySelectorAll('[data-delsale]').forEach(function(btn){
     btn.onclick=function(){
       var id=btn.getAttribute("data-delsale");
-      var idx=ONETIME_SALES.findIndex(function(s){return s.id===id;});
-      if(idx>=0) ONETIME_SALES.splice(idx,1);
-      render(true); toast("ลบรายการขายขาดแล้ว","good");
+      confirmDelete("ลบรายการขายนี้ ?","ยอดนี้จะหายจากหน้ารายได้\nลบแล้วกู้คืนไม่ได้","ลบรายการ").then(function(yes){ if(!yes) return;
+        var idx=ONETIME_SALES.findIndex(function(s){return s.id===id;});
+        if(idx>=0) ONETIME_SALES.splice(idx,1);
+        render(true); deleteAndSave("ลบรายการขายแล้ว");
+      });
     };
   });
 }
@@ -4959,11 +5006,14 @@ function mountMailboxRowEvents(){
   });
   document.querySelectorAll('[data-delmb]').forEach(function(btn){
     btn.onclick=function(){
-      var id=btn.getAttribute("data-delmb");
-      var idx=MAILBOXES.findIndex(function(x){return x.id===id});
-      if(idx>=0) MAILBOXES.splice(idx,1);
-      refreshMailboxView(); schedulePersist(); toast("ลบบัญชีอีเมลแล้ว","good");
-      fetch("/api/mailbox-creds?mailboxId="+encodeURIComponent(id), { method:"DELETE", headers:{"authorization":"Bearer "+adminToken()} }).catch(function(){});
+      var id=btn.getAttribute("data-delmb"); var mb=mailbox(id);
+      confirmDelete('ลบอีเมล "'+(mb?mb.email:"")+'" ?',"รหัสผ่านแอป/สิทธิ์ที่เชื่อมไว้จะถูกลบจากเซิร์ฟเวอร์ด้วย","ลบอีเมล").then(function(yes){ if(!yes) return;
+        var idx=MAILBOXES.findIndex(function(x){return x.id===id});
+        if(idx>=0) MAILBOXES.splice(idx,1);
+        refreshMailboxView();
+        var credDel=fetch("/api/mailbox-creds?mailboxId="+encodeURIComponent(id), { method:"DELETE", headers:{"authorization":"Bearer "+adminToken()} }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+        credDel.then(function(){ deleteAndSave("ลบบัญชีอีเมลแล้ว"); });
+      });
     };
   });
 }
@@ -5068,7 +5118,9 @@ function mountAdminSettings(){
     inp[ev]=function(){ var x=byId(SERVICES,inp.getAttribute("data-sv-id")); if(!x) return; var f=inp.getAttribute("data-sv-field");
       if(f==="on") x.on=inp.checked; else if(f==="price") x.price=inp.value.replace(/[^0-9.]/g,""); else x[f]=inp.value; };
   });
-  document.querySelectorAll('[data-delsv]').forEach(function(b){ b.onclick=function(){ var i=SERVICES.findIndex(function(x){ return x.id===b.getAttribute("data-delsv"); }); if(i>=0) SERVICES.splice(i,1); toast("ลบแอปแล้ว","good"); render(true); }; });
+  document.querySelectorAll('[data-delsv]').forEach(function(b){ b.onclick=function(){ var sid=b.getAttribute("data-delsv"); var sv=byId(SERVICES,sid);
+    confirmDelete('ลบแอป "'+(sv?sv.name:"")+'" ?',"แอปนี้จะหายจากหน้าร้าน","ลบแอป").then(function(yes){ if(!yes) return;
+      var i=SERVICES.findIndex(function(x){ return x.id===sid; }); if(i>=0) SERVICES.splice(i,1); render(true); deleteAndSave("ลบแอปแล้ว"); }); }; });
   var asv=document.getElementById("addSvBtn"); if(asv) asv.onclick=function(){ SERVICES.push({id:"sv-new-"+Date.now()+"-"+(SERVICE_SEQ++), name:"แอปใหม่", cat:"อื่นๆ", desc:"", price:"", on:true, color:"#2f80ff"}); toast("เพิ่มแอปแล้ว แก้ชื่อได้เลย","good"); render(true); };
   mountBillingSettings();
   var sn=document.getElementById("setShopName"); if(sn) sn.oninput=function(){ SHOP.name=sn.value; };
@@ -5095,14 +5147,15 @@ function mountAdminSettings(){
   });
   document.querySelectorAll('[data-delplan]').forEach(function(btn){
     btn.onclick=function(){
-      var id=btn.getAttribute("data-delplan");
-      var idx=PLANS.findIndex(function(p){ return p.id===id; });
-      if(idx>=0) PLANS.splice(idx,1);
-      toast("ลบแพ็กเกจแล้ว","good");
-      render();
+      var id=btn.getAttribute("data-delplan"); var pl=byId(PLANS,id);
+      confirmDelete('ลบแพ็กเกจ "'+(pl?pl.name:"")+'" ?',"แพ็กเกจนี้จะหายจากหน้าร้าน","ลบแพ็กเกจ").then(function(yes){ if(!yes) return;
+        var idx=PLANS.findIndex(function(p){ return p.id===id; });
+        if(idx>=0) PLANS.splice(idx,1);
+        render(true); deleteAndSave("ลบแพ็กเกจแล้ว");
+      });
     };
   });
-  var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ toast("บันทึกการตั้งค่าแล้ว การเปลี่ยนแปลงมีผลทั่วทั้งเว็บไซต์ทันที","good"); render(); };
+  var b=document.getElementById("saveSettingsBtn"); if(b) b.onclick=function(){ b.disabled=true; persistStateNow().then(function(ok){ b.disabled=false; toast(ok?"บันทึกการตั้งค่าแล้ว การเปลี่ยนแปลงมีผลทั่วทั้งเว็บไซต์ทันที":"บันทึกไม่สำเร็จ ระบบจะลองใหม่อัตโนมัติ", ok?"good":"bad"); render(true); }); };
   var nb=document.getElementById("enableNotifyBtn"); if(nb) nb.onclick=requestNotifyPermission;
 }
 

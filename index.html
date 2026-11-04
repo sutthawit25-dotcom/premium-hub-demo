@@ -380,6 +380,10 @@
   .ts-search input::placeholder{color:var(--faint)}
   .ts-search input:focus{outline:none; border-color:var(--accent); background:var(--surface-raised)}
   .ts-line{white-space:nowrap; gap:8px}
+  .ts-login{display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 12px; border-radius:10px; border:1px solid var(--border); color:var(--ink); text-decoration:none; font-size:14px; font-weight:700; white-space:nowrap; transition:background-color var(--t-fast) var(--ease)}
+  .ts-login:hover{background:var(--surface)}
+  .ts-login svg{transform:scaleX(-1)}
+  @media (max-width:767px){ .ts-login{margin-left:auto; width:44px; padding:0; justify-content:center} .ts-login span{display:none} .ts-login + .ts-line{margin-left:0} }
   @media (max-width:767px){
     .ts-header-in{height:60px}
     .ts-menu{display:none}
@@ -3544,6 +3548,7 @@ function tsHeaderHTML(){
   return '<header class="ts-header" id="tsHeader"><div class="ts-header-in gutter">' +
     '<a href="#home" class="ts-brand" data-tstop><span class="ts-mark" aria-hidden="true">C</span><span>'+esc(SHOP.name)+'</span></a>' +
     '<nav class="ts-menu" aria-label="เมนูหลัก"><button type="button" data-tsjump="tsAll">แอปทั้งหมด</button><button type="button" data-tsjump="tsHow">วิธีสั่งซื้อ</button><button type="button" data-tsjump="tsFaq">คำถามที่พบบ่อย</button></nav>' +
+    '<a class="ts-login" href="#login" aria-label="เข้าสู่ระบบ">'+icon("logout")+'<span>เข้าสู่ระบบ</span></a>' +
     '<a class="btn btn-primary ts-line" href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'<span>สั่งซื้อผ่านแชต</span></a>' +
   '</div></header>';
 }

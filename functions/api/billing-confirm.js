@@ -1,3 +1,4 @@
+import { safeEqual } from "./_billing.js";
 import { loadBilling, saveBilling, checkSig, renewedExpiry, esc, thaiDate } from "./_billing.js";
 
 function page(title, inner) {
@@ -27,6 +28,9 @@ async function handle(request, env, method) {
   }
   if (method === "POST") {
     const form = await request.formData();
+    if (!env.PROVIDER_USER || !env.PROVIDER_PASSWORD) return page("ผิดพลาด", "<h1>ยังไม่ได้ตั้งรหัสผู้ให้บริการ</h1><p>ตั้ง PROVIDER_USER และ PROVIDER_PASSWORD ใน Cloudflare</p>");
+    if (!safeEqual(form.get("user"), env.PROVIDER_USER) || !safeEqual(form.get("pass"), env.PROVIDER_PASSWORD))
+      return page("รหัสไม่ถูกต้อง", "<h1>ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</h1><p>กดย้อนกลับแล้วลองใหม่</p>");
     const decision = form.get("decision");
     const now = Date.now();
     if (decision === "confirm") {
@@ -52,8 +56,9 @@ async function handle(request, env, method) {
   }
   return page("ยืนยันการชำระเงิน", "<h1>ยืนยันการชำระเงิน</h1><p>ยอด <b>" + esc(n.amount) + " บาท</b><br>เวลาที่โอน: " +
     esc(n.paidAt ? thaiDate(n.paidAt) : "ไม่ระบุ") + (n.note ? "<br>หมายเหตุ: " + esc(n.note) : "") +
-    "</p><p>ตรวจยอดเข้าบัญชีแล้วจึงกดยืนยัน</p>" +
-    '<form method="post"><button class="ok" name="decision" value="confirm">ยืนยัน — ต่ออายุ ' + esc(b.periodDays || 30) + ' วัน</button>' +
+    "</p><p>ตรวจยอดเข้าบัญชีแล้วจึงกดยืนยัน (ล็อกอินผู้ให้บริการ)</p>" +
+    '<form method="post"><input name="user" placeholder="ชื่อผู้ใช้" autocomplete="username" required style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #3a3a3e;background:#111;color:#fff;margin-bottom:8px;font:inherit">' +
+    '<input name="pass" type="password" placeholder="รหัสผ่าน" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #3a3a3e;background:#111;color:#fff;font:inherit;margin-bottom:6px"><button class="ok" name="decision" value="confirm">ยืนยัน — ต่ออายุ ' + esc(b.periodDays || 30) + ' วัน</button>' +
     '<button class="no" name="decision" value="reject">ยังไม่พบยอด / ปฏิเสธ</button></form>');
 }
 

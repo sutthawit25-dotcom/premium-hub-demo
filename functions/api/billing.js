@@ -72,8 +72,8 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (action === "config" || action === "test-email") {
-    if (!env.PROVIDER_CODE) return json({ ok: false, error: "provider_code_not_set" }, 403);
-    if (!safeEqual(body.providerCode, env.PROVIDER_CODE)) return json({ ok: false, error: "bad_provider_code" }, 403);
+    if (!env.PROVIDER_USER || !env.PROVIDER_PASSWORD) return json({ ok: false, error: "provider_login_not_set" }, 403);
+    if (!safeEqual(body.providerUser, env.PROVIDER_USER) || !safeEqual(body.providerPassword, env.PROVIDER_PASSWORD)) return json({ ok: false, error: "bad_provider_login" }, 403);
     if (action === "test-email") {
       const to = notifyTo(env, b);
       if (!to) return json({ ok: false, error: "no_notify_email" });

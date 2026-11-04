@@ -373,6 +373,7 @@ function hydrateFromBackend(){
     if(data){ applySnapshot(data); seedNotifySeen(); LAST_SAVED_JSON=JSON.stringify(snapshotState()); }
     HYDRATED=true;
     if(data) render(true);
+    if(hasValidLocalToken()) autoCheckMailboxes();
   }).catch(function(){ HYDRATED=true; /* ไม่มีระบบหลังบ้านบนโดเมนนี้ (เช่น mirror บน GitHub Pages) — ทำงานต่อแบบชั่วคราวในเครื่อง */ });
 }
 
@@ -2054,6 +2055,33 @@ function mailboxApiFetch(path, mailboxId){
     return r.json().catch(function(){ return {ok:false,error:"bad_response"}; });
   }).catch(function(){ return {ok:false,error:"network_error"}; });
 }
+// เช็คการเชื่อมต่ออัตโนมัติทุกครั้งที่เปิดเว็บ (ไม่ต้องกด "ทดสอบ" เอง)
+// ทดสอบเฉพาะกล่องเมลจริง (Gmail/Outlook) ครั้งละ 1 ครั้ง ส่วน Hotmail แบบส่งต่อใช้สถานะของ Gmail ปลายทาง
+var MAILBOX_AUTOCHECK_DONE=false;
+function autoCheckMailboxes(){
+  if(MAILBOX_AUTOCHECK_DONE || !adminToken()) return;
+  MAILBOX_AUTOCHECK_DONE=true;
+  fetch("/api/mailbox-creds",{headers:{"authorization":"Bearer "+adminToken()}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      var saved={}; ((data&&data.mailboxIds)||[]).forEach(function(id){ saved[id]=true; });
+      var direct=MAILBOXES.filter(function(m){ return m.provider!=="OUTLOOK_FORWARD"; });
+      return Promise.all(direct.map(function(m){
+        if(!saved[m.id]) return Promise.resolve([m.id,"NOT_CONNECTED"]);
+        return mailboxApiFetch("/api/mailbox-test", m.id).then(function(res){ return [m.id, res&&res.ok ? "CONNECTED" : "ERROR"]; });
+      })).then(function(results){
+        var st={}; results.forEach(function(x){ st[x[0]]=x[1]; });
+        MAILBOXES.forEach(function(m){
+          if(m.provider==="OUTLOOK_FORWARD"){
+            if(!saved[m.id] || !m.forwardTag) m.status="NOT_CONNECTED";
+            else m.status = st[m.sourceMailboxId] || "NOT_CONNECTED";
+          }else if(st[m.id]) m.status=st[m.id];
+        });
+        refreshMailboxView(); schedulePersist();
+      });
+    })
+    .catch(function(){ MAILBOX_AUTOCHECK_DONE=false; });
+}
 function mountMailboxRowEvents(){
   document.querySelectorAll('[data-test]').forEach(function(btn){
     btn.onclick=function(){
@@ -2099,6 +2127,7 @@ function mountMailboxRowEvents(){
   });
 }
 function mountAdminMailboxes(){
+  if(HYDRATED) autoCheckMailboxes();
   document.getElementById("addGmailBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"GMAIL"}; render(); };
   document.getElementById("addOutlookBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK"}; render(); };
   document.getElementById("addOutlookForwardBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK_FORWARD"}; render(); };

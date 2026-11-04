@@ -397,9 +397,21 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){retu
 
 var THAI_M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 function toBangkok(d){ return new Date(d.getTime() + 7*3600*1000); }
-// <input type="datetime-local"> ใช้เวลาไทย (UTC+7) เสมอ ไม่ขึ้นกับเขตเวลาของเครื่องที่เปิดเว็บ
-function msToBkkInput(ms){ var d=toBangkok(new Date(ms)); return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")+"T"+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0"); }
-function bkkInputToMs(v){ var m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v||""); if(!m) return null; return Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5])-7*3600*1000; }
+// ตัวเลือกวัน/เดือน/ปี + เวลา 24 ชม. (เวลาไทย) — ไม่ใช้ datetime-local เพราะรูปแบบวันที่ขึ้นกับภาษาของเบราว์เซอร์ (เช่น เดือน/วัน/ปี และ AM/PM)
+function startPickerHTML(ms){
+  var d=toBangkok(new Date(ms)), cy=toBangkok(new Date()).getUTCFullYear();
+  function opts(from,to,sel,pad){ var o=""; for(var i=from;i<=to;i++) o+='<option value="'+i+'"'+(i===sel?' selected':'')+'>'+(pad?String(i).padStart(pad,"0"):i)+'</option>'; return o; }
+  var sty='style="width:auto;min-width:62px;padding-left:10px;padding-right:22px"';
+  var sep='<span class="muted" style="font-weight:700">/</span>';
+  return '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+    '<select class="input" '+sty+' data-startpart="d" aria-label="วัน">'+opts(1,31,d.getUTCDate(),2)+'</select>'+sep +
+    '<select class="input" '+sty+' data-startpart="m" aria-label="เดือน">'+opts(1,12,d.getUTCMonth()+1,2)+'</select>'+sep +
+    '<select class="input" '+sty+' data-startpart="y" aria-label="ปี">'+opts(Math.min(cy-2,d.getUTCFullYear()),Math.max(cy+1,d.getUTCFullYear()),d.getUTCFullYear())+'</select>' +
+    '<span style="width:8px"></span>' +
+    '<select class="input" '+sty+' data-startpart="h" aria-label="ชั่วโมง">'+opts(0,23,d.getUTCHours(),2)+'</select><span class="muted" style="font-weight:700">:</span>' +
+    '<select class="input" '+sty+' data-startpart="mi" aria-label="นาที">'+opts(0,59,d.getUTCMinutes(),2)+'</select><span class="muted" style="font-size:12px">น.</span>' +
+  '</div>';
+}
 function fmtDT(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear()+" เวลา "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
 function fmtD(iso){ var d=toBangkok(new Date(iso)); return d.getUTCDate()+" "+THAI_M[d.getUTCMonth()]+" "+d.getUTCFullYear(); }
 function fmtT(iso){ var d=toBangkok(new Date(iso)); return String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+" น."; }
@@ -874,7 +886,7 @@ function accountsTableRows(rows){
       '<td>'+secretHTML(acc.pass)+'</td>' +
       '<td>'+editInlineHTML(p.id,"pin",p.pin||"","60",true)+'</td>' +
       '<td>'+statusBadge(r.status)+'</td>' +
-      '<td>'+(r.customer? secretHTML(r.customer.name): '<span class="faint">-</span>')+'</td>' +
+      '<td>'+(r.customer? '<span style="font-weight:600">'+esc(r.customer.name)+'</span>': '<span class="faint">-</span>')+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? fmtDT(r.rental.startedAt) : "-")+'</td>' +
       '<td class="muted" style="font-size:12px">'+(r.rental? (fmtDT(r.rental.expiresAt)+'<br>'+countdownSpan(r.rental.expiresAt,r.status==="EXPIRED")) : "-")+'</td>' +
       '<td class="num">'+(r.rental? editSelectHTML(r.rental.id,"days",r.rental.days,DAYS_OPTIONS,78) : '<span class="faint">-</span>')+'</td>' +
@@ -891,7 +903,7 @@ function accountsCardsHTML(rows){
       '<div class="grid grid-2" style="font-size:11.5px">' +
         '<div class="muted">อีเมล Netflix</div><div style="text-align:right">'+secretHTML(acc.email)+'</div>' +
         '<div class="muted">รหัสผ่าน</div><div style="text-align:right">'+secretHTML(acc.pass)+'</div>' +
-        '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?secretHTML(r.customer.name):"-")+'</div>' +
+        '<div class="muted">ลูกค้า</div><div style="text-align:right">'+(r.customer?esc(r.customer.name):"-")+'</div>' +
         '<div class="muted">วันหมดอายุ</div><div style="text-align:right">'+(r.rental?fmtDT(r.rental.expiresAt):"-")+'</div>' +
       '</div>' +
       '<div style="display:flex;gap:16px;margin-top:8px;font-size:11.5px">' +
@@ -1168,7 +1180,7 @@ function modalHTML(){
         '<input class="input" id="assignCustomDays" placeholder="กำหนดเอง" style="width:84px;height:32px" value="">' +
       '</div></div>' +
       paymentPickerHTML(m.paymentMethod,"apay") +
-      '<div class="field"><label>วันและเวลาเริ่มต้น (แก้ไขได้)</label><input class="input" type="datetime-local" id="assignStart" value="'+msToBkkInput(start.getTime())+'">' +
+      '<div class="field"><label>วันและเวลาเริ่มต้น (แก้ไขได้) — วว/ดด/ปปปป</label>'+startPickerHTML(start.getTime())+
         '<p class="faint" style="font-size:10.5px;margin-top:3px">'+(m.startMs!=null ? 'ตั้งเวลาเองไว้ (เวลาไทย) · <a href="#" id="assignStartNow" style="color:var(--accent)">ใช้เวลาปัจจุบัน</a>' : 'ค่าเริ่มต้นคือเวลาปัจจุบัน แตะเพื่อเปลี่ยนวัน/เวลาเริ่มได้ (เวลาไทย)')+'</p></div>' +
       '<div class="field"><label>วันและเวลาหมดอายุ (คำนวณให้อัตโนมัติ)</label><input class="input" disabled value="'+fmtDT(exp.toISOString())+'"></div>' +
       '<div class="summary-box">ใช้งาน '+m.days+' วัน เริ่ม '+fmtDT(start.toISOString())+' หมดเวลา '+fmtDT(exp.toISOString())+' · ลูกค้า: '+esc(custLabel)+'</div>' +
@@ -1313,8 +1325,14 @@ function mountModal(){
     var cd=document.getElementById("assignCustomDays");
     if(cd) cd.oninput=function(){ var n=Number(cd.value); if(Number.isInteger(n)&&n>=1&&n<=365){ m.days=n; render(); } };
     var sel=document.getElementById("assignCust"); if(sel) sel.onchange=function(){ m.customerId=sel.value; };
-    var stIn=document.getElementById("assignStart");
-    if(stIn) stIn.onchange=function(){ var ms=bkkInputToMs(stIn.value); m.startMs=(ms==null?null:ms); render(); };
+    document.querySelectorAll('[data-startpart]').forEach(function(sel){
+      sel.onchange=function(){
+        var g=function(k){ return Number(document.querySelector('[data-startpart="'+k+'"]').value); };
+        var y=g("y"), mo=g("m"), d=g("d");
+        d=Math.min(d, new Date(Date.UTC(y,mo,0)).getUTCDate()); // 31 → 30/28 เมื่อเดือนนั้นมีวันน้อยกว่า
+        m.startMs=Date.UTC(y,mo-1,d,g("h"),g("mi"))-7*3600*1000; render();
+      };
+    });
     var stNow=document.getElementById("assignStartNow"); if(stNow) stNow.onclick=function(e){ e.preventDefault(); m.startMs=null; render(); };
     var nn=document.getElementById("assignNewName"); if(nn) nn.oninput=function(){ m.newName=nn.value; };
     document.getElementById("assignConfirm").onclick=function(){
@@ -1540,7 +1558,7 @@ function viewAdminAccountDetail(accountId){
     '<div><h3 style="font-size:13px;font-weight:800;margin-bottom:10px">โปรไฟล์ในบัญชีนี้ ('+rows.length+')</h3>' +
       '<div class="grid grid-2">' + rows.map(function(r){
         return '<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-weight:700;font-size:13px">'+esc(r.profile.name)+'</div>'+statusBadge(r.status)+'</div>' +
-        '<div class="muted" style="font-size:11.5px">'+(r.customer?("ลูกค้า: "+secretHTML(r.customer.name)):"ยังไม่มีลูกค้า")+'</div>' +
+        '<div class="muted" style="font-size:11.5px">'+(r.customer?("ลูกค้า: "+esc(r.customer.name)):"ยังไม่มีลูกค้า")+'</div>' +
         (r.rental?'<div class="faint" style="font-size:11px;margin-top:3px">หมดอายุ '+fmtDT(r.rental.expiresAt)+'</div>':'')+'</div>';
       }).join("") + '</div>' +
     '</div>' +

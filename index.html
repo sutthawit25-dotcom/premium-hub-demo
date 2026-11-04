@@ -13,21 +13,20 @@
   @font-face{font-family:"LINE Seed Sans TH"; src:url("/fonts/LINESeedSansTH_XBd.woff2") format("woff2"); font-weight:800 900; font-style:normal; font-display:swap}
   /* ============================================================
      CATBYTE PREHUB — design plan
-     Color: porcelain / obsidian neutrals, one champagne-gold accent used
-            sparingly (active nav, prices, brand mark, focus); ink-black
-            primary buttons in light, gold primary buttons in dark
+     Color: cool white / navy-black neutrals, sky-to-royal blue accent
+            (active nav, prices, brand mark, focus, primary buttons)
      Type:  LINE Seed Sans TH throughout (Rg / Bd / XBd, self-hosted);
             headings use the heavier weights, numerals stay tabular
      Layout: obsidian left rail in both themes, airy cards with hairline
              borders and soft layered shadows; one hero band on the shop
      ============================================================ */
   :root{
-    --bg:#f3f3f6; --bg-subtle:#ebebf0; --surface:#ffffff; --surface-raised:#ffffff;
-    --border:#e2e2e9; --border-strong:#cfd0da; --ink:#13141b; --muted:#5e6070; --faint:#9496a4;
-    --accent:#9a7231; --accent-hover:#82602a; --accent-ink:#ffffff; --accent-soft:#f5eee2;
-    --gold:#c7a15e; --gold-soft:rgba(199,161,94,.14);
-    --btn-bg:#13141b; --btn-bg-hover:#2a2c38; --btn-ink:#ffffff;
-    --rail-bg:#0f1016; --rail-ink:#e9e7e1; --rail-muted:#8d8f9c; --rail-border:#22232d; --rail-hover:#1a1b24;
+    --bg:#f3f6fb; --bg-subtle:#e9eef7; --surface:#ffffff; --surface-raised:#ffffff;
+    --border:#dde4f0; --border-strong:#c5cfe2; --ink:#0b1220; --muted:#55617a; --faint:#8b96ad;
+    --accent:#1d4ed8; --accent-hover:#1e40af; --accent-ink:#ffffff; --accent-soft:#e8efff;
+    --gold:#2f80ff; --gold-soft:rgba(47,128,255,.14);
+    --btn-bg:#1d4ed8; --btn-bg-hover:#1e40af; --btn-ink:#ffffff;
+    --rail-bg:#0a1226; --rail-ink:#e8eefc; --rail-muted:#8592ad; --rail-border:#18223a; --rail-hover:#121b30;
     --good:#13875a; --good-bg:#e7f5ee; --good-bd:#c2e6d4;
     --info:#3651c9; --info-bg:#ecf0fd; --info-bd:#cbd5f8;
     --bad:#c02634; --bad-bg:#fcecee; --bad-bd:#f3c6cb;
@@ -41,12 +40,12 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#0b0c10; --bg-subtle:#12131a; --surface:#14151c; --surface-raised:#1a1b24;
-      --border:#24252f; --border-strong:#33354a; --ink:#efede7; --muted:#a2a3b0; --faint:#6e7080;
-      --accent:#d6b376; --accent-hover:#e3c48c; --accent-ink:#14110a; --accent-soft:#251f14;
-      --gold:#d6b376; --gold-soft:rgba(214,179,118,.12);
-      --btn-bg:#d6b376; --btn-bg-hover:#e3c48c; --btn-ink:#14110a;
-      --rail-bg:#08090c; --rail-ink:#ece9e2; --rail-muted:#82848f; --rail-border:#1b1c24; --rail-hover:#12131a;
+      --bg:#060b16; --bg-subtle:#0a1120; --surface:#0d1424; --surface-raised:#121b30;
+      --border:#1c2740; --border-strong:#2a3a5c; --ink:#eef3ff; --muted:#9aa6c0; --faint:#6e7080;
+      --accent:#4da3ff; --accent-hover:#7cbcff; --accent-ink:#04101f; --accent-soft:#0f1c33;
+      --gold:#4da3ff; --gold-soft:rgba(77,163,255,.12);
+      --btn-bg:#4da3ff; --btn-bg-hover:#7cbcff; --btn-ink:#04101f;
+      --rail-bg:#050913; --rail-ink:#e8eefc; --rail-muted:#7c89a6; --rail-border:#131d33; --rail-hover:#0a1120;
       --good:#4cc78f; --good-bg:#0f2219; --good-bd:#1b3d2d;
       --info:#8ea2ff; --info-bg:#121933; --info-bd:#232f5c;
       --bad:#f06873; --bad-bg:#2b1217; --bad-bd:#4d1f27;
@@ -56,12 +55,12 @@
     }
   }
   :root[data-theme="dark"]{
-    --bg:#0b0c10; --bg-subtle:#12131a; --surface:#14151c; --surface-raised:#1a1b24;
-    --border:#24252f; --border-strong:#33354a; --ink:#efede7; --muted:#a2a3b0; --faint:#6e7080;
-    --accent:#d6b376; --accent-hover:#e3c48c; --accent-ink:#14110a; --accent-soft:#251f14;
-    --gold:#d6b376; --gold-soft:rgba(214,179,118,.12);
-    --btn-bg:#d6b376; --btn-bg-hover:#e3c48c; --btn-ink:#14110a;
-    --rail-bg:#08090c; --rail-ink:#ece9e2; --rail-muted:#82848f; --rail-border:#1b1c24; --rail-hover:#12131a;
+    --bg:#060b16; --bg-subtle:#0a1120; --surface:#0d1424; --surface-raised:#121b30;
+    --border:#1c2740; --border-strong:#2a3a5c; --ink:#eef3ff; --muted:#9aa6c0; --faint:#6e7080;
+    --accent:#4da3ff; --accent-hover:#7cbcff; --accent-ink:#04101f; --accent-soft:#0f1c33;
+    --gold:#4da3ff; --gold-soft:rgba(77,163,255,.12);
+    --btn-bg:#4da3ff; --btn-bg-hover:#7cbcff; --btn-ink:#04101f;
+    --rail-bg:#050913; --rail-ink:#e8eefc; --rail-muted:#7c89a6; --rail-border:#131d33; --rail-hover:#0a1120;
     --good:#4cc78f; --good-bg:#0f2219; --good-bd:#1b3d2d;
     --info:#8ea2ff; --info-bg:#121933; --info-bd:#232f5c;
     --bad:#f06873; --bad-bg:#2b1217; --bad-bd:#4d1f27;
@@ -226,7 +225,7 @@
   a.btn{text-decoration:none}
   .brand{white-space:nowrap}
   body{letter-spacing:.005em}
-  ::selection{background:var(--gold); color:#14110a}
+  ::selection{background:var(--gold); color:#04101f}
   .btn{height:40px; padding:0 16px; border-radius:var(--radius-sm); font-weight:600; letter-spacing:.01em; transition:background-color .18s,border-color .18s,color .18s,transform .18s}
   .btn-sm{height:34px; padding:0 13px}
   .btn:active{transform:translateY(1px)}
@@ -243,7 +242,7 @@
 
   .brand{font-family:var(--font-display); font-weight:600; letter-spacing:.06em; font-size:14px; font-weight:800}
   .brand .mark{width:32px; height:32px; border-radius:10px; font-family:var(--font-display); font-weight:700; font-size:16px;
-    background:linear-gradient(145deg,#e7cd97 0%,#c7a15e 45%,#8f6a2c 100%); color:#17130b; box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px -4px rgba(199,161,94,.55)}
+    background:linear-gradient(145deg,#7dd3fc 0%,#2f80ff 45%,#1e3a8a 100%); color:#ffffff; box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px -4px rgba(47,128,255,.55)}
 
   .topbar{height:62px; background:color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter:saturate(1.4) blur(14px)}
   .topbar h1{font-family:var(--font-display); font-weight:600!important; font-size:16px!important; letter-spacing:.01em}
@@ -254,12 +253,12 @@
   .rail .brand .muted, .drawer .brand .muted{color:var(--rail-muted)!important; font-family:var(--font-th); letter-spacing:.02em}
   .rail nav a, .drawer nav a{color:var(--rail-muted); position:relative; font-weight:500; padding:10px 14px}
   .rail nav a:hover, .drawer nav a:hover{background:var(--rail-hover); color:var(--rail-ink)}
-  .rail nav a.active, .drawer nav a.active{background:linear-gradient(90deg,rgba(214,179,118,.16),rgba(214,179,118,0) 85%); color:#ecd6a6}
+  .rail nav a.active, .drawer nav a.active{background:linear-gradient(90deg,rgba(77,163,255,.16),rgba(77,163,255,0) 85%); color:#a9d2ff}
   .rail nav a.active::before, .drawer nav a.active::before{content:""; position:absolute; left:0; top:9px; bottom:9px; width:2px; border-radius:2px; background:var(--gold)}
   .rail .foot, .drawer .foot{border-top-color:var(--rail-border)}
   .rail .foot a, .drawer .foot a{color:var(--rail-muted)!important}
   .rail .foot a[data-billing-open], .drawer .foot a[data-billing-open]{background:var(--rail-hover)!important; color:var(--rail-ink)!important; border:1px solid var(--rail-border)}
-  .rail .foot a[data-billing-open] .muted, .drawer .foot a[data-billing-open] .muted{color:#d6b376!important}
+  .rail .foot a[data-billing-open] .muted, .drawer .foot a[data-billing-open] .muted{color:#4da3ff!important}
   .drawer .btn-ghost{color:var(--rail-muted)}
   .admin-content{padding:26px 28px}
   @media (max-width:900px){ .admin-content{padding:16px} }
@@ -289,23 +288,39 @@
   .pill{background:transparent; border-color:color-mix(in srgb, var(--gold) 45%, transparent); color:var(--accent); letter-spacing:.04em}
 
   /* storefront hero band: the one bold moment */
-  .lux-hero{position:relative; overflow:hidden; background:#0b0c10; color:#efede7; border-bottom:1px solid #1c1d26}
+  .lux-hero{position:relative; overflow:hidden; background:#060b16; color:#eef3ff; border-bottom:1px solid #16213a}
   .lux-hero::before{content:""; position:absolute; inset:-40% -10% auto auto; width:780px; height:780px; border-radius:50%;
-    background:radial-gradient(closest-side, rgba(214,179,118,.22), rgba(214,179,118,0)); pointer-events:none}
-  .lux-hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:1px; background:linear-gradient(90deg,transparent,rgba(214,179,118,.55),transparent)}
+    background:radial-gradient(closest-side, rgba(77,163,255,.22), rgba(77,163,255,0)); pointer-events:none}
+  .lux-hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:1px; background:linear-gradient(90deg,transparent,rgba(77,163,255,.55),transparent)}
   .lux-hero .inner{position:relative; max-width:920px; margin:0 auto; padding-block:72px 64px; display:flex; flex-direction:column; gap:18px}
-  .lux-hero .eyebrow{color:#d6b376; font-size:12.5px; letter-spacing:.18em}
+  .lux-hero .eyebrow{color:#4da3ff; font-size:12.5px; letter-spacing:.18em}
   .lux-hero h1{font-family:var(--font-display); font-weight:800; font-size:clamp(30px,5.2vw,50px); line-height:1.25; letter-spacing:.005em; max-width:20ch}
-  .lux-hero p{color:#a9aab6; max-width:52ch; font-size:15px}
-  .lux-hero .btn-secondary{background:transparent; color:#efede7; border-color:#33354a}
-  .lux-hero .btn-secondary:hover{border-color:#d6b376; color:#ecd6a6}
-  .lux-hero .btn-primary{background:#d6b376; color:#14110a}
-  .lux-hero .btn-primary:hover{background:#e3c48c}
+  .lux-hero p{color:#a3b1cc; max-width:52ch; font-size:15px}
+  .lux-hero .btn-secondary{background:transparent; color:#eef3ff; border-color:#2a3a5c}
+  .lux-hero .btn-secondary:hover{border-color:#4da3ff; color:#a9d2ff}
+  .lux-hero .btn-primary{background:#4da3ff; color:#04101f}
+  .lux-hero .btn-primary:hover{background:#7cbcff}
   .lux-feature{display:flex; flex-direction:column; gap:6px; padding:22px}
   .lux-feature .t{font-family:var(--font-display); font-weight:600; font-size:15px}
   .lux-feature .rule{width:28px; height:1px; background:var(--gold); margin-bottom:6px}
   footer.site{letter-spacing:.02em}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+  /* storefront sections */
+  .lux-steps{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; counter-reset:st}
+  .lux-steps .s{padding:22px; display:flex; flex-direction:column; gap:6px}
+  .lux-steps .n{width:30px; height:30px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff; background:linear-gradient(145deg,#38bdf8,#1d4ed8); margin-bottom:6px}
+  .lux-steps .t{font-weight:700; font-size:15px}
+  @media (max-width:720px){ .lux-steps{grid-template-columns:1fr} }
+  .lux-stats{display:flex; gap:28px; flex-wrap:wrap; padding-top:22px; margin-top:8px; border-top:1px solid #16213a}
+  .lux-stats .v{font-size:26px; font-weight:800; color:#eef3ff}
+  .lux-stats .l{font-size:12px; color:#8592ad}
+  .faq{display:flex; flex-direction:column; gap:8px}
+  .faq details{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:0 18px}
+  .faq summary{cursor:pointer; list-style:none; padding:15px 0; font-weight:700; font-size:14px; display:flex; justify-content:space-between; gap:12px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+"; color:var(--accent); font-weight:800; font-size:18px; line-height:1}
+  .faq details[open] summary::after{content:"–"}
+  .faq details p{color:var(--muted); font-size:13.5px; padding-bottom:16px}
 </style>
 
 </head>
@@ -3048,6 +3063,7 @@ function viewHome(){
       '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:6px">' +
         contactButtonsHTML({lineLabel:"สั่งซื้อทาง LINE",fbLabel:"สั่งซื้อทาง Facebook"}) +
       '</div>' +
+      heroStatsHTML() +
   '</div></section>' +
   '<main class="gutter" style="max-width:920px;margin:0 auto;padding-top:44px;padding-bottom:48px">' +
     '<section>' +
@@ -3058,13 +3074,37 @@ function viewHome(){
         '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
       '</div>' +
     '</section>' +
+    '<section style="margin-top:40px"><h2 class="section-title" style="font-size:20px;margin-bottom:14px">สั่งซื้อง่ายใน 3 ขั้นตอน</h2><div class="lux-steps">' +
+      '<div class="card s"><div class="n">1</div><div class="t">เลือกแพ็กเกจ</div><div class="muted" style="font-size:13px">เลือกอุปกรณ์และจำนวนวันที่ต้องการจากรายการด้านบน</div></div>' +
+      '<div class="card s"><div class="n">2</div><div class="t">ทักแชทแอดมิน</div><div class="muted" style="font-size:13px">ส่งแพ็กเกจที่เลือกทาง LINE หรือ Facebook แล้วโอนเงินตามยอด</div></div>' +
+      '<div class="card s"><div class="n">3</div><div class="t">รับโปรไฟล์ใช้งาน</div><div class="muted" style="font-size:13px">แอดมินส่งข้อมูลเข้าใช้งานพร้อมวันหมดอายุ ขอรหัส OTP ผ่านแอดมินได้</div></div>' +
+    '</div></section>' +
     '<section class="grid grid-3" style="margin-top:32px">' +
       '<div class="card lux-feature"><div class="rule"></div><div class="t">ไม่ต้องสมัครสมาชิก</div><div class="muted" style="font-size:13px">ทักแชทบอกแพ็กเกจที่ต้องการ แอดมินจัดการให้ทุกขั้นตอน</div></div>' +
       '<div class="card lux-feature"><div class="rule"></div><div class="t">ตอบไว ดูแลต่อเนื่อง</div><div class="muted" style="font-size:13px">แจ้งวันหมดอายุและรหัส OTP ให้ทุกครั้งที่ต้องใช้งาน ผ่าน LINE หรือ Facebook</div></div>' +
       '<div class="card lux-feature"><div class="rule"></div><div class="t">โปร่งใส ตรวจสอบได้</div><div class="muted" style="font-size:13px">ทุกการเปลี่ยนแปลงถูกบันทึกเป็นประวัติกิจกรรม พร้อมเวลา</div></div>' +
     '</section>' +
+    '<section style="margin-top:40px"><h2 class="section-title" style="font-size:20px;margin-bottom:14px">คำถามที่พบบ่อย</h2><div class="faq">' +
+      faqItem('ต้องสมัครสมาชิกไหม','ไม่ต้องครับ ทักแชทหาแอดมินแล้วบอกแพ็กเกจที่ต้องการได้เลย') +
+      faqItem('ใช้งานได้กี่อุปกรณ์','1 โปรไฟล์ใช้ได้ตามประเภทอุปกรณ์ที่เลือก (มือถือ/คอม หรือ Smart TV) ราคาต่างกันตามอุปกรณ์') +
+      faqItem('เริ่มนับวันใช้งานเมื่อไหร่','เริ่มนับตั้งแต่แอดมินส่งข้อมูลเข้าใช้งานให้ และแจ้งวันหมดอายุให้ทุกครั้ง') +
+      faqItem('Netflix ขอรหัส OTP ต้องทำยังไง','ทักแอดมิน แล้วแอดมินจะดึงรหัสจากอีเมลของบัญชีส่งให้') +
+      faqItem('ใกล้หมดอายุแล้วต่อได้ไหม','ต่อได้ก่อนหมดอายุ ทักแอดมินแล้วโอนตามแพ็กเกจที่ต้องการ วันจะนับต่อจากวันหมดอายุเดิม') +
+    '</div></section>' +
   '</main>' +
   siteFooterHTML();
+}
+function faqItem(q,a){ return '<details><summary>'+esc(q)+'</summary><p>'+esc(a)+'</p></details>'; }
+// ตัวเลขจริงจากระบบ (ไม่ใช่ตัวเลขสมมุติ) — ซ่อนไว้ถ้ายังไม่มีข้อมูล
+function heroStatsHTML(){
+  var rows=[]; try{ rows=allRows(); }catch(e){ rows=[]; }
+  var avail=rows.filter(function(r){ return r.status==="AVAILABLE"; }).length;
+  var cust=managedCustomers().length;
+  var items=[];
+  if(rows.length) items.push([avail,"โปรไฟล์ว่างพร้อมใช้"]);
+  if(cust) items.push([cust,"ลูกค้าที่ดูแลอยู่"]);
+  items.push([DEVICE_TYPES.length+" แบบ","รองรับมือถือ คอม และ Smart TV"]);
+  return '<div class="lux-stats">'+items.map(function(x){ return '<div><div class="v num">'+esc(x[0])+'</div><div class="l">'+esc(x[1])+'</div></div>'; }).join("")+'</div>';
 }
 function mountHome(){
   document.querySelectorAll('[data-buyplan]').forEach(function(b){ b.onclick=function(){ STATE.modal={type:"buyPlan", planId:b.getAttribute("data-buyplan")}; render(); }; });

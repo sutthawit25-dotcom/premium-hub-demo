@@ -3149,7 +3149,7 @@ function billSettingsCardHTML(){
     '<div class="grid grid-2">'+f("days","ตั้งให้หมดอายุอีก (วัน นับจากตอนนี้)",c.days,"เว้นว่างถ้าไม่เปลี่ยน")+f("price","ราคา (บาท)",c.price)+'</div>' +
     '<div class="grid grid-2">'+f("periodDays","ต่ออายุครั้งละ (วัน)",c.periodDays)+f("warnDays","เตือนก่อนหมด (วัน)",c.warnDays)+'</div>' +
     f("promptpayId","พร้อมเพย์ (เบอร์โทร หรือเลขบัตร ปชช.)",c.promptpayId)+f("promptpayName","ชื่อบัญชีที่แสดง",c.promptpayName)+f("contactUrl","ลิงก์ติดต่อ (LINE/Facebook)",c.contactUrl,"https://")+f("notifyEmail","อีเมลรับแจ้งเตือน",c.notifyEmail,"เว้นว่างถ้าตั้งใน Cloudflare แล้ว")+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="billCfgSave">บันทึก</button><button class="btn btn-outline btn-sm" id="billCfgMail">ส่งอีเมลทดสอบ</button></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" id="billCfgSave">บันทึก</button><button class="btn btn-outline btn-sm" id="billCfgMail">ส่งอีเมลทดสอบ</button>'+(b&&b.pending?'<button class="btn btn-outline btn-sm" id="billCfgClear">ล้างรายการแจ้งโอนที่ค้าง</button>':'')+'</div>' +
     (BILL_UI.msg? '<div class="muted" style="font-size:12.5px">'+esc(BILL_UI.msg)+'</div>':'') + '</div></details>';
   return '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจของเว็บนี้</div>'+st+prov+'</div>';
 }
@@ -3174,6 +3174,12 @@ function mountBillingSettings(){
     post(body).then(function(j){
       if(j.ok){ BILL_UI.cfg=null; BILL_UI.msg="บันทึกแล้ว"; applyBilling(j.billing); render(true); }
       else { BILL_UI.msg=errText(j.error); render(true); }
+    });
+  };
+  var cl=document.getElementById("billCfgClear"); if(cl) cl.onclick=function(){
+    BILL_UI.cfgOpen=true;
+    post({action:"clear-pending",providerUser:BILL_UI.puser,providerPassword:BILL_UI.code}).then(function(j){
+      if(j.ok){ BILL_UI.msg="ล้างรายการที่ค้างแล้ว ("+j.cleared+")"; applyBilling(j.billing); render(true); } else { BILL_UI.msg=errText(j.error); render(true); }
     });
   };
   var ml=document.getElementById("billCfgMail"); if(ml) ml.onclick=function(){

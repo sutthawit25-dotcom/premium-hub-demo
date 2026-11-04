@@ -71,9 +71,15 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, created, emailOk: !!mail.ok, emailError: mail.ok ? undefined : mail.error, billing: publicView(b, env) });
   }
 
-  if (action === "config" || action === "test-email") {
+  if (action === "config" || action === "test-email" || action === "clear-pending") {
     if (!env.PROVIDER_USER || !env.PROVIDER_PASSWORD) return json({ ok: false, error: "provider_login_not_set" }, 403);
     if (!safeEqual(body.providerUser, env.PROVIDER_USER) || !safeEqual(body.providerPassword, env.PROVIDER_PASSWORD)) return json({ ok: false, error: "bad_provider_login" }, 403);
+    if (action === "clear-pending") {
+      let n = 0;
+      b.notices.forEach((x) => { if (x.status === "pending") { x.status = "rejected"; x.decidedAt = Date.now(); n++; } });
+      try { await saveBilling(env, b); } catch (e) { return json({ ok: false, error: "kv_write_failed" }, 500); }
+      return json({ ok: true, cleared: n, billing: publicView(b, env) });
+    }
     if (action === "test-email") {
       const to = notifyTo(env, b);
       if (!to) return json({ ok: false, error: "no_notify_email" });

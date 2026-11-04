@@ -339,13 +339,13 @@
   .faq details p{color:var(--muted); font-size:13.5px; padding-bottom:16px}
   /* ================= Blue / Black Tech Store (body.ts-on = public pages) ================= */
   body.ts-on{
-    --bg:#080B12; --bg-subtle:#0D131D; --surface:#101722; --surface-raised:#162131;
-    --border:#253247; --border-strong:#33445f; --ink:#F3F6FC; --muted:#A3B0C2; --faint:#8593a8;
+    --bg:#080B12; --bg-subtle:#0C1220; --surface:#111827; --surface-raised:#172135;
+    --border:#263247; --border-strong:#34445f; --ink:#F3F4F6; --muted:#A8B3C7; --faint:#8b97ad;
     --accent:#2563EB; --accent-hover:#1D4ED8; --accent-ink:#ffffff; --accent-soft:#12224a;
     --gold:#2563EB; --gold-soft:rgba(37,99,235,.18);
     --btn-bg:#2563EB; --btn-bg-hover:#1D4ED8; --btn-ink:#ffffff;
     --ts-link:#8DB2FF;
-    --shadow:none; --radius:14px; --radius-sm:10px;
+    --shadow:none; --radius:14px; --radius-sm:12px;
     --t-fast:120ms; --t-normal:200ms; --t-panel:280ms; --ease:cubic-bezier(0.22,1,0.36,1);
     --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
     background:var(--bg); color:var(--ink); color-scheme:dark;
@@ -371,18 +371,20 @@
   .ts-header-in{max-width:1200px; margin:0 auto; height:68px; display:flex; align-items:center; gap:var(--s4)}
   .ts-brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-weight:800; letter-spacing:.04em; font-size:15px; white-space:nowrap; min-height:44px}
   .ts-mark{width:32px; height:32px; border-radius:9px; background:var(--accent); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:16px}
-  .ts-search{flex:1; max-width:560px; margin:0 auto; position:relative; display:flex; align-items:center}
+  .ts-menu{display:flex; gap:2px; margin-left:auto}
+  .ts-menu button{min-height:44px; padding:0 14px; border:0; border-radius:10px; background:none; color:var(--muted); font:inherit; font-size:14.5px; font-weight:700; cursor:pointer; transition:color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease)}
+  .ts-menu button:hover{color:var(--ink); background:var(--surface)}
+  .ts-search{flex:1; position:relative; display:flex; align-items:center; min-width:0}
   .ts-search svg{position:absolute; left:14px; color:var(--muted); pointer-events:none}
   .ts-search input{width:100%; height:44px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--ink); font:inherit; font-size:15px; padding:0 14px 0 40px; transition:border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease)}
   .ts-search input::placeholder{color:var(--faint)}
   .ts-search input:focus{outline:none; border-color:var(--accent); background:var(--surface-raised)}
   .ts-line{white-space:nowrap; gap:8px}
-  @media (max-width:720px){
-    .ts-header-in{height:auto; flex-wrap:wrap; gap:var(--s2) var(--s3); padding-block:10px}
-    .ts-search{order:3; flex-basis:100%; max-width:none}
+  @media (max-width:767px){
+    .ts-header-in{height:60px}
+    .ts-menu{display:none}
     .ts-line{margin-left:auto; padding:0 14px}
   }
-  @media (max-width:380px){ .ts-line span{display:none} .ts-line{width:44px; padding:0} }
 
   .ts-intro{padding-block:var(--s6) var(--s4)}
   .ts-intro .ts-wrap{display:flex; align-items:flex-end; justify-content:space-between; gap:var(--s5); padding-bottom:var(--s5); border-bottom:1px solid var(--border)}
@@ -518,6 +520,95 @@
   .ts-textbtn{display:inline-flex; align-items:center; gap:6px; min-height:44px; background:none; border:0; color:var(--ts-link); font:inherit; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer}
   .ts-textbtn:hover{text-decoration:underline}
   @media (prefers-reduced-motion: reduce){ .ts *, .ts-panel, .ts-overlay{animation:none!important; transition:none!important} }
+
+  /* banner carousel */
+  .ts-banner{padding-top:var(--s4)}
+  .ts-bn{position:relative}
+  .ts-bn-view{overflow:hidden; border-radius:16px; border:1px solid var(--border); background:var(--surface); touch-action:pan-y; cursor:grab; user-select:none}
+  .ts-bn-view:active{cursor:grabbing}
+  .ts-bn-track{display:flex; transition:transform 400ms var(--ease); will-change:transform}
+  .ts-slide{flex:0 0 100%; min-width:0; position:relative}
+  .ts-slide picture, .ts-slide img{display:block; width:100%}
+  .ts-slide img{aspect-ratio:3 / 1; height:auto; object-fit:cover; background:var(--surface-raised)}
+  .ts-bn-cap{position:absolute; left:0; top:0; bottom:0; width:min(54%,560px); display:flex; flex-direction:column; justify-content:center; align-items:flex-start; gap:6px; padding:var(--s5) 40px var(--s5) 76px;
+    background:linear-gradient(90deg, rgba(8,11,18,.86) 0%, rgba(8,11,18,.62) 70%, rgba(8,11,18,0) 100%)}
+  .ts-bn-cap strong{font-size:clamp(20px,2.4vw,30px); font-weight:800; line-height:1.3}
+  .ts-bn-cap span{color:#cfd6e3; font-size:15px}
+  .ts-bn-tag{display:inline-flex; font-size:12px!important; font-weight:700; color:#fde68a!important; border:1px solid rgba(253,230,138,.5); border-radius:6px; padding:1px 8px}
+  .ts-bn-cta{margin-top:var(--s2)}
+  .ts-bn-nav{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:rgba(17,24,39,.9); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease)}
+  .ts-bn-nav:hover{background:var(--surface-raised)}
+  .ts-bn-nav:active{transform:translateY(-50%) scale(.96)}
+  .ts-bn-nav.prev{left:12px} .ts-bn-nav.next{right:12px}
+  .ts-bn-ctrl{display:flex; justify-content:center; align-items:center; gap:var(--s2); margin-top:var(--s2)}
+  .ts-bn-dots{display:flex; gap:2px}
+  .ts-dot{width:28px; height:44px; border:0; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0}
+  .ts-dot::before{content:""; width:8px; height:8px; border-radius:4px; background:var(--border-strong); transition:width var(--t-normal) var(--ease), background-color var(--t-normal) var(--ease)}
+  .ts-dot[aria-current="true"]::before{width:22px; background:var(--accent)}
+  .ts-bn-play{width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer}
+  .ts-bn-play:hover{color:var(--ink)}
+  .ts-bn-play svg, .ts-bn-nav svg, .ts-rbtn svg{pointer-events:none}
+  @media (max-width:767px){
+    .ts-banner{padding-top:var(--s3)}
+    .ts-slide img{aspect-ratio:16 / 9}
+    .ts-bn-cap{position:static; width:auto; background:var(--surface); border-top:1px solid var(--border); padding:var(--s3) var(--s4); gap:4px}
+    .ts-bn-cap strong{font-size:17px}
+    .ts-bn-cap span{font-size:13.5px}
+    .ts-bn-cta{min-height:40px!important; font-size:14px}
+    .ts-bn-nav{display:none}
+  }
+
+  /* finder: search + categories */
+  .ts-finder{display:flex; flex-direction:column; gap:var(--s3); padding-top:var(--s4)}
+  .ts-finder .ts-search input{height:48px; font-size:16px; border-radius:12px}
+  .ts-finder .ts-cats-wrap{flex:none}
+
+  .ts-sec-head{display:flex; align-items:flex-end; justify-content:space-between; gap:var(--s3); margin-bottom:var(--s3); flex-wrap:wrap}
+  .ts-sec-head h2{margin:0!important}
+  .ts-sec-head .ts-count{margin:2px 0 0}
+  .ts-feat, .ts-all{padding-top:var(--s6)}
+  .ts-all{scroll-margin-top:76px}
+  #tsHow, #tsFaq{scroll-margin-top:76px}
+
+  /* featured row */
+  .ts-row-nav{display:flex; gap:var(--s2)}
+  .ts-rbtn{width:44px; height:44px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background-color var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease)}
+  .ts-rbtn:hover:not(:disabled){background:var(--surface-raised)}
+  .ts-rbtn:disabled{opacity:.35; cursor:default}
+  .ts-row{display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 3 * var(--s3)) / 4); gap:var(--s3); overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding-bottom:4px; overscroll-behavior-x:contain}
+  .ts-row::-webkit-scrollbar{display:none}
+  .ts-row > .ts-card{scroll-snap-align:start}
+  @media (max-width:1023px){ .ts-row{grid-auto-columns:calc((100% - 2 * var(--s3)) / 2.6)} }
+  @media (max-width:767px){ .ts-row-nav{display:none} .ts-row{grid-auto-columns:72%; margin-inline:calc(-1 * max(16px, env(safe-area-inset-left,0px))); padding-inline:max(16px, env(safe-area-inset-left,0px)); scroll-padding-inline:max(16px, env(safe-area-inset-left,0px))} }
+
+  .ts-logo{width:64px; height:64px}
+  .ts-logo-img{width:56px; height:56px; object-fit:contain; border-radius:12px}
+  .ts-dur{font-size:13.5px; color:#c3cddb; margin-top:var(--s2)}
+  .ts-cta{background:var(--accent)!important; border-color:var(--accent)!important; color:#fff!important}
+  .ts-cta:hover{background:var(--accent-hover)!important}
+  .ts-cta svg{display:none}
+
+  /* mobile bottom nav */
+  .ts-bnav{display:none}
+  @media (max-width:767px){
+    .ts{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+    .ts-bnav{display:grid; grid-template-columns:repeat(4,1fr); position:fixed; left:0; right:0; bottom:0; z-index:45; background:#0B111D; border-top:1px solid var(--border); padding:4px max(8px, env(safe-area-inset-left,0px)) calc(4px + env(safe-area-inset-bottom,0px))}
+    .ts-bnav button, .ts-bnav a{min-height:56px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:0; background:none; color:var(--muted); font:inherit; font-size:11.5px; font-weight:700; text-decoration:none; cursor:pointer; border-radius:10px}
+    .ts-bnav button:active, .ts-bnav a:active{background:var(--surface)}
+    .ts-bnav a{color:#8DB2FF}
+  }
+  @media (prefers-reduced-motion: reduce){ .ts-bn-track{transition:none!important} }
+
+  /* admin: banner + logo editors */
+  .bn-edit{display:grid; grid-template-columns:220px minmax(0,1fr); gap:12px; border:1px solid var(--border); border-radius:10px; padding:10px}
+  .bn-prev{position:relative; border-radius:8px; overflow:hidden; background:var(--bg-subtle); aspect-ratio:3/1; align-self:start}
+  .bn-prev img{width:100%; height:100%; object-fit:cover; display:block}
+  .bn-prev span{position:absolute; left:6px; top:6px; font-size:11px; font-weight:700; background:rgba(0,0,0,.6); color:#fde68a; padding:1px 6px; border-radius:5px}
+  .bn-fields{display:flex; flex-direction:column; gap:8px; min-width:0}
+  @media (max-width:720px){ .bn-edit{grid-template-columns:1fr} }
+  .sv-extra{grid-column:1 / -1; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .logo-cell{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .logo-cell img{width:34px; height:34px; object-fit:contain; border-radius:8px; background:var(--bg-subtle)}
 </style>
 
 </head>
@@ -2926,23 +3017,23 @@ function snapshotState(){
     accounts:ACCOUNTS, customers:CUSTOMERS, reviews:REVIEWS, mailboxes:MAILBOXES,
     profiles:PROFILES, rentals:RENTALS, renewals:RENEWALS, onetimeSales:ONETIME_SALES,
     activity:ACTIVITY, plans:PLANS, planIdSeq:PLAN_ID_SEQ, deviceTypes:DEVICE_TYPES,
-    paymentMethods:PAYMENT_METHODS, shop:SHOP, services:SERVICES
+    paymentMethods:PAYMENT_METHODS, shop:SHOP, services:SERVICES, banners:BANNERS
   };
 }
 // บริการพรีเมียมอื่นๆ ในหน้าร้าน (นอกจาก Netflix) — แก้ชื่อ/คำอธิบาย/ราคา/เปิดปิดได้ที่หลังบ้าน > ตั้งค่าร้าน
 // ราคาเว้นว่าง = แสดง "สอบถามราคา"  |  สีใช้ทำป้ายตัวอักษรย่อ (ไม่ใช้โลโก้จริงของแต่ละแบรนด์)
 var SERVICES = [
-  {id:"sv-yt", name:"YouTube Premium", cat:"วิดีโอ", desc:"ดูไม่มีโฆษณา เล่นเบื้องหลัง พร้อม YouTube Music", price:"", on:true, color:"#e5484d"},
-  {id:"sv-dp", name:"Disney+ Hotstar", cat:"วิดีโอ", desc:"หนัง ซีรีส์ Marvel, Pixar, Star Wars และกีฬา", price:"", on:true, color:"#2563eb"},
+  {id:"sv-yt", name:"YouTube Premium", cat:"วิดีโอ", desc:"ดูไม่มีโฆษณา เล่นเบื้องหลัง พร้อม YouTube Music", price:"", on:true, featured:true, color:"#e5484d"},
+  {id:"sv-dp", name:"Disney+ Hotstar", cat:"วิดีโอ", desc:"หนัง ซีรีส์ Marvel, Pixar, Star Wars และกีฬา", price:"", on:true, featured:true, color:"#2563eb"},
   {id:"sv-hbo", name:"HBO Max", cat:"วิดีโอ", desc:"ซีรีส์ HBO หนังใหม่จาก Warner Bros.", price:"", on:true, color:"#7c3aed"},
   {id:"sv-prime", name:"Prime Video", cat:"วิดีโอ", desc:"หนังและซีรีส์ Amazon Originals", price:"", on:true, color:"#0ea5e9"},
   {id:"sv-viu", name:"VIU", cat:"วิดีโอ", desc:"ซีรีส์เกาหลี ไทย เอเชีย อัปเดตไว", price:"", on:true, color:"#f59e0b"},
   {id:"sv-iq", name:"iQIYI", cat:"วิดีโอ", desc:"ซีรีส์จีน อนิเมะ หนังเอเชีย", price:"", on:true, color:"#16a34a"},
   {id:"sv-wetv", name:"WeTV", cat:"วิดีโอ", desc:"ซีรีส์จีน ไทย และวาไรตี้", price:"", on:true, color:"#f97316"},
   {id:"sv-trueid", name:"TrueID+", cat:"วิดีโอ", desc:"ช่องทีวี กีฬา และคอนเทนต์ไทย", price:"", on:true, color:"#dc2626"},
-  {id:"sv-spot", name:"Spotify Premium", cat:"เพลง", desc:"ฟังเพลงไม่มีโฆษณา ดาวน์โหลดฟังออฟไลน์", price:"", on:true, color:"#22c55e"},
+  {id:"sv-spot", name:"Spotify Premium", cat:"เพลง", desc:"ฟังเพลงไม่มีโฆษณา ดาวน์โหลดฟังออฟไลน์", price:"", on:true, featured:true, color:"#22c55e"},
   {id:"sv-am", name:"Apple Music", cat:"เพลง", desc:"เพลงคุณภาพสูง Lossless และ Spatial Audio", price:"", on:true, color:"#ec4899"},
-  {id:"sv-gpt", name:"ChatGPT Plus", cat:"AI และทำงาน", desc:"ผู้ช่วย AI สำหรับงานเขียน ค้นคว้า และเขียนโค้ด", price:"", on:true, color:"#10b981"},
+  {id:"sv-gpt", name:"ChatGPT Plus", cat:"AI และทำงาน", desc:"ผู้ช่วย AI สำหรับงานเขียน ค้นคว้า และเขียนโค้ด", price:"", on:true, featured:true, color:"#10b981"},
   {id:"sv-canva", name:"Canva Pro", cat:"AI และทำงาน", desc:"ออกแบบกราฟิก โพสต์ วิดีโอ พร้อมเทมเพลตพรีเมียม", price:"", on:true, color:"#06b6d4"},
   {id:"sv-capcut", name:"CapCut Pro", cat:"AI และทำงาน", desc:"ตัดต่อวิดีโอ เอฟเฟกต์และฟีเจอร์ Pro", price:"", on:true, color:"#334155"},
   {id:"sv-ms", name:"Microsoft 365", cat:"AI และทำงาน", desc:"Word, Excel, PowerPoint พร้อม OneDrive 1 TB", price:"", on:true, color:"#f97316"}
@@ -2956,12 +3047,15 @@ function applySnapshot(s){
   setArr(RENEWALS, s.renewals); setArr(ONETIME_SALES, s.onetimeSales); setArr(ACTIVITY, s.activity);
   if(Array.isArray(s.plans)) setArr(PLANS, s.plans);
   if(Array.isArray(s.services)) setArr(SERVICES, s.services);
+  if(Array.isArray(s.banners)) setArr(BANNERS, s.banners);
   if(typeof s.planIdSeq==="number") PLAN_ID_SEQ=s.planIdSeq;
   if(Array.isArray(s.deviceTypes)) setArr(DEVICE_TYPES, s.deviceTypes);
   if(Array.isArray(s.paymentMethods)) setArr(PAYMENT_METHODS, s.paymentMethods);
   if(s.shop && typeof s.shop==="object"){
     SHOP.name=s.shop.name||SHOP.name; SHOP.tagline=s.shop.tagline||SHOP.tagline;
     SHOP.contactLine=s.shop.contactLine||SHOP.contactLine; SHOP.contactFacebook=s.shop.contactFacebook||SHOP.contactFacebook;
+    if(typeof s.shop.netflixLogo==="string") SHOP.netflixLogo=s.shop.netflixLogo;
+    if(typeof s.shop.netflixFeatured==="boolean") SHOP.netflixFeatured=s.shop.netflixFeatured;
   }
 }
 var PERSIST_TIMER=null, PERSIST_FAIL_WARNED=false;
@@ -3273,10 +3367,18 @@ function devicePlansHtml(deviceType){
   }).join("");
 }
 /* ================================================================ STOREFRONT — Blue / Black Tech Store
-   หน้าร้าน: Header(แบรนด์/ค้นหา/LINE) → Intro สั้น → หมวด+เรียง → Product grid → วิธีสั่งซื้อ → FAQ → ติดต่อ
-   ข้อมูลมาจาก PLANS / DEVICE_TYPES / SERVICES / SHOP เดิมทั้งหมด สั่งซื้อผ่านแชต LINE/Facebook (ไม่มีระบบจ่ายเงินในเว็บ) */
+   ลำดับหน้า: Header → แบนเนอร์สไลด์ → ค้นหา → หมวดหมู่ → แอปแนะนำ (เลื่อนแนวนอน) → แอปทั้งหมด (grid) → วิธีสั่งซื้อ → FAQ/ติดต่อ
+   ข้อมูลทั้งหมดมาจาก BANNERS / PLANS / DEVICE_TYPES / SERVICES / SHOP ซึ่งแก้ได้ที่ หลังบ้าน > ตั้งค่าร้าน
+   สั่งซื้อผ่านแชต LINE/Facebook เท่านั้น (ไม่มีระบบชำระเงินในเว็บ) */
 var TS = { q:"", cat:"all", sort:"default", sel:{}, opener:null, panelId:null };
 var STORE_LOAD = "loading"; // loading | ok | error — สถานะโหลดข้อมูลร้านจาก /api/state จริง
+
+// แบนเนอร์: แก้ภาพ ลำดับ ข้อความ และลิงก์ได้ที่ หลังบ้าน > ตั้งค่าร้าน > แบนเนอร์หน้าร้าน
+// href: "app:<id>" เปิดแพ็กเกจของแอป · "cat:<หมวด>" กรองหมวด · "#shop" ไปที่สินค้า · หรือ https://... เปิดแท็บใหม่
+var BANNERS = [
+  {id:"bn-sample-1", imageDesktop:"/banners/sample-1-desktop.svg", imageMobile:"/banners/sample-1-mobile.svg", alt:"ภาพตัวอย่างแบนเนอร์ 1", title:"ภาพตัวอย่างแบนเนอร์", subtitle:"อัปโหลดภาพของร้านได้ที่ หลังบ้าน > ตั้งค่าร้าน > แบนเนอร์หน้าร้าน", ctaLabel:"ดูแอปทั้งหมด", href:"#shop", focus:"center", sample:true},
+  {id:"bn-sample-2", imageDesktop:"/banners/sample-2-desktop.svg", imageMobile:"/banners/sample-2-mobile.svg", alt:"ภาพตัวอย่างแบนเนอร์ 2", title:"ภาพตัวอย่าง: Netflix", subtitle:"ตัวอย่างลิงก์ที่เปิดหน้าเลือกแพ็กเกจของแอป", ctaLabel:"เลือกแพ็กเกจ Netflix", href:"app:netflix", focus:"center", sample:true}
+];
 
 function svMono(sv,size){
   size=size||40;
@@ -3285,18 +3387,17 @@ function svMono(sv,size){
   return '<span class="sv-mono" aria-hidden="true" style="width:'+size+'px;height:'+size+'px;background:'+esc(sv.color||"#2563EB")+'">'+esc(t.toUpperCase())+'</span>';
 }
 function tsIcon(n){
-  var p={ chev:'<path d="M6 9l6 6 6-6"/>', check:'<path d="M20 6L9 17l-5-5"/>', chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/>', arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>', sort:'<path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/>' };
-  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[n]||"")+'</svg>';
+  var p={ chev:'<path d="M6 9l6 6 6-6"/>', left:'<path d="M15 18l-6-6 6-6"/>', right:'<path d="M9 18l6-6-6-6"/>', check:'<path d="M20 6L9 17l-5-5"/>', chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/>', arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>', sort:'<path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/>', pause:'<path d="M9 5v14M15 5v14"/>', play:'<path d="M7 5l12 7-12 7z"/>', home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>', grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/>' };
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[n]||"")+'</svg>';
 }
 function tsNetflixMin(){ var m=null; PLANS.forEach(function(p){ if(m===null || Number(p.price)<Number(m.price)) m=p; }); return m; }
 function tsProducts(){
-  var list=[];
-  var mp=tsNetflixMin();
-  if(mp) list.push({id:"netflix", kind:"netflix", name:"Netflix", cat:"วิดีโอ", desc:"หนังและซีรีส์ แบ่งโปรไฟล์ใช้งาน", price:Number(mp.price), priceDays:mp.days});
+  var list=[], mp=tsNetflixMin();
+  if(mp) list.push({id:"netflix", kind:"netflix", name:"Netflix", cat:"วิดีโอ", desc:"หนังและซีรีส์ แบ่งโปรไฟล์ใช้งาน", price:Number(mp.price), priceDays:mp.days, logo:SHOP.netflixLogo||"", featured:SHOP.netflixFeatured!==false});
   SERVICES.forEach(function(x){
     if(x.on===false || !x.name) return;
     var pr=String(x.price||"").trim();
-    list.push({id:x.id, kind:"service", name:x.name, cat:x.cat||"อื่นๆ", desc:x.desc||"", price:pr?Number(pr):null, sv:x});
+    list.push({id:x.id, kind:"service", name:x.name, cat:x.cat||"อื่นๆ", desc:x.desc||"", price:pr?Number(pr):null, sv:x, logo:x.logo||"", featured:!!x.featured});
   });
   return list;
 }
@@ -3312,23 +3413,27 @@ function tsFiltered(){
   else if(TS.sort==="name") list.sort(function(a,b){ return a.name.localeCompare(b.name); });
   return list;
 }
-function tsLogo(p,size){ return p.kind==="netflix" ? nfMark(size||44) : svMono(p.sv,size||44); }
-function tsCardHTML(p){
-  var meta, priceHTML;
+function tsLogo(p,size){
+  if(p.logo) return '<img class="ts-logo-img" src="'+esc(p.logo)+'" alt="" width="'+size+'" height="'+size+'" loading="lazy" decoding="async">';
+  return p.kind==="netflix" ? nfMark(size) : svMono(p.sv,size);
+}
+function tsCardHTML(p, cls){
+  var pkg, dur, priceHTML;
   if(p.kind==="netflix"){
-    meta='<li>1 โปรไฟล์ ราคาตามอุปกรณ์</li><li>เลือกได้ '+esc(PLANS.map(function(x){return x.days;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return a-b;}).join(" / "))+' วัน</li>';
+    var days=PLANS.map(function(x){return x.days;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return a-b;});
+    pkg='1 โปรไฟล์ ราคาตามอุปกรณ์'; dur='เลือกได้ '+days.join(" / ")+' วัน';
     priceHTML='<span class="lbl">เริ่มต้น</span><span class="amt num">฿'+esc(p.price)+'</span><span class="unit">/ '+esc(p.priceDays)+' วัน</span>';
   }else{
-    meta='<li>ระยะเวลาและเงื่อนไข แอดมินแจ้งในแชตก่อนโอน</li>';
+    pkg=p.desc; dur='ระยะเวลาตามแพ็กเกจ แจ้งในแชต';
     priceHTML = p.price!==null ? '<span class="lbl">เริ่มต้น</span><span class="amt num">฿'+esc(p.price)+'</span>' : '<span class="ask">สอบถามราคา</span>';
   }
-  return '<article class="ts-card">' +
-    '<div class="ts-logo">'+tsLogo(p,44)+'</div>' +
+  return '<article class="ts-card'+(cls?' '+cls:'')+'">' +
+    '<div class="ts-logo">'+tsLogo(p,56)+'</div>' +
     '<h3 class="ts-name">'+esc(p.name)+'</h3>' +
-    '<p class="ts-benefit">'+esc(p.desc)+'</p>' +
-    '<ul class="ts-meta">'+meta+'</ul>' +
+    '<p class="ts-benefit">'+esc(pkg)+'</p>' +
+    '<p class="ts-dur">'+esc(dur)+'</p>' +
     '<div class="ts-price">'+priceHTML+'</div>' +
-    '<button type="button" class="btn ts-cta" data-open="'+esc(p.id)+'">'+(p.kind==="netflix"?'เลือกแพ็กเกจ':'ดูรายละเอียด')+tsIcon("arrow")+'</button>' +
+    '<button type="button" class="btn ts-cta" data-open="'+esc(p.id)+'" aria-label="เลือกแพ็กเกจ '+esc(p.name)+'">เลือกแพ็กเกจ</button>' +
   '</article>';
 }
 function tsGridHTML(){
@@ -3339,22 +3444,116 @@ function tsGridHTML(){
     return '<div class="ts-state" role="alert"><strong>โหลดข้อมูลสินค้าไม่สำเร็จ</strong><p>ตรวจสอบอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง</p><button type="button" class="btn btn-primary" id="tsRetry">ลองใหม่</button></div>';
   }
   var list=tsFiltered();
-  if(!list.length){
-    return '<div class="ts-state"><strong>ไม่พบแอปที่ค้นหา</strong><p>ลองใช้คำอื่น หรือดูแอปทั้งหมด</p><button type="button" class="btn btn-secondary" data-tsclear>ล้างการค้นหาและตัวกรอง</button></div>';
-  }
-  return '<div class="ts-grid">'+list.map(tsCardHTML).join("")+'</div>';
+  if(!list.length) return '<div class="ts-state"><strong>ไม่พบแอปที่ค้นหา</strong><p>ลองใช้คำอื่น หรือดูแอปทั้งหมด</p><button type="button" class="btn btn-secondary" data-tsclear>ล้างการค้นหาและตัวกรอง</button></div>';
+  return '<div class="ts-grid">'+list.map(function(p){ return tsCardHTML(p); }).join("")+'</div>';
 }
 function tsCountText(){
   if(STORE_LOAD!=="ok") return "";
   var n=tsFiltered().length, all=tsProducts().length;
   return (TS.q||TS.cat!=="all") ? ('พบ '+n+' จาก '+all+' แอป') : ('ทั้งหมด '+all+' แอป');
 }
+
+/* ---------- แบนเนอร์สไลด์ ---------- */
+function tsBanners(){ return BANNERS.filter(function(b){ return b && (b.imageDesktop||b.imageMobile); }); }
+function tsBannerHTML(){
+  var list=tsBanners(); if(!list.length) return "";
+  var multi=list.length>1;
+  var slides=list.map(function(b,i){
+    var d=b.imageDesktop||b.imageMobile, m=b.imageMobile||b.imageDesktop, pos=esc(b.focus||"center");
+    var cta=(b.ctaLabel&&b.href)?'<a class="btn btn-primary ts-bn-cta" href="'+esc(/^https?:/i.test(b.href)?b.href:'#home')+'" data-bnhref="'+esc(b.href)+'"'+(/^https?:/i.test(b.href)?' target="_blank" rel="noreferrer"':'')+'>'+esc(b.ctaLabel)+'</a>':'';
+    var cap=(b.title||b.subtitle||cta)?'<div class="ts-bn-cap">'+(b.sample?'<span class="ts-bn-tag">ภาพตัวอย่าง</span>':'')+(b.title?'<strong>'+esc(b.title)+'</strong>':'')+(b.subtitle?'<span>'+esc(b.subtitle)+'</span>':'')+cta+'</div>':'';
+    return '<div class="ts-slide" role="group" aria-roledescription="สไลด์" aria-label="'+(i+1)+' จาก '+list.length+'"'+(i?' aria-hidden="true"':'')+'>' +
+      '<picture><source media="(max-width:767px)" srcset="'+esc(m)+'"><img src="'+esc(d)+'" alt="'+esc(b.alt||b.title||"")+'" width="1500" height="500" style="object-position:'+pos+'" '+(i===0?'fetchpriority="high" loading="eager"':'loading="lazy"')+' decoding="async" draggable="false"></picture>' + cap + '</div>';
+  }).join("");
+  return '<section class="ts-banner gutter" aria-roledescription="carousel" aria-label="แบนเนอร์ร้าน"><div class="ts-wrap">' +
+    '<div class="ts-bn" id="tsBn" data-count="'+list.length+'">' +
+      '<div class="ts-bn-view"><div class="ts-bn-track" id="tsBnTrack" aria-live="off">'+slides+'</div></div>' +
+      (multi?'<button type="button" class="ts-bn-nav prev" data-bn="prev" aria-label="สไลด์ก่อนหน้า">'+tsIcon("left")+'</button><button type="button" class="ts-bn-nav next" data-bn="next" aria-label="สไลด์ถัดไป">'+tsIcon("right")+'</button>':'') +
+    '</div>' +
+    (multi?'<div class="ts-bn-ctrl"><div class="ts-bn-dots" role="group" aria-label="เลือกสไลด์">'+list.map(function(b,i){ return '<button type="button" class="ts-dot" data-bndot="'+i+'" aria-label="ไปสไลด์ '+(i+1)+'"'+(i===0?' aria-current="true"':'')+'></button>'; }).join("")+'</div>' +
+      '<button type="button" class="ts-bn-play" id="tsBnPlay" aria-label="หยุดเลื่อนอัตโนมัติ">'+tsIcon("pause")+'</button></div>':'') +
+  '</div></section>';
+}
+var BN = { i:0, n:0, timer:null, playing:false, userStopped:false, hover:false, focus:false };
+function bnReduced(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+function bnGo(i, manual){
+  var tr=document.getElementById("tsBnTrack"); if(!tr || !BN.n) return;
+  BN.i=(i+BN.n)%BN.n;
+  tr.style.transform="translateX("+(-100*BN.i)+"%)";
+  tr.querySelectorAll(".ts-slide").forEach(function(s,k){ if(k===BN.i) s.removeAttribute("aria-hidden"); else s.setAttribute("aria-hidden","true"); s.querySelectorAll("a,button").forEach(function(a){ a.tabIndex = k===BN.i?0:-1; }); });
+  document.querySelectorAll("[data-bndot]").forEach(function(d,k){ if(k===BN.i) d.setAttribute("aria-current","true"); else d.removeAttribute("aria-current"); });
+  tr.setAttribute("aria-live", manual?"polite":"off");
+  if(manual){ BN.userStopped=true; bnSync(); }
+}
+function bnSync(){
+  var should = BN.n>1 && !BN.userStopped && !BN.hover && !BN.focus && !bnReduced() && !document.hidden;
+  if(should && !BN.timer){ BN.timer=setInterval(function(){ bnGo(BN.i+1,false); }, 5000); }
+  if(!should && BN.timer){ clearInterval(BN.timer); BN.timer=null; }
+  BN.playing=!!BN.timer;
+  var pb=document.getElementById("tsBnPlay");
+  if(pb){ var on=!BN.userStopped && !bnReduced(), st=on?"on":"off"; if(pb.getAttribute("data-st")!==st){ pb.setAttribute("data-st",st); pb.innerHTML=tsIcon(on?"pause":"play"); pb.setAttribute("aria-label", on?"หยุดเลื่อนอัตโนมัติ":"เล่นเลื่อนอัตโนมัติ"); } }
+}
+document.addEventListener("visibilitychange", function(){ bnSync(); });
+function bnMount(){
+  if(BN.timer){ clearInterval(BN.timer); BN.timer=null; }
+  var root=document.getElementById("tsBn"); if(!root){ BN.n=0; return; }
+  BN.n=Number(root.getAttribute("data-count"))||0; if(BN.i>=BN.n) BN.i=0;
+  var tr=document.getElementById("tsBnTrack");
+  tr.style.transition="none"; bnGo(BN.i,false); void tr.offsetWidth; tr.style.transition="";
+  root.querySelectorAll("[data-bnhref]").forEach(function(a){ a.onclick=function(e){ var h=a.getAttribute("data-bnhref")||"";
+    if(/^https?:/i.test(h)) return; e.preventDefault();
+    if(h.indexOf("app:")===0) tsOpenPanel(h.slice(4), a);
+    else if(h.indexOf("cat:")===0){ tsSetCat(h.slice(4)); tsUpdateGrid(true); tsJump("tsAll"); }
+    else tsJump("tsAll"); }; });
+  if(BN.n<2) return;
+  root.querySelectorAll("[data-bn]").forEach(function(b){ b.onclick=function(){ bnGo(BN.i+(b.getAttribute("data-bn")==="next"?1:-1), true); }; });
+  document.querySelectorAll("[data-bndot]").forEach(function(d){ d.onclick=function(){ bnGo(Number(d.getAttribute("data-bndot")), true); }; });
+  var pb=document.getElementById("tsBnPlay"); if(pb) pb.onclick=function(){ BN.userStopped=!BN.userStopped; if(bnReduced() && !BN.userStopped) BN.userStopped=false; bnSync(); };
+  var wrap=root.parentNode;
+  wrap.onmouseenter=function(){ BN.hover=true; bnSync(); }; wrap.onmouseleave=function(){ BN.hover=false; bnSync(); };
+  wrap.addEventListener("focusin", function(){ BN.focus=true; bnSync(); }); wrap.addEventListener("focusout", function(e){ if(!wrap.contains(e.relatedTarget)){ BN.focus=false; bnSync(); } });
+  wrap.onkeydown=function(e){ if(e.key==="ArrowLeft"){ e.preventDefault(); bnGo(BN.i-1,true); } else if(e.key==="ArrowRight"){ e.preventDefault(); bnGo(BN.i+1,true); } };
+  // ปัดด้วยนิ้ว / ลากเมาส์ (เฉพาะแนวนอน ไม่ดักการเลื่อนหน้าแนวตั้ง)
+  var view=root.querySelector(".ts-bn-view"), sx=0, sy=0, dx=0, drag=false, axis=null, w=1, moved=false;
+  view.addEventListener("pointerdown", function(e){ if(e.button) return; drag=true; axis=null; moved=false; sx=e.clientX; sy=e.clientY; dx=0; w=view.clientWidth||1; });
+  view.addEventListener("pointermove", function(e){ if(!drag) return; var mx=e.clientX-sx, my=e.clientY-sy;
+    if(axis===null && (Math.abs(mx)>6||Math.abs(my)>6)){ axis=Math.abs(mx)>Math.abs(my)?"x":"y"; if(axis==="x"){ tr.style.transition="none"; try{ view.setPointerCapture(e.pointerId); }catch(x){} } }
+    if(axis!=="x") return; dx=mx; moved=true; tr.style.transform="translateX(calc("+(-100*BN.i)+"% + "+dx+"px))"; });
+  function end(){ if(!drag) return; drag=false; tr.style.transition=""; if(axis==="x"){ if(Math.abs(dx)>w*0.18) bnGo(BN.i+(dx<0?1:-1), true); else bnGo(BN.i,false); } axis=null; }
+  view.addEventListener("pointerup", end); view.addEventListener("pointercancel", end);
+  view.addEventListener("click", function(e){ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } }, true);
+  bnSync();
+}
+
+/* ---------- แถวแอปแนะนำ (เลื่อนแนวนอน ไม่เลื่อนเอง) ---------- */
+function tsFeaturedHTML(){
+  if(STORE_LOAD!=="ok") return "";
+  var list=tsProducts().filter(function(p){ return p.featured; }); if(!list.length) return "";
+  return '<section class="ts-sec ts-feat" aria-labelledby="tsFeatH"><div class="ts-sec-head"><h2 id="tsFeatH">แอปแนะนำ</h2>' +
+    '<div class="ts-row-nav"><button type="button" class="ts-rbtn" data-row="-1" aria-label="เลื่อนแอปแนะนำไปทางซ้าย">'+tsIcon("left")+'</button><button type="button" class="ts-rbtn" data-row="1" aria-label="เลื่อนแอปแนะนำไปทางขวา">'+tsIcon("right")+'</button></div></div>' +
+    '<div class="ts-row" id="tsRow" tabindex="0" aria-label="รายการแอปแนะนำ เลื่อนแนวนอนได้">'+list.map(function(p){ return tsCardHTML(p,"in-row"); }).join("")+'</div></section>';
+}
+function rowSync(){
+  var r=document.getElementById("tsRow"); if(!r) return;
+  var max=r.scrollWidth-r.clientWidth-2;
+  document.querySelectorAll("[data-row]").forEach(function(b){ var d=Number(b.getAttribute("data-row")); b.disabled = d<0 ? r.scrollLeft<=2 : r.scrollLeft>=max; });
+}
+
+function tsJump(id){ var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:bnReduced()?"auto":"smooth", block:"start"}); }
 function tsHeaderHTML(){
   return '<header class="ts-header" id="tsHeader"><div class="ts-header-in gutter">' +
-    '<a href="#home" class="ts-brand"><span class="ts-mark" aria-hidden="true">C</span><span>'+esc(SHOP.name)+'</span></a>' +
-    '<label class="ts-search"><span class="sr-only">ค้นหาแอป</span>'+icon("search")+'<input id="tsSearch" type="search" placeholder="ค้นหาแอป เช่น Netflix, Spotify" autocomplete="off" value="'+esc(TS.q)+'"></label>' +
-    '<a class="btn btn-primary ts-line" href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'<span>สั่งซื้อทาง LINE</span></a>' +
+    '<a href="#home" class="ts-brand" data-tstop><span class="ts-mark" aria-hidden="true">C</span><span>'+esc(SHOP.name)+'</span></a>' +
+    '<nav class="ts-menu" aria-label="เมนูหลัก"><button type="button" data-tsjump="tsAll">แอปทั้งหมด</button><button type="button" data-tsjump="tsHow">วิธีสั่งซื้อ</button><button type="button" data-tsjump="tsFaq">คำถามที่พบบ่อย</button></nav>' +
+    '<a class="btn btn-primary ts-line" href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'<span>สั่งซื้อผ่านแชต</span></a>' +
   '</div></header>';
+}
+function tsBottomNavHTML(){
+  return '<nav class="ts-bnav" aria-label="เมนูด่วน">' +
+    '<button type="button" data-tstop>'+tsIcon("home")+'<span>หน้าหลัก</span></button>' +
+    '<button type="button" data-tsjump="tsAll">'+tsIcon("grid")+'<span>แอปทั้งหมด</span></button>' +
+    '<button type="button" data-tsjump="tsHow">'+tsIcon("help")+'<span>วิธีสั่งซื้อ</span></button>' +
+    '<a href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'<span>แชต LINE</span></a>' +
+  '</nav>';
 }
 function tsAccItem(id,q,a){
   return '<div class="ts-acc"><h3><button type="button" class="ts-acc-btn" aria-expanded="false" aria-controls="'+id+'" id="'+id+'b">'+esc(q)+tsIcon("chev")+'</button></h3>' +
@@ -3362,29 +3561,26 @@ function tsAccItem(id,q,a){
 }
 function viewHome(){
   var prods=tsProducts(), cats=tsCats(prods);
-  var names=prods.slice(0,4).map(function(p){ return p.name; }).join(", ");
-  return '<div class="ts">' + tsHeaderHTML() +
-  '<section class="ts-intro gutter"><div class="ts-wrap">' +
-    '<div><h1>แอปพรีเมียม ครบในร้านเดียว</h1><p>'+esc(names)+(prods.length>4?(' และอีก '+(prods.length-4)+' แอป'):'')+' เลือกแพ็กเกจแล้วสั่งซื้อผ่านแชตกับแอดมิน</p></div>' +
-    '<button type="button" class="btn btn-primary ts-intro-cta" data-tsjump="tsShop">เลือกแอป'+tsIcon("arrow")+'</button>' +
-  '</div></section>' +
+  return '<div class="ts">' + tsHeaderHTML() + tsBannerHTML() +
   '<main class="gutter"><div class="ts-wrap">' +
-    '<section id="tsShop" class="ts-shop" aria-label="สินค้า">' +
-      '<div class="ts-toolbar">' +
-        '<div class="ts-cats-wrap"><div class="ts-cats" role="tablist" aria-label="หมวดหมู่" id="tsCats">' +
-          [{id:"all",label:"ทั้งหมด"}].concat(cats.map(function(c){return {id:c,label:c};})).map(function(c){ return '<button type="button" role="tab" class="ts-cat" aria-selected="'+(TS.cat===c.id)+'" data-tscat="'+esc(c.id)+'">'+esc(c.label)+'</button>'; }).join("") +
-          '<span class="ts-ind" aria-hidden="true"></span></div></div>' +
-        '<label class="ts-sort">'+tsIcon("sort")+'<span class="sr-only">เรียงตาม</span><select id="tsSort"><option value="default"'+(TS.sort==="default"?" selected":"")+'>แนะนำโดยร้าน</option><option value="price"'+(TS.sort==="price"?" selected":"")+'>ราคาต่ำไปสูง</option><option value="name"'+(TS.sort==="name"?" selected":"")+'>ชื่อ A–Z</option></select></label>' +
-      '</div>' +
-      '<p class="ts-count" id="tsCount" aria-live="polite">'+tsCountText()+'</p>' +
+    '<section class="ts-finder" aria-label="ค้นหาและหมวดหมู่">' +
+      '<label class="ts-search"><span class="sr-only">ค้นหาแอป</span>'+icon("search")+'<input id="tsSearch" type="search" placeholder="ค้นหาแอป เช่น Netflix, Spotify" autocomplete="off" value="'+esc(TS.q)+'"></label>' +
+      '<div class="ts-cats-wrap"><div class="ts-cats" role="tablist" aria-label="หมวดหมู่" id="tsCats">' +
+        [{id:"all",label:"ทั้งหมด"}].concat(cats.map(function(c){return {id:c,label:c};})).map(function(c){ return '<button type="button" role="tab" class="ts-cat" aria-selected="'+(TS.cat===c.id)+'" data-tscat="'+esc(c.id)+'">'+esc(c.label)+'</button>'; }).join("") +
+        '<span class="ts-ind" aria-hidden="true"></span></div></div>' +
+    '</section>' +
+    '<div id="tsFeatWrap">'+(TS.q||TS.cat!=="all"?'':tsFeaturedHTML())+'</div>' +
+    '<section id="tsAll" class="ts-sec ts-all" aria-labelledby="tsAllH">' +
+      '<div class="ts-sec-head"><div><h2 id="tsAllH">แอปทั้งหมด</h2><p class="ts-count" id="tsCount" aria-live="polite">'+tsCountText()+'</p></div>' +
+        '<label class="ts-sort">'+tsIcon("sort")+'<span class="sr-only">เรียงตาม</span><select id="tsSort"><option value="default"'+(TS.sort==="default"?" selected":"")+'>แนะนำโดยร้าน</option><option value="price"'+(TS.sort==="price"?" selected":"")+'>ราคาต่ำไปสูง</option><option value="name"'+(TS.sort==="name"?" selected":"")+'>ชื่อ A–Z</option></select></label></div>' +
       '<div id="tsGridWrap">'+tsGridHTML()+'</div>' +
     '</section>' +
-    '<section class="ts-sec" aria-labelledby="tsHowH"><h2 id="tsHowH">วิธีสั่งซื้อ</h2><ol class="ts-steps">' +
-      '<li><span class="n">1</span><div><strong>เลือกแอปและแพ็กเกจ</strong><p>กดที่แอปเพื่อดูแพ็กเกจ ระยะเวลา และราคา</p></div></li>' +
-      '<li><span class="n">2</span><div><strong>ทักแชต LINE หรือ Facebook</strong><p>แจ้งแพ็กเกจที่เลือก แอดมินยืนยันราคาและรายละเอียดก่อนโอนเงิน</p></div></li>' +
+    '<section class="ts-sec" id="tsHow" aria-labelledby="tsHowH"><h2 id="tsHowH">วิธีสั่งซื้อ</h2><ol class="ts-steps">' +
+      '<li><span class="n">1</span><div><strong>เลือกแอปและแพ็กเกจ</strong><p>กด "เลือกแพ็กเกจ" เพื่อดูระยะเวลา เงื่อนไข และราคา</p></div></li>' +
+      '<li><span class="n">2</span><div><strong>สั่งซื้อผ่านแชต</strong><p>แจ้งแพ็กเกจทาง LINE หรือ Facebook แอดมินยืนยันราคาก่อนโอนเงิน</p></div></li>' +
       '<li><span class="n">3</span><div><strong>รับข้อมูลเข้าใช้งาน</strong><p>หลังโอนเงิน แอดมินส่งข้อมูลเข้าใช้งานพร้อมแจ้งวันหมดอายุ</p></div></li>' +
     '</ol></section>' +
-    '<section class="ts-sec" aria-labelledby="tsFaqH"><h2 id="tsFaqH">คำถามที่พบบ่อย</h2><div class="ts-accs">' +
+    '<section class="ts-sec" id="tsFaq" aria-labelledby="tsFaqH"><h2 id="tsFaqH">คำถามที่พบบ่อย</h2><div class="ts-accs">' +
       tsAccItem("tsq1","ต้องสมัครสมาชิกไหม","ไม่ต้อง ทักแชตหาแอดมินแล้วบอกแพ็กเกจที่ต้องการได้เลย") +
       tsAccItem("tsq2","Netflix ใช้ได้กี่อุปกรณ์","1 โปรไฟล์ ใช้ตามประเภทอุปกรณ์ที่เลือก (มือถือ/ไอแพด/คอม หรือ Smart TV) ราคาต่างกันตามอุปกรณ์") +
       tsAccItem("tsq3","เริ่มนับวันใช้งานเมื่อไหร่","เริ่มนับตั้งแต่แอดมินส่งข้อมูลเข้าใช้งาน และแจ้งวันหมดอายุให้ทุกครั้ง") +
@@ -3396,6 +3592,7 @@ function viewHome(){
       contactButtonsHTML({lineLabel:"LINE",fbLabel:"Facebook"}) + '</section>' +
   '</div></main>' +
   '<footer class="ts-footer gutter">'+esc(SHOP.name)+' · '+esc(SHOP.tagline)+'</footer>' +
+  tsBottomNavHTML() +
   '<div class="ts-overlay" id="tsOverlay" hidden></div>' +
   '<aside class="ts-panel" id="tsPanel" role="dialog" aria-modal="true" aria-labelledby="tsPanelTitle" hidden tabindex="-1"></aside>' +
   '</div>';
@@ -3421,7 +3618,7 @@ function tsPanelHTML(pid){
     body+='<fieldset class="ts-field"><legend>2. ระยะเวลา</legend><div class="ts-list" role="radiogroup">' +
       PLANS.filter(function(x){return x.device===s.device;}).map(function(x){ var on=x.id===s.planId; return '<button type="button" role="radio" aria-checked="'+on+'" class="ts-opt row'+(on?' on':'')+'" data-tsplan="'+esc(x.id)+'"><span class="ck">'+(on?tsIcon("check"):'')+'</span><span class="nm">'+esc(x.name)+'</span><span class="pr num">฿'+esc(x.price)+'</span></button>'; }).join("") + '</div></fieldset>';
     body+='<div class="ts-field"><div class="legend">3. เงื่อนไขและการรับบริการ</div><ul class="ts-terms">' +
-      '<li>1 โปรไฟล์ สำหรับ '+esc(dt.label||"")+'</li><li>ใช้งานได้ '+esc(plan.days||"")+' วัน นับจากวันที่แอดมินส่งข้อมูลเข้าใช้งาน</li><li>ขอรหัส OTP ผ่านแอดมินได้</li><li>แอดมินยืนยันราคาและรายละเอียดก่อนโอนเงิน</li></ul></div>';
+      '<li>1 โปรไฟล์ สำหรับ'+esc(dt.label||"")+'</li><li>ใช้งานได้ '+esc(plan.days||"")+' วัน นับจากวันที่แอดมินส่งข้อมูลเข้าใช้งาน</li><li>ขอรหัส OTP ผ่านแอดมินได้</li><li>แอดมินยืนยันราคาและรายละเอียดก่อนโอนเงิน</li></ul></div>';
     summary='<div class="ts-sum-l"><span class="t">Netflix · '+esc(dt.short||"")+' · '+esc(plan.name||"")+'</span><span class="s">ราคารวม</span></div><div class="ts-sum-p num">฿'+esc(plan.price)+'</div>';
     orderText='สนใจสั่งซื้อ Netflix ('+(dt.label||"")+') แพ็กเกจ '+(plan.name||"")+' ราคา ฿'+plan.price;
   }else{
@@ -3432,7 +3629,7 @@ function tsPanelHTML(pid){
   }
   return head + '<div class="ts-p-body">'+body+'</div>' +
     '<div class="ts-p-foot"><div class="ts-sum">'+summary+'</div>' +
-      '<a class="btn btn-primary ts-order" href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'สั่งซื้อทางแชต LINE</a>' +
+      '<a class="btn btn-primary ts-order" href="'+esc(SHOP.contactLine)+'" target="_blank" rel="noreferrer">'+tsIcon("chat")+'สั่งซื้อผ่านแชต LINE</a>' +
       '<p class="ts-hint">จะเปิดแชต LINE ของร้าน ส่งรายละเอียดนี้ให้แอดมิน ไม่มีการตัดเงินในเว็บ</p>' +
       '<div class="ts-alt"><button type="button" class="ts-textbtn" id="tsCopy" data-text="'+esc(orderText)+'">'+icon("copy")+'คัดลอกรายละเอียด</button><a class="ts-textbtn" href="'+esc(SHOP.contactFacebook)+'" target="_blank" rel="noreferrer">หรือทักทาง Facebook</a></div>' +
     '</div>';
@@ -3489,11 +3686,12 @@ function tsUpdateGrid(animate){
   w.innerHTML=tsGridHTML();
   if(animate) w.querySelectorAll(".ts-card").forEach(function(c,i){ c.style.animationDelay=Math.min(i,8)*18+"ms"; c.classList.add("ts-in"); });
   var cnt=document.getElementById("tsCount"); if(cnt) cnt.textContent=tsCountText();
+  var fw=document.getElementById("tsFeatWrap"); if(fw){ var want=!(TS.q||TS.cat!=="all"); var has=!!fw.firstChild; if(want!==has){ fw.innerHTML=want?tsFeaturedHTML():""; tsMountRow(); } }
   tsBindGrid();
 }
 function tsBindGrid(){
   document.querySelectorAll("[data-open]").forEach(function(b){ b.onclick=function(){ tsOpenPanel(b.getAttribute("data-open"), b); }; });
-  document.querySelectorAll("[data-tsclear]").forEach(function(b){ b.onclick=function(){ TS.q=""; TS.cat="all"; var s=document.getElementById("tsSearch"); if(s) s.value=""; tsSetCat("all"); tsUpdateGrid(true); if(s) s.focus(); }; });
+  document.querySelectorAll("[data-tsclear]").forEach(function(b){ b.onclick=function(){ TS.q=""; var s=document.getElementById("tsSearch"); if(s) s.value=""; tsSetCat("all"); tsUpdateGrid(true); if(s) s.focus(); }; });
   var r=document.getElementById("tsRetry"); if(r) r.onclick=function(){ r.disabled=true; r.textContent="กำลังโหลด..."; STORE_LOAD="loading"; tsUpdateGrid(false); hydrateFromBackend(); };
 }
 function tsSetCat(id){
@@ -3501,15 +3699,22 @@ function tsSetCat(id){
   document.querySelectorAll("[data-tscat]").forEach(function(x){ x.setAttribute("aria-selected", String(x.getAttribute("data-tscat")===id)); });
   tsMoveIndicator();
 }
+function tsMountRow(){
+  var r=document.getElementById("tsRow"); if(!r) return;
+  r.onscroll=function(){ rowSync(); };
+  document.querySelectorAll("[data-row]").forEach(function(b){ b.onclick=function(){ r.scrollBy({left:Number(b.getAttribute("data-row"))*Math.max(200, r.clientWidth*0.9), behavior:bnReduced()?"auto":"smooth"}); }; });
+  rowSync();
+}
 function mountHome(){
   var ind=document.querySelector(".ts-ind"); if(ind){ ind.style.transition="none"; tsMoveIndicator(); void ind.offsetWidth; ind.style.transition=""; }
   var h=document.getElementById("tsHeader"); if(h) h.classList.toggle("scrolled", window.scrollY>4);
-  tsBindGrid();
+  bnMount(); tsMountRow(); tsBindGrid();
   var s=document.getElementById("tsSearch"), t=null;
   if(s) s.oninput=function(){ clearTimeout(t); t=setTimeout(function(){ TS.q=s.value; tsUpdateGrid(true); }, 120); };
   var so=document.getElementById("tsSort"); if(so) so.onchange=function(){ TS.sort=so.value; tsUpdateGrid(true); };
   document.querySelectorAll("[data-tscat]").forEach(function(b){ b.onclick=function(){ tsSetCat(b.getAttribute("data-tscat")); b.scrollIntoView({block:"nearest", inline:"nearest"}); tsUpdateGrid(true); }; });
-  document.querySelectorAll("[data-tsjump]").forEach(function(b){ b.onclick=function(){ var el=document.getElementById(b.getAttribute("data-tsjump")); if(el){ var r=false; try{ r=matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){} el.scrollIntoView({behavior:r?"auto":"smooth", block:"start"}); } }; });
+  document.querySelectorAll("[data-tsjump]").forEach(function(b){ b.onclick=function(){ tsJump(b.getAttribute("data-tsjump")); }; });
+  document.querySelectorAll("[data-tstop]").forEach(function(b){ b.onclick=function(e){ e.preventDefault(); window.scrollTo({top:0, behavior:bnReduced()?"auto":"smooth"}); }; });
   document.querySelectorAll(".ts-acc-btn").forEach(function(b){ b.onclick=function(){ var open=b.getAttribute("aria-expanded")!=="true"; b.setAttribute("aria-expanded", String(open)); var pn=document.getElementById(b.getAttribute("aria-controls")); if(pn) pn.classList.toggle("open", open); }; });
   var ov=document.getElementById("tsOverlay"); if(ov) ov.onclick=tsClosePanel;
   if(TS.panelId) tsOpenPanel(TS.panelId, null);
@@ -5401,6 +5606,86 @@ function mountAdminActivity(){
   if(s) s.oninput=function(){ ACTIVITY_UI.search=s.value; render(true); };
 }
 
+/* ---------- อัปโหลดภาพร้าน (แบนเนอร์ / โลโก้แอป) ไปที่ /api/img ---------- */
+function uploadShopImage(file, maxW, maxH){
+  return new Promise(function(resolve, reject){
+    if(!file || !/^image\//.test(file.type)) return reject(new Error("ไฟล์ต้องเป็นรูปภาพ"));
+    var url=URL.createObjectURL(file), img=new Image();
+    img.onload=function(){
+      var sc=Math.min(1, maxW/img.naturalWidth, maxH/img.naturalHeight);
+      var w=Math.max(1,Math.round(img.naturalWidth*sc)), h=Math.max(1,Math.round(img.naturalHeight*sc));
+      var c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+      function enc(type,q){ return new Promise(function(r){ c.toBlob(function(b){ r(b); }, type, q); }); }
+      enc("image/webp",0.86).then(function(b){ if(!b || b.type!=="image/webp") return enc("image/jpeg",0.86); return b; })
+        .then(function(b){ if(b && b.size>1400*1024) return enc(b.type,0.7); return b; })
+        .then(function(b){
+          if(!b) throw new Error("แปลงภาพไม่สำเร็จ");
+          if(b.size>1500*1024) throw new Error("ภาพใหญ่เกินไป ลองใช้ภาพที่เล็กลง");
+          return fetch("/api/img",{method:"POST", headers:{"content-type":b.type, "authorization":"Bearer "+adminToken()}, body:b});
+        })
+        .then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(j){ if(j && j.ok && j.url) resolve(j.url); else reject(new Error(j&&j.error==="kv_write_failed"?"บันทึกภาพไม่สำเร็จ (โควตาเขียนรายวันอาจเต็ม)":"อัปโหลดไม่สำเร็จ")); })
+        .catch(reject);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error("เปิดไฟล์ภาพไม่ได้")); };
+    img.src=url;
+  });
+}
+function imgUploadBtn(label, attrs){
+  return '<label class="btn btn-outline btn-sm" style="cursor:pointer">'+icon('plus')+esc(label)+'<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden '+attrs+'></label>';
+}
+function bannersCardHTML(){
+  var rows=BANNERS.map(function(b,i){
+    var f=function(k,label,ph){ return '<div class="field" style="margin:0"><label>'+label+'</label><input class="input" data-bn-id="'+esc(b.id)+'" data-bn-field="'+k+'" value="'+esc(b[k]||"")+'" placeholder="'+esc(ph||"")+'"></div>'; };
+    return '<div class="bn-edit">' +
+      '<div class="bn-prev"><img src="'+esc(b.imageDesktop||b.imageMobile||"")+'" alt="" style="object-position:'+esc(b.focus||"center")+'">'+(b.sample?'<span>ภาพตัวอย่าง</span>':'')+'</div>' +
+      '<div class="bn-fields">' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><strong style="font-size:13px">สไลด์ '+(i+1)+'</strong>' +
+          imgUploadBtn("ภาพคอม 3:1 (1500×500)", 'data-bnup="'+esc(b.id)+'" data-kind="imageDesktop"') +
+          imgUploadBtn("ภาพมือถือ 16:9 (1280×720)", 'data-bnup="'+esc(b.id)+'" data-kind="imageMobile"') +
+          '<span style="flex:1"></span>' +
+          '<button class="btn btn-outline btn-sm" data-bnmove="'+esc(b.id)+'" data-dir="-1" '+(i===0?'disabled':'')+' title="เลื่อนขึ้น">ขึ้น</button>' +
+          '<button class="btn btn-outline btn-sm" data-bnmove="'+esc(b.id)+'" data-dir="1" '+(i===BANNERS.length-1?'disabled':'')+' title="เลื่อนลง">ลง</button>' +
+          '<button class="btn btn-outline btn-sm" data-bndel="'+esc(b.id)+'" style="color:var(--bad)">ลบ</button></div>' +
+        '<div class="grid grid-2">'+f("title","หัวข้อ (แสดงเป็นตัวอักษรบนเว็บ)")+f("subtitle","คำอธิบายสั้น")+'</div>' +
+        '<div class="grid grid-2">'+f("ctaLabel","ข้อความปุ่ม","เช่น เลือกแพ็กเกจ")+f("href","ลิงก์ปุ่ม","app:netflix · cat:เพลง · #shop · https://...")+'</div>' +
+        '<div class="grid grid-2">'+f("alt","คำอธิบายภาพ (alt)")+'<div class="field" style="margin:0"><label>จุดโฟกัสภาพ</label><select class="input" data-bn-id="'+esc(b.id)+'" data-bn-field="focus">'+[["center","กลาง"],["left","ซ้าย"],["right","ขวา"],["top","บน"],["bottom","ล่าง"]].map(function(o){ return '<option value="'+o[0]+'"'+((b.focus||"center")===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join("")+'</select></div></div>' +
+      '</div></div>';
+  }).join("");
+  return '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px"><div class="section-title" style="margin:0">แบนเนอร์หน้าร้าน</div><button class="btn btn-outline btn-sm" id="addBnBtn">'+icon('plus')+'เพิ่มสไลด์</button></div>' +
+    '<p class="muted" style="font-size:12px;margin:0 0 10px">ภาพคอม 1500×500 (3:1) และภาพมือถือ 1280×720 (16:9) · ระบบย่อและบีบอัดให้อัตโนมัติ · หัวข้อและปุ่มเป็นตัวอักษรบนเว็บ ไม่ต้องใส่ในภาพ · ไม่มีสไลด์ = ซ่อนแบนเนอร์ · มีสไลด์เดียว = ไม่เลื่อนอัตโนมัติ</p>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">'+(rows||'<p class="muted" style="font-size:13px">ยังไม่มีสไลด์ (หน้าร้านจะไม่แสดงแบนเนอร์)</p>')+'</div></div>';
+}
+function mountBannerSettings(){
+  document.querySelectorAll("[data-bn-id]").forEach(function(inp){
+    var ev = inp.tagName==="SELECT" ? "onchange" : "oninput";
+    inp[ev]=function(){ var b=byId(BANNERS,inp.getAttribute("data-bn-id")); if(b) b[inp.getAttribute("data-bn-field")]=inp.value.trim()===""&&inp.getAttribute("data-bn-field")!=="focus"?"":inp.value; };
+  });
+  document.querySelectorAll("[data-bnup]").forEach(function(inp){ inp.onchange=function(){
+    var b=byId(BANNERS,inp.getAttribute("data-bnup")), kind=inp.getAttribute("data-kind"), file=inp.files&&inp.files[0]; if(!b||!file) return;
+    var lbl=inp.parentNode; lbl.style.opacity=".6"; lbl.style.pointerEvents="none"; var old=lbl.firstChild&&lbl.childNodes; toast("กำลังอัปโหลดภาพ...","info");
+    uploadShopImage(file, kind==="imageDesktop"?1800:1280, kind==="imageDesktop"?600:720).then(function(url){
+      b[kind]=url; if(b.sample){ b.sample=false; if(/^ภาพตัวอย่าง/.test(b.title||"")){ b.title=""; b.subtitle=""; } if(/^ภาพตัวอย่าง/.test(b.alt||"")) b.alt=""; }
+      render(true); return persistStateNow();
+    }).then(function(ok){ toast(ok?"อัปโหลดและบันทึกภาพแล้ว":"อัปโหลดแล้ว แต่บันทึกการตั้งค่ายังไม่สำเร็จ กดบันทึกการตั้งค่าอีกครั้ง", ok?"good":"bad"); })
+      .catch(function(e){ lbl.style.opacity=""; lbl.style.pointerEvents=""; toast(e.message||"อัปโหลดไม่สำเร็จ","bad"); });
+  }; });
+  document.querySelectorAll("[data-bnmove]").forEach(function(btn){ btn.onclick=function(){ var i=BANNERS.findIndex(function(x){ return x.id===btn.getAttribute("data-bnmove"); }), j=i+Number(btn.getAttribute("data-dir")); if(i<0||j<0||j>=BANNERS.length) return; var t=BANNERS[i]; BANNERS[i]=BANNERS[j]; BANNERS[j]=t; render(true); }; });
+  document.querySelectorAll("[data-bndel]").forEach(function(btn){ btn.onclick=function(){ var id=btn.getAttribute("data-bndel");
+    confirmDelete("ลบสไลด์นี้ ?","สไลด์จะหายจากหน้าร้าน","ลบสไลด์").then(function(yes){ if(!yes) return; var i=BANNERS.findIndex(function(x){ return x.id===id; }); if(i>=0) BANNERS.splice(i,1); render(true); deleteAndSave("ลบสไลด์แล้ว"); }); }; });
+  var add=document.getElementById("addBnBtn"); if(add) add.onclick=function(){ BANNERS.push({id:"bn-"+Date.now(), imageDesktop:"", imageMobile:"", alt:"", title:"", subtitle:"", ctaLabel:"", href:"", focus:"center"}); toast("เพิ่มสไลด์แล้ว อัปโหลดภาพเพื่อให้แสดงบนหน้าร้าน","good"); render(true); };
+  // โลโก้แอป + แนะนำ
+  document.querySelectorAll("[data-logoup]").forEach(function(inp){ inp.onchange=function(){
+    var id=inp.getAttribute("data-logoup"), file=inp.files&&inp.files[0]; if(!file) return; toast("กำลังอัปโหลดโลโก้...","info");
+    uploadShopImage(file, 256, 256).then(function(url){ if(id==="netflix") SHOP.netflixLogo=url; else { var x=byId(SERVICES,id); if(x) x.logo=url; } render(true); return persistStateNow(); })
+      .then(function(ok){ toast(ok?"บันทึกโลโก้แล้ว":"อัปโหลดแล้ว แต่บันทึกการตั้งค่ายังไม่สำเร็จ", ok?"good":"bad"); }).catch(function(e){ toast(e.message||"อัปโหลดไม่สำเร็จ","bad"); });
+  }; });
+  document.querySelectorAll("[data-logodel]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-logodel"); if(id==="netflix") SHOP.netflixLogo=""; else { var x=byId(SERVICES,id); if(x) x.logo=""; } render(true); }; });
+  var nf=document.getElementById("nfFeatured"); if(nf) nf.onchange=function(){ SHOP.netflixFeatured=nf.checked; };
+}
+function logoCellHTML(id, logo, fallback){
+  return '<div class="logo-cell">'+(logo?'<img src="'+esc(logo)+'" alt="" width="34" height="34">':fallback)+imgUploadBtn(logo?"เปลี่ยนโลโก้":"อัปโหลดโลโก้",'data-logoup="'+esc(id)+'"')+(logo?'<button class="btn btn-outline btn-sm" data-logodel="'+esc(id)+'">ใช้ตัวอักษรแทน</button>':'')+'</div>';
+}
 function viewAdminSettings(){
   var plansHtml = DEVICE_TYPES.map(function(dt){
     var rows = PLANS.filter(function(p){ return p.device===dt.id; }).map(function(p){
@@ -5420,7 +5705,8 @@ function viewAdminSettings(){
       '<div class="field" style="margin:0"><label>ราคาเริ่ม (เว้นว่าง = สอบถาม)</label><input class="input" inputmode="numeric" data-sv-id="'+esc(x.id)+'" data-sv-field="price" value="'+esc(x.price||"")+'"></div>' +
       '<div class="field sv-desc" style="margin:0"><label>คำอธิบายสั้น</label><input class="input" data-sv-id="'+esc(x.id)+'" data-sv-field="desc" value="'+esc(x.desc||"")+'"></div>' +
       '<label class="sv-on"><input type="checkbox" data-sv-id="'+esc(x.id)+'" data-sv-field="on" '+(x.on!==false?'checked':'')+'> แสดง</label>' +
-      '<button class="btn btn-outline btn-sm" data-delsv="'+esc(x.id)+'" style="height:38px">ลบ</button></div>';
+      '<button class="btn btn-outline btn-sm" data-delsv="'+esc(x.id)+'" style="height:38px">ลบ</button>' +
+      '<div class="sv-extra">'+logoCellHTML(x.id, x.logo, '')+'<label class="sv-on"><input type="checkbox" data-sv-id="'+esc(x.id)+'" data-sv-field="featured" '+(x.featured?'checked':'')+'> แสดงในแถว "แอปแนะนำ"</label></div></div>';
   }).join("");
   var body = '<div style="display:flex;flex-direction:column;gap:16px">' +
     '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
@@ -5442,8 +5728,10 @@ function viewAdminSettings(){
     '</div>' +
     '<div class="card" style="padding:18px"><div class="section-title" style="margin-bottom:10px">แพ็กเกจและราคา</div>' +
       '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ/จำนวนวัน/ราคาได้โดยตรง ระบบจะใช้ราคานี้คำนวณยอดขายทุกจุดในเว็บทันที</p>' +
+      '<div class="sv-extra" style="margin-bottom:12px">'+logoCellHTML("netflix", SHOP.netflixLogo, nfMark(34))+'<label class="sv-on"><input type="checkbox" id="nfFeatured" '+(SHOP.netflixFeatured!==false?'checked':'')+'> Netflix แสดงในแถว "แอปแนะนำ"</label></div>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
     '</div>' +
+    bannersCardHTML() +
     '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div class="section-title" style="margin:0">แอปพรีเมียมอื่นๆ ในหน้าร้าน</div><button class="btn btn-outline btn-sm" id="addSvBtn">'+icon('plus')+'เพิ่มแอป</button></div>' +
       '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ หมวด ราคา และติ๊ก "แสดง" เพื่อขึ้นหน้าร้าน แล้วกดบันทึกการตั้งค่า</p>' +
       '<div style="display:flex;flex-direction:column;gap:8px">'+svRows+'</div>' +
@@ -5453,10 +5741,11 @@ function viewAdminSettings(){
   return adminShell("admin-settings","ตั้งค่าร้าน",body);
 }
 function mountAdminSettings(){
+  mountBannerSettings();
   document.querySelectorAll('[data-sv-id]').forEach(function(inp){
     var ev = inp.type==="checkbox" ? "onchange" : "oninput";
     inp[ev]=function(){ var x=byId(SERVICES,inp.getAttribute("data-sv-id")); if(!x) return; var f=inp.getAttribute("data-sv-field");
-      if(f==="on") x.on=inp.checked; else if(f==="price") x.price=inp.value.replace(/[^0-9.]/g,""); else x[f]=inp.value; };
+      if(f==="on") x.on=inp.checked; else if(f==="featured") x.featured=inp.checked; else if(f==="price") x.price=inp.value.replace(/[^0-9.]/g,""); else x[f]=inp.value; };
   });
   document.querySelectorAll('[data-delsv]').forEach(function(b){ b.onclick=function(){ var sid=b.getAttribute("data-delsv"); var sv=byId(SERVICES,sid);
     confirmDelete('ลบแอป "'+(sv?sv.name:"")+'" ?',"แอปนี้จะหายจากหน้าร้าน","ลบแอป").then(function(yes){ if(!yes) return;

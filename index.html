@@ -3070,6 +3070,16 @@ function qrSvg(text){
   for(var r=0;r<n;r++) for(var c=0;c<n;c++) if(q.isDark(r,c)) d+="M"+((c+qz)*cell)+","+((r+qz)*cell)+"h"+cell+"v"+cell+"h-"+cell+"z";
   return '<svg viewBox="0 0 '+size+' '+size+'" width="100%" style="max-width:230px;display:block;margin:0 auto;background:#fff;border-radius:10px" role="img" aria-label="QR PromptPay"><path d="'+d+'" fill="#111"/></svg>';
 }
+function billNavHTML(){
+  if(billState()==="none") return "";
+  var d=billDaysLeft();
+  return '<a href="#" data-billing-open style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border-radius:9px;color:var(--ink);font-size:13px;font-weight:700;text-decoration:none;background:var(--bg-subtle);margin-bottom:6px"><span>ชำระเงิน / ต่ออายุแพ็กเกจ</span><span class="muted" style="font-size:11px;font-weight:600">'+(d<=0?"หมดอายุ":"เหลือ "+d+" วัน")+'</span></a>';
+}
+function billDashCardHTML(){
+  if(billState()==="none") return "";
+  var s=billState(), d=billDaysLeft();
+  return '<div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><div style="font-size:13px;font-weight:700">แพ็กเกจของเว็บนี้ · หมดอายุ '+fmtD(BILLING.expiresAt)+'</div><div class="muted" style="font-size:12px">'+(s==="pending"?"แจ้งโอนแล้ว รอผู้ให้บริการยืนยัน":"เหลือ "+Math.max(0,d)+" วัน · ต่ออายุ "+BILLING.periodDays+" วัน ฿"+BILLING.price)+'</div></div><button class="btn btn-primary btn-sm" data-billing-open>'+(s==="pending"?"ดูสถานะ":"ชำระเงิน / ต่ออายุ")+'</button></div>';
+}
 function billPillHTML(){
   var s=billState(); if(s==="none") return "";
   var d=billDaysLeft(), cls="badge-good", txt="แพ็กเกจเหลือ "+d+" วัน";
@@ -3109,6 +3119,7 @@ function billModalHTML(locked){
 }
 function billLockHTML(){ return (billState()==="expired" || (billState()==="pending" && billNow()>=BILLING.expiresAt))? billModalHTML(true) : ""; }
 function mountBilling(){
+  document.querySelectorAll("[data-billing-open]").forEach(function(a){ a.onclick=function(e){ e.preventDefault(); if(!BILLING||!BILLING.configured){ toast("ยังไม่ได้ตั้งวันหมดอายุแพ็กเกจ","info"); return; } STATE.drawerOpen=false; STATE.modal={type:"billing"}; render(); }; });
   var pill=document.getElementById("billPill"); if(pill) pill.onclick=function(){ STATE.modal={type:"billing"}; render(); };
   var bb=document.getElementById("billBannerBtn"); if(bb) bb.onclick=function(){ STATE.modal={type:"billing"}; render(); };
   var note=document.getElementById("billNote"); if(note) note.oninput=function(){ BILL_UI.note=note.value; };
@@ -3200,7 +3211,7 @@ function adminShell(route, title, bodyHtml){
   var rail = '<aside class="rail">' +
       '<div class="brand"><div class="mark">F</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
       '<nav>'+railNavHTML(active)+'</nav>' +
-      '<div class="foot"><a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+      '<div class="foot">'+billNavHTML()+'<a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</aside>';
   var drawer='';
   if(STATE.drawerOpen){
@@ -3209,7 +3220,7 @@ function adminShell(route, title, bodyHtml){
         '<div class="brand" style="padding:16px"><div class="mark">F</div>'+esc(SHOP.name)+'</div>' +
         '<button class="btn btn-ghost btn-sm" id="drawerClose">'+icon('close')+'</button>' +
       '</div><nav style="padding:0 10px">'+railNavHTML(active)+'</nav>' +
-      '<div class="foot"><a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
+      '<div class="foot">'+billNavHTML()+'<a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</div>';
   }
   return '<div class="admin">' + rail +
@@ -3271,6 +3282,7 @@ function viewAdminDashboard(){
   }).join("");
 
   var body = '<div style="display:flex;flex-direction:column;gap:18px">' +
+    billDashCardHTML() +
     '<div class="grid grid-6">'+statCards+'</div>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
       '<a href="#admin-accounts" class="btn btn-primary btn-sm">'+icon('plus')+'เพิ่มบัญชี Netflix</a>' +

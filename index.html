@@ -314,6 +314,18 @@
   .lux-stats{display:flex; gap:28px; flex-wrap:wrap; padding-top:22px; margin-top:8px; border-top:1px solid #16213a}
   .lux-stats .v{font-size:26px; font-weight:800; color:#eef3ff}
   .lux-stats .l{font-size:12px; color:#8592ad}
+  .sv-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px}
+  .sv-card{display:flex; gap:12px; padding:16px; align-items:flex-start; transition:border-color .18s, transform .18s}
+  .sv-card:hover{border-color:color-mix(in srgb, var(--gold) 50%, var(--border)); transform:translateY(-2px)}
+  .sv-card .t{font-weight:700; font-size:14.5px}
+  .sv-card .d{font-size:12.5px; margin-top:2px; min-height:2.6em}
+  .sv-foot{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px}
+  .sv-price{color:var(--accent); font-weight:800}
+  .sv-mono{flex:none; border-radius:12px; color:#fff; font-weight:800; font-size:14px; letter-spacing:.02em; display:inline-flex; align-items:center; justify-content:center; box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+  .sv-edit{display:grid; grid-template-columns:34px 1.3fr .8fr .9fr auto auto; grid-template-areas:"m n c p o d" ". s s s s s"; gap:8px; align-items:end; border:1px solid var(--border); border-radius:10px; padding:10px}
+  .sv-edit .sv-desc{grid-area:s}
+  .sv-on{display:flex; align-items:center; gap:6px; font-size:12.5px; height:38px; white-space:nowrap}
+  @media (max-width:720px){ .sv-edit{grid-template-columns:34px 1fr 1fr; grid-template-areas:none} .sv-edit > *{grid-area:auto!important} .sv-edit .sv-desc{grid-column:1 / -1} }
   .faq{display:flex; flex-direction:column; gap:8px}
   .faq details{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:0 18px}
   .faq summary{cursor:pointer; list-style:none; padding:15px 0; font-weight:700; font-size:14px; display:flex; justify-content:space-between; gap:12px}
@@ -2728,9 +2740,28 @@ function snapshotState(){
     accounts:ACCOUNTS, customers:CUSTOMERS, reviews:REVIEWS, mailboxes:MAILBOXES,
     profiles:PROFILES, rentals:RENTALS, renewals:RENEWALS, onetimeSales:ONETIME_SALES,
     activity:ACTIVITY, plans:PLANS, planIdSeq:PLAN_ID_SEQ, deviceTypes:DEVICE_TYPES,
-    paymentMethods:PAYMENT_METHODS, shop:SHOP
+    paymentMethods:PAYMENT_METHODS, shop:SHOP, services:SERVICES
   };
 }
+// บริการพรีเมียมอื่นๆ ในหน้าร้าน (นอกจาก Netflix) — แก้ชื่อ/คำอธิบาย/ราคา/เปิดปิดได้ที่หลังบ้าน > ตั้งค่าร้าน
+// ราคาเว้นว่าง = แสดง "สอบถามราคา"  |  สีใช้ทำป้ายตัวอักษรย่อ (ไม่ใช้โลโก้จริงของแต่ละแบรนด์)
+var SERVICES = [
+  {id:"sv-yt", name:"YouTube Premium", cat:"วิดีโอ", desc:"ดูไม่มีโฆษณา เล่นเบื้องหลัง พร้อม YouTube Music", price:"", on:true, color:"#e5484d"},
+  {id:"sv-dp", name:"Disney+ Hotstar", cat:"วิดีโอ", desc:"หนัง ซีรีส์ Marvel, Pixar, Star Wars และกีฬา", price:"", on:true, color:"#2563eb"},
+  {id:"sv-hbo", name:"HBO Max", cat:"วิดีโอ", desc:"ซีรีส์ HBO หนังใหม่จาก Warner Bros.", price:"", on:true, color:"#7c3aed"},
+  {id:"sv-prime", name:"Prime Video", cat:"วิดีโอ", desc:"หนังและซีรีส์ Amazon Originals", price:"", on:true, color:"#0ea5e9"},
+  {id:"sv-viu", name:"VIU", cat:"วิดีโอ", desc:"ซีรีส์เกาหลี ไทย เอเชีย อัปเดตไว", price:"", on:true, color:"#f59e0b"},
+  {id:"sv-iq", name:"iQIYI", cat:"วิดีโอ", desc:"ซีรีส์จีน อนิเมะ หนังเอเชีย", price:"", on:true, color:"#16a34a"},
+  {id:"sv-wetv", name:"WeTV", cat:"วิดีโอ", desc:"ซีรีส์จีน ไทย และวาไรตี้", price:"", on:true, color:"#f97316"},
+  {id:"sv-trueid", name:"TrueID+", cat:"วิดีโอ", desc:"ช่องทีวี กีฬา และคอนเทนต์ไทย", price:"", on:true, color:"#dc2626"},
+  {id:"sv-spot", name:"Spotify Premium", cat:"เพลง", desc:"ฟังเพลงไม่มีโฆษณา ดาวน์โหลดฟังออฟไลน์", price:"", on:true, color:"#22c55e"},
+  {id:"sv-am", name:"Apple Music", cat:"เพลง", desc:"เพลงคุณภาพสูง Lossless และ Spatial Audio", price:"", on:true, color:"#ec4899"},
+  {id:"sv-gpt", name:"ChatGPT Plus", cat:"AI และทำงาน", desc:"ผู้ช่วย AI สำหรับงานเขียน ค้นคว้า และเขียนโค้ด", price:"", on:true, color:"#10b981"},
+  {id:"sv-canva", name:"Canva Pro", cat:"AI และทำงาน", desc:"ออกแบบกราฟิก โพสต์ วิดีโอ พร้อมเทมเพลตพรีเมียม", price:"", on:true, color:"#06b6d4"},
+  {id:"sv-capcut", name:"CapCut Pro", cat:"AI และทำงาน", desc:"ตัดต่อวิดีโอ เอฟเฟกต์และฟีเจอร์ Pro", price:"", on:true, color:"#334155"},
+  {id:"sv-ms", name:"Microsoft 365", cat:"AI และทำงาน", desc:"Word, Excel, PowerPoint พร้อม OneDrive 1 TB", price:"", on:true, color:"#f97316"}
+];
+var SERVICE_SEQ = 1;
 function applySnapshot(s){
   if(!s || typeof s!=="object") return;
   function setArr(dst,src){ dst.length=0; if(Array.isArray(src)) Array.prototype.push.apply(dst,src); }
@@ -2738,6 +2769,7 @@ function applySnapshot(s){
   setArr(MAILBOXES, s.mailboxes); setArr(PROFILES, s.profiles); setArr(RENTALS, s.rentals);
   setArr(RENEWALS, s.renewals); setArr(ONETIME_SALES, s.onetimeSales); setArr(ACTIVITY, s.activity);
   if(Array.isArray(s.plans)) setArr(PLANS, s.plans);
+  if(Array.isArray(s.services)) setArr(SERVICES, s.services);
   if(typeof s.planIdSeq==="number") PLAN_ID_SEQ=s.planIdSeq;
   if(Array.isArray(s.deviceTypes)) setArr(DEVICE_TYPES, s.deviceTypes);
   if(Array.isArray(s.paymentMethods)) setArr(PAYMENT_METHODS, s.paymentMethods);
@@ -3074,6 +3106,7 @@ function viewHome(){
         '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
       '</div>' +
     '</section>' +
+    servicesSectionHTML() +
     '<section style="margin-top:40px"><h2 class="section-title" style="font-size:20px;margin-bottom:14px">สั่งซื้อง่ายใน 3 ขั้นตอน</h2><div class="lux-steps">' +
       '<div class="card s"><div class="n">1</div><div class="t">เลือกแพ็กเกจ</div><div class="muted" style="font-size:13px">เลือกอุปกรณ์และจำนวนวันที่ต้องการจากรายการด้านบน</div></div>' +
       '<div class="card s"><div class="n">2</div><div class="t">ทักแชทแอดมิน</div><div class="muted" style="font-size:13px">ส่งแพ็กเกจที่เลือกทาง LINE หรือ Facebook แล้วโอนเงินตามยอด</div></div>' +
@@ -3094,6 +3127,28 @@ function viewHome(){
   '</main>' +
   siteFooterHTML();
 }
+function svMono(sv,size){
+  size=size||40;
+  var w=String(sv.name||"?").replace(/[^A-Za-z0-9ก-๙ ]/g,"").trim().split(/\s+/);
+  var t=(w[0]||"?").charAt(0)+(w[1]?w[1].charAt(0):"");
+  return '<span class="sv-mono" style="width:'+size+'px;height:'+size+'px;background:'+esc(sv.color||"#2f80ff")+'">'+esc(t.toUpperCase())+'</span>';
+}
+function servicesSectionHTML(){
+  var list=SERVICES.filter(function(x){ return x.on!==false && x.name; });
+  if(!list.length) return "";
+  var cats=[]; list.forEach(function(x){ var c=x.cat||"อื่นๆ"; if(cats.indexOf(c)<0) cats.push(c); });
+  return '<section style="margin-top:40px"><h2 class="section-title" style="font-size:20px;margin-bottom:4px">แอปพรีเมียมอื่นๆ</h2>' +
+    '<p class="muted" style="font-size:13px;margin-bottom:14px">ทักแชทแอดมินเพื่อสอบถามแพ็กเกจและราคาล่าสุด</p>' +
+    cats.map(function(c){
+      return '<div style="margin-top:14px"><div style="font-weight:700;font-size:12.5px;margin-bottom:8px" class="muted">'+esc(c)+'</div><div class="sv-grid">' +
+        list.filter(function(x){ return (x.cat||"อื่นๆ")===c; }).map(function(x){
+          var price=String(x.price||"").trim();
+          return '<div class="card sv-card">'+svMono(x)+'<div style="min-width:0;flex:1"><div class="t">'+esc(x.name)+'</div><div class="muted d">'+esc(x.desc||"")+'</div>' +
+            '<div class="sv-foot"><span class="'+(price?'sv-price num':'muted')+'" style="font-size:'+(price?'15px':'12.5px')+'">'+(price?('เริ่ม ฿'+esc(price)):'สอบถามราคา')+'</span>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-buysv="'+esc(x.id)+'">สั่งซื้อ</button></div></div></div>';
+        }).join("") + '</div></div>';
+    }).join("") + '</section>';
+}
 function faqItem(q,a){ return '<details><summary>'+esc(q)+'</summary><p>'+esc(a)+'</p></details>'; }
 // ตัวเลขจริงจากระบบ (ไม่ใช่ตัวเลขสมมุติ) — ซ่อนไว้ถ้ายังไม่มีข้อมูล
 function heroStatsHTML(){
@@ -3107,6 +3162,7 @@ function heroStatsHTML(){
   return '<div class="lux-stats">'+items.map(function(x){ return '<div><div class="v num">'+esc(x[0])+'</div><div class="l">'+esc(x[1])+'</div></div>'; }).join("")+'</div>';
 }
 function mountHome(){
+  document.querySelectorAll('[data-buysv]').forEach(function(b){ b.onclick=function(){ STATE.modal={type:"buyService", svId:b.getAttribute("data-buysv")}; render(); }; });
   document.querySelectorAll('[data-buyplan]').forEach(function(b){ b.onclick=function(){ STATE.modal={type:"buyPlan", planId:b.getAttribute("data-buyplan")}; render(); }; });
   document.querySelectorAll('[data-detailplan]').forEach(function(b){ b.onclick=function(){ STATE.modal={type:"planDetail", planId:b.getAttribute("data-detailplan")}; render(); }; });
 }
@@ -3845,6 +3901,14 @@ function modalHTML(){
       paymentPickerHTML(m.paymentMethod,"opay"),
       '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="oneConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึกยอดขาย')+'</button>'
     );
+  }
+  if(m.type==="buyService"){
+    var sv=byId(SERVICES,m.svId);
+    return modalWrap('สั่งซื้อ '+(sv?sv.name:'บริการ'), sv?(sv.price?('ราคาเริ่ม ฿'+sv.price):'สอบถามราคากับแอดมิน'):null,
+      '<p style="font-size:13px">ทักแชทหาแอดมิน แจ้งชื่อแอปและระยะเวลาที่ต้องการ แอดมินจะแจ้งราคาและดำเนินการให้</p>' +
+      (sv?'<div class="summary-box" style="display:flex;gap:10px;align-items:center">'+svMono(sv,32)+'<div><strong>'+esc(sv.name)+'</strong><div class="muted" style="font-size:12px">'+esc(sv.desc||"")+'</div></div></div>':'') +
+      '<div style="margin-top:6px">'+contactButtonsHTML({wrapStyle:"display:flex;flex-direction:column;gap:8px",btnStyle:"width:100%;justify-content:center"})+'</div>',
+      '<button class="btn btn-outline" data-close>ปิด</button>');
   }
   if(m.type==="buyPlan"){
     var bp=byId(PLANS,m.planId);
@@ -4959,6 +5023,15 @@ function viewAdminSettings(){
     }).join("");
     return '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-weight:700;font-size:12.5px">'+dt.emoji+' '+esc(dt.label)+'</div><button class="btn btn-outline btn-sm" data-addplan="'+dt.id+'">'+icon('plus')+'เพิ่มแพ็กเกจ</button></div>'+rows+'</div>';
   }).join("");
+  var svRows = SERVICES.map(function(x){
+    return '<div class="sv-edit">' + svMono(x,34) +
+      '<div class="field" style="margin:0"><label>ชื่อแอป</label><input class="input" data-sv-id="'+esc(x.id)+'" data-sv-field="name" value="'+esc(x.name)+'"></div>' +
+      '<div class="field" style="margin:0"><label>หมวด</label><input class="input" data-sv-id="'+esc(x.id)+'" data-sv-field="cat" value="'+esc(x.cat||"")+'"></div>' +
+      '<div class="field" style="margin:0"><label>ราคาเริ่ม (เว้นว่าง = สอบถาม)</label><input class="input" inputmode="numeric" data-sv-id="'+esc(x.id)+'" data-sv-field="price" value="'+esc(x.price||"")+'"></div>' +
+      '<div class="field sv-desc" style="margin:0"><label>คำอธิบายสั้น</label><input class="input" data-sv-id="'+esc(x.id)+'" data-sv-field="desc" value="'+esc(x.desc||"")+'"></div>' +
+      '<label class="sv-on"><input type="checkbox" data-sv-id="'+esc(x.id)+'" data-sv-field="on" '+(x.on!==false?'checked':'')+'> แสดง</label>' +
+      '<button class="btn btn-outline btn-sm" data-delsv="'+esc(x.id)+'" style="height:38px">ลบ</button></div>';
+  }).join("");
   var body = '<div style="display:flex;flex-direction:column;gap:16px">' +
     '<div class="card" style="padding:18px"><div class="section-title">ข้อมูลร้าน</div>' +
       '<div class="grid grid-2">' +
@@ -4981,11 +5054,22 @@ function viewAdminSettings(){
       '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ/จำนวนวัน/ราคาได้โดยตรง ระบบจะใช้ราคานี้คำนวณยอดขายทุกจุดในเว็บทันที</p>' +
       '<div id="plansWrap">'+plansHtml+'</div>' +
     '</div>' +
+    '<div class="card" style="padding:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div class="section-title" style="margin:0">แอปพรีเมียมอื่นๆ ในหน้าร้าน</div><button class="btn btn-outline btn-sm" id="addSvBtn">'+icon('plus')+'เพิ่มแอป</button></div>' +
+      '<p class="muted" style="font-size:12px;margin:-4px 0 10px">แก้ชื่อ หมวด ราคา และติ๊ก "แสดง" เพื่อขึ้นหน้าร้าน แล้วกดบันทึกการตั้งค่า</p>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">'+svRows+'</div>' +
+    '</div>' +
     '<div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="saveSettingsBtn">บันทึกการตั้งค่า</button></div>' +
   '</div>';
   return adminShell("admin-settings","ตั้งค่าร้าน",body);
 }
 function mountAdminSettings(){
+  document.querySelectorAll('[data-sv-id]').forEach(function(inp){
+    var ev = inp.type==="checkbox" ? "onchange" : "oninput";
+    inp[ev]=function(){ var x=byId(SERVICES,inp.getAttribute("data-sv-id")); if(!x) return; var f=inp.getAttribute("data-sv-field");
+      if(f==="on") x.on=inp.checked; else if(f==="price") x.price=inp.value.replace(/[^0-9.]/g,""); else x[f]=inp.value; };
+  });
+  document.querySelectorAll('[data-delsv]').forEach(function(b){ b.onclick=function(){ var i=SERVICES.findIndex(function(x){ return x.id===b.getAttribute("data-delsv"); }); if(i>=0) SERVICES.splice(i,1); toast("ลบแอปแล้ว","good"); render(true); }; });
+  var asv=document.getElementById("addSvBtn"); if(asv) asv.onclick=function(){ SERVICES.push({id:"sv-new-"+Date.now()+"-"+(SERVICE_SEQ++), name:"แอปใหม่", cat:"อื่นๆ", desc:"", price:"", on:true, color:"#2f80ff"}); toast("เพิ่มแอปแล้ว แก้ชื่อได้เลย","good"); render(true); };
   mountBillingSettings();
   var sn=document.getElementById("setShopName"); if(sn) sn.oninput=function(){ SHOP.name=sn.value; };
   var sl=document.getElementById("setShopLine"); if(sl) sl.oninput=function(){ SHOP.contactLine=sl.value; };

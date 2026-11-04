@@ -5,54 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CATBYTE PREHUB</title>
 <link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     Design plan
-     Color: near-black/off-white neutrals + one red brand accent
-            (--bg,--surface,--border,--ink,--muted,--accent,--good,--info,--bad)
-     Type:  Noto Sans Thai for all Thai copy + Inter for latin/numerals,
-            one scale (12/13/14/16/20/26px), tabular numerals on dates/money
-     Layout: fixed left rail + topbar on desktop, slide-over drawer + topbar
-             on phone; content is cards in a 12px-gap grid that collapses
-             tables to stacked cards under 760px
+     CATBYTE PREHUB — design plan
+     Color: porcelain / obsidian neutrals, one champagne-gold accent used
+            sparingly (active nav, prices, brand mark, focus); ink-black
+            primary buttons in light, gold primary buttons in dark
+     Type:  Noto Serif Thai for display (headline, brand, titles),
+            Noto Sans Thai + Inter for UI copy and tabular numerals
+     Layout: obsidian left rail in both themes, airy cards with hairline
+             borders and soft layered shadows; one hero band on the shop
      ============================================================ */
   :root{
-    --bg:#f6f6f7; --bg-subtle:#eeeef0; --surface:#ffffff; --surface-raised:#ffffff;
-    --border:#e3e3e8; --border-strong:#d2d2da; --ink:#17171b; --muted:#68686f; --faint:#9a9aa3;
-    --accent:#d4202c; --accent-hover:#b81824; --accent-ink:#ffffff; --accent-soft:#fdeced;
-    --good:#0f9d58; --good-bg:#e6f6ec; --good-bd:#bfe8cd;
-    --info:#2563eb; --info-bg:#e9f0fe; --info-bd:#c3d7fc;
-    --bad:#d4202c; --bad-bg:#fdeced; --bad-bd:#f6c3c6;
-    --warn:#b5790a; --warn-bg:#fbf0dc; --warn-bd:#f0d9a4;
-    --shadow:0 1px 2px rgba(20,20,24,.05),0 1px 1px rgba(20,20,24,.04);
-    --radius:14px; --radius-sm:10px;
+    --bg:#f3f3f6; --bg-subtle:#ebebf0; --surface:#ffffff; --surface-raised:#ffffff;
+    --border:#e2e2e9; --border-strong:#cfd0da; --ink:#13141b; --muted:#5e6070; --faint:#9496a4;
+    --accent:#9a7231; --accent-hover:#82602a; --accent-ink:#ffffff; --accent-soft:#f5eee2;
+    --gold:#c7a15e; --gold-soft:rgba(199,161,94,.14);
+    --btn-bg:#13141b; --btn-bg-hover:#2a2c38; --btn-ink:#ffffff;
+    --rail-bg:#0f1016; --rail-ink:#e9e7e1; --rail-muted:#8d8f9c; --rail-border:#22232d; --rail-hover:#1a1b24;
+    --good:#13875a; --good-bg:#e7f5ee; --good-bd:#c2e6d4;
+    --info:#3651c9; --info-bg:#ecf0fd; --info-bd:#cbd5f8;
+    --bad:#c02634; --bad-bg:#fcecee; --bad-bd:#f3c6cb;
+    --warn:#9a6a0e; --warn-bg:#fbf2df; --warn-bd:#eed9a8;
+    --shadow:0 1px 1px rgba(19,20,27,.03),0 2px 6px rgba(19,20,27,.04),0 12px 32px -12px rgba(19,20,27,.10);
+    --radius:16px; --radius-sm:11px;
     --font-th:"Noto Sans Thai",ui-sans-serif,system-ui,sans-serif;
     --font-la:"Inter",ui-sans-serif,system-ui,sans-serif;
+    --font-display:"Noto Serif Thai","Noto Sans Thai",Georgia,serif;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#121214; --bg-subtle:#0c0c0e; --surface:#1a1a1d; --surface-raised:#1f1f23;
-      --border:#2a2a2f; --border-strong:#38383f; --ink:#f5f5f7; --muted:#a3a3ad; --faint:#717178;
-      --accent:#e5343f; --accent-hover:#f04852; --accent-ink:#ffffff; --accent-soft:#341418;
-      --good:#34c777; --good-bg:#10291c; --good-bd:#1d4a30;
-      --info:#5b8def; --info-bg:#101d33; --info-bd:#1e3458;
-      --bad:#e5343f; --bad-bg:#331316; --bad-bd:#552127;
-      --warn:#e0a940; --warn-bg:#30260f; --warn-bd:#4e3f18;
-      --shadow:0 1px 2px rgba(0,0,0,.35),0 2px 10px rgba(0,0,0,.28);
+      --bg:#0b0c10; --bg-subtle:#12131a; --surface:#14151c; --surface-raised:#1a1b24;
+      --border:#24252f; --border-strong:#33354a; --ink:#efede7; --muted:#a2a3b0; --faint:#6e7080;
+      --accent:#d6b376; --accent-hover:#e3c48c; --accent-ink:#14110a; --accent-soft:#251f14;
+      --gold:#d6b376; --gold-soft:rgba(214,179,118,.12);
+      --btn-bg:#d6b376; --btn-bg-hover:#e3c48c; --btn-ink:#14110a;
+      --rail-bg:#08090c; --rail-ink:#ece9e2; --rail-muted:#82848f; --rail-border:#1b1c24; --rail-hover:#12131a;
+      --good:#4cc78f; --good-bg:#0f2219; --good-bd:#1b3d2d;
+      --info:#8ea2ff; --info-bg:#121933; --info-bd:#232f5c;
+      --bad:#f06873; --bad-bg:#2b1217; --bad-bd:#4d1f27;
+      --warn:#e3b45a; --warn-bg:#2a2010; --warn-bd:#47381a;
+      --shadow:0 1px 1px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#121214; --bg-subtle:#0c0c0e; --surface:#1a1a1d; --surface-raised:#1f1f23;
-    --border:#2a2a2f; --border-strong:#38383f; --ink:#f5f5f7; --muted:#a3a3ad; --faint:#717178;
-    --accent:#e5343f; --accent-hover:#f04852; --accent-ink:#ffffff; --accent-soft:#341418;
-    --good:#34c777; --good-bg:#10291c; --good-bd:#1d4a30;
-    --info:#5b8def; --info-bg:#101d33; --info-bd:#1e3458;
-    --bad:#e5343f; --bad-bg:#331316; --bad-bd:#552127;
-    --warn:#e0a940; --warn-bg:#30260f; --warn-bd:#4e3f18;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 2px 10px rgba(0,0,0,.28);
+    --bg:#0b0c10; --bg-subtle:#12131a; --surface:#14151c; --surface-raised:#1a1b24;
+    --border:#24252f; --border-strong:#33354a; --ink:#efede7; --muted:#a2a3b0; --faint:#6e7080;
+    --accent:#d6b376; --accent-hover:#e3c48c; --accent-ink:#14110a; --accent-soft:#251f14;
+    --gold:#d6b376; --gold-soft:rgba(214,179,118,.12);
+    --btn-bg:#d6b376; --btn-bg-hover:#e3c48c; --btn-ink:#14110a;
+    --rail-bg:#08090c; --rail-ink:#ece9e2; --rail-muted:#82848f; --rail-border:#1b1c24; --rail-hover:#12131a;
+    --good:#4cc78f; --good-bg:#0f2219; --good-bd:#1b3d2d;
+    --info:#8ea2ff; --info-bg:#121933; --info-bd:#232f5c;
+    --bad:#f06873; --bad-bg:#2b1217; --bad-bd:#4d1f27;
+    --warn:#e3b45a; --warn-bg:#2a2010; --warn-bd:#47381a;
+    --shadow:0 1px 1px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);
     color-scheme: dark;
   }
 
@@ -205,6 +215,93 @@
   [hidden]{display:none!important}
 
   footer.site{padding:26px 0; text-align:center; color:var(--faint); font-size:11.5px; border-top:1px solid var(--border)}
+
+  /* ---------- CATBYTE PREHUB refinements ---------- */
+  .admin{min-height:100vh}
+  .rail{position:sticky; top:0; height:100vh; overflow-y:auto}
+  a.btn{text-decoration:none}
+  .brand{white-space:nowrap}
+  body{letter-spacing:.005em}
+  ::selection{background:var(--gold); color:#14110a}
+  .btn{height:40px; padding:0 16px; border-radius:var(--radius-sm); font-weight:600; letter-spacing:.01em; transition:background-color .18s,border-color .18s,color .18s,transform .18s}
+  .btn-sm{height:34px; padding:0 13px}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--btn-bg); color:var(--btn-ink)}
+  .btn-primary:hover{background:var(--btn-bg-hover)}
+  .btn-secondary{background:var(--surface); box-shadow:0 1px 1px rgba(19,20,27,.04)}
+  .btn:focus-visible,.input:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .input, select.input, textarea.input{height:42px; border-radius:var(--radius-sm); padding:0 13px; transition:border-color .15s, box-shadow .15s}
+  .input:focus{border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft)}
+  .field label{font-size:12px; color:var(--muted); letter-spacing:.02em}
+
+  .card{border-color:var(--border)}
+  .section-title{font-family:var(--font-display); font-weight:600; font-size:15px; letter-spacing:.01em}
+
+  .brand{font-family:var(--font-display); font-weight:600; letter-spacing:.06em; font-size:14px}
+  .brand .mark{width:32px; height:32px; border-radius:10px; font-family:var(--font-display); font-weight:700; font-size:16px;
+    background:linear-gradient(145deg,#e7cd97 0%,#c7a15e 45%,#8f6a2c 100%); color:#17130b; box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px -4px rgba(199,161,94,.55)}
+
+  .topbar{height:62px; background:color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter:saturate(1.4) blur(14px)}
+  .topbar h1{font-family:var(--font-display); font-weight:600!important; font-size:16px!important; letter-spacing:.01em}
+
+  /* obsidian rail in both themes */
+  .rail, .drawer{background:var(--rail-bg); border-right:1px solid var(--rail-border); color:var(--rail-ink)}
+  .rail .brand, .drawer .brand{color:var(--rail-ink)}
+  .rail .brand .muted, .drawer .brand .muted{color:var(--rail-muted)!important; font-family:var(--font-th); letter-spacing:.02em}
+  .rail nav a, .drawer nav a{color:var(--rail-muted); position:relative; font-weight:500; padding:10px 14px}
+  .rail nav a:hover, .drawer nav a:hover{background:var(--rail-hover); color:var(--rail-ink)}
+  .rail nav a.active, .drawer nav a.active{background:linear-gradient(90deg,rgba(214,179,118,.16),rgba(214,179,118,0) 85%); color:#ecd6a6}
+  .rail nav a.active::before, .drawer nav a.active::before{content:""; position:absolute; left:0; top:9px; bottom:9px; width:2px; border-radius:2px; background:var(--gold)}
+  .rail .foot, .drawer .foot{border-top-color:var(--rail-border)}
+  .rail .foot a, .drawer .foot a{color:var(--rail-muted)!important}
+  .rail .foot a[data-billing-open], .drawer .foot a[data-billing-open]{background:var(--rail-hover)!important; color:var(--rail-ink)!important; border:1px solid var(--rail-border)}
+  .rail .foot a[data-billing-open] .muted, .drawer .foot a[data-billing-open] .muted{color:#d6b376!important}
+  .drawer .btn-ghost{color:var(--rail-muted)}
+  .admin-content{padding:26px 28px}
+  @media (max-width:900px){ .admin-content{padding:16px} }
+
+  .stat{padding:18px}
+  .stat .v{font-family:var(--font-display); font-weight:600; font-size:28px; line-height:1.2; letter-spacing:.01em}
+  .stat .l{font-size:12px; margin-top:2px}
+
+  table.tbl th{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); padding:12px 14px; background:var(--bg-subtle)}
+  table.tbl td{padding:13px 14px}
+  table.tbl tbody tr{transition:background-color .15s}
+  table.tbl tbody tr:hover{background:color-mix(in srgb, var(--gold) 5%, transparent)}
+
+  .badge{font-weight:600; letter-spacing:.01em}
+  .modal-scrim{background:rgba(8,9,12,.58); backdrop-filter:blur(6px)}
+  .modal{border-radius:20px; padding:24px; box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
+  .modal h3{font-family:var(--font-display); font-weight:600; font-size:19px; letter-spacing:.01em}
+  .summary-box{background:var(--gold-soft); border:1px solid color-mix(in srgb, var(--gold) 28%, transparent)}
+  .chip.active, .tabs button.active{color:var(--ink)}
+  .chip.active{border-color:var(--gold); background:var(--gold-soft)}
+  .theme-toggle button.active{color:var(--accent)}
+  .toast{border-radius:999px; padding:10px 18px; box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
+
+  .plan-tile{background:var(--surface); border-color:var(--border); padding:18px 12px; transition:border-color .18s, transform .18s, box-shadow .18s}
+  .plan-tile:hover{border-color:color-mix(in srgb, var(--gold) 55%, var(--border)); transform:translateY(-2px); box-shadow:var(--shadow)}
+  .plan-tile .price{color:var(--accent); font-family:var(--font-display); font-weight:600; font-size:20px}
+  .pill{background:transparent; border-color:color-mix(in srgb, var(--gold) 45%, transparent); color:var(--accent); letter-spacing:.04em}
+
+  /* storefront hero band: the one bold moment */
+  .lux-hero{position:relative; overflow:hidden; background:#0b0c10; color:#efede7; border-bottom:1px solid #1c1d26}
+  .lux-hero::before{content:""; position:absolute; inset:-40% -10% auto auto; width:780px; height:780px; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(214,179,118,.22), rgba(214,179,118,0)); pointer-events:none}
+  .lux-hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:1px; background:linear-gradient(90deg,transparent,rgba(214,179,118,.55),transparent)}
+  .lux-hero .inner{position:relative; max-width:920px; margin:0 auto; padding-block:72px 64px; display:flex; flex-direction:column; gap:18px}
+  .lux-hero .eyebrow{color:#d6b376; font-size:12.5px; letter-spacing:.18em}
+  .lux-hero h1{font-family:var(--font-display); font-weight:600; font-size:clamp(30px,5.2vw,50px); line-height:1.25; letter-spacing:.005em; max-width:20ch}
+  .lux-hero p{color:#a9aab6; max-width:52ch; font-size:15px}
+  .lux-hero .btn-secondary{background:transparent; color:#efede7; border-color:#33354a}
+  .lux-hero .btn-secondary:hover{border-color:#d6b376; color:#ecd6a6}
+  .lux-hero .btn-primary{background:#d6b376; color:#14110a}
+  .lux-hero .btn-primary:hover{background:#e3c48c}
+  .lux-feature{display:flex; flex-direction:column; gap:6px; padding:22px}
+  .lux-feature .t{font-family:var(--font-display); font-weight:600; font-size:15px}
+  .lux-feature .rule{width:28px; height:1px; background:var(--gold); margin-bottom:6px}
+  footer.site{letter-spacing:.02em}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
 
 </head>
@@ -2940,27 +3037,27 @@ function viewHome(){
       '<div class="grid grid-4">'+devicePlansHtml(dt.id)+'</div></div>';
   }).join("");
   return publicTopbar() +
-  '<main class="gutter" style="max-width:920px;margin:0 auto;padding-top:28px;padding-bottom:40px">' +
-    '<section class="hero" style="display:flex;flex-direction:column;gap:14px">' +
-      '<span class="pill">ร้านพรีเมียม Netflix</span>' +
-      '<h1 style="font-size:30px;line-height:1.3;font-weight:800">บริการ Netflix โปรไฟล์พร้อมใช้ จัดการวันหมดอายุให้อัตโนมัติ</h1>' +
-      '<p class="muted" style="max-width:520px">'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วทักแชทหาแอดมินเพื่อสั่งซื้อได้ทันที ไม่ต้องสมัครสมาชิก</p>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">' +
+  '<section class="lux-hero"><div class="inner gutter">' +
+      '<span class="eyebrow">'+esc(SHOP.name)+'</span>' +
+      '<h1>Netflix โปรไฟล์พร้อมใช้ ดูแลให้ทุกวัน</h1>' +
+      '<p>'+esc(SHOP.tagline)+' เลือกแพ็กเกจที่ต้องการ แล้วทักแชทหาแอดมินเพื่อสั่งซื้อได้ทันที ไม่ต้องสมัครสมาชิก</p>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:6px">' +
         contactButtonsHTML({lineLabel:"สั่งซื้อทาง LINE",fbLabel:"สั่งซื้อทาง Facebook"}) +
       '</div>' +
-    '</section>' +
-    '<section style="margin-top:36px">' +
-      '<h2 style="font-size:16px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+nfMark(26)+'Netflix</h2>' +
+  '</div></section>' +
+  '<main class="gutter" style="max-width:920px;margin:0 auto;padding-top:44px;padding-bottom:48px">' +
+    '<section>' +
+      '<h2 class="section-title" style="font-size:20px;margin-bottom:14px;gap:10px">'+nfMark(26)+'แพ็กเกจ Netflix</h2>' +
       '<div class="card" style="padding:18px">' +
         '<p class="muted" style="font-size:12.5px;margin-bottom:4px">เลือกจำนวนวันที่ต้องการใช้งาน ราคาต่างกันตามประเภทอุปกรณ์ แก้ไขราคาได้ในหลังบ้าน</p>' +
         devicePlanSections +
         '<p class="faint" style="font-size:11px;margin-top:14px">การเลือกแพ็กเกจยังไม่ได้มอบหมายโปรไฟล์ให้ทันที กรุณาติดต่อแอดมินเพื่อดำเนินการ</p>' +
       '</div>' +
     '</section>' +
-    '<section class="grid grid-3" style="margin-top:28px">' +
-      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('search')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ไม่ต้องสมัครสมาชิก</div><div class="muted" style="font-size:12.5px">ทักแชทบอกแพ็กเกจที่ต้องการ แอดมินจัดการให้ทุกขั้นตอน สั่งซื้อได้ทันทีแบบ Guest</div></div></div>' +
-      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('monitor')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">ตอบไว ดูแลต่อเนื่อง</div><div class="muted" style="font-size:12.5px">แจ้งวันหมดอายุและรหัส OTP ให้ทุกครั้งที่ต้องใช้งาน ผ่าน LINE หรือ Facebook</div></div></div>' +
-      '<div class="card" style="padding:16px"><div class="stat" style="padding:0"><div class="ic" style="background:var(--accent-soft);color:var(--accent)">'+icon('eye')+'</div><div style="font-weight:700;font-size:13px;margin-bottom:4px">โปร่งใส ตรวจสอบได้</div><div class="muted" style="font-size:12.5px">ทุกการเปลี่ยนแปลงถูกบันทึกเป็นประวัติกิจกรรม พร้อมผู้ดำเนินการและเวลา</div></div></div>' +
+    '<section class="grid grid-3" style="margin-top:32px">' +
+      '<div class="card lux-feature"><div class="rule"></div><div class="t">ไม่ต้องสมัครสมาชิก</div><div class="muted" style="font-size:13px">ทักแชทบอกแพ็กเกจที่ต้องการ แอดมินจัดการให้ทุกขั้นตอน</div></div>' +
+      '<div class="card lux-feature"><div class="rule"></div><div class="t">ตอบไว ดูแลต่อเนื่อง</div><div class="muted" style="font-size:13px">แจ้งวันหมดอายุและรหัส OTP ให้ทุกครั้งที่ต้องใช้งาน ผ่าน LINE หรือ Facebook</div></div>' +
+      '<div class="card lux-feature"><div class="rule"></div><div class="t">โปร่งใส ตรวจสอบได้</div><div class="muted" style="font-size:13px">ทุกการเปลี่ยนแปลงถูกบันทึกเป็นประวัติกิจกรรม พร้อมเวลา</div></div>' +
     '</section>' +
   '</main>' +
   siteFooterHTML();
@@ -2972,9 +3069,9 @@ function mountHome(){
 
 function viewLogin(){
   return publicTopbar({showLogin:false}) +
-  '<main class="gutter" style="max-width:380px;margin:40px auto;display:flex;flex-direction:column;align-items:center;gap:0">' +
+  '<main class="gutter" style="max-width:400px;margin:64px auto;display:flex;flex-direction:column;align-items:center;gap:0">' +
     '<div class="card" style="padding:22px;width:100%">' +
-      '<div style="font-weight:700;font-size:13px;margin-bottom:2px">เข้าสู่ระบบ</div>' +
+      '<div style="font-family:var(--font-display);font-weight:600;font-size:20px;margin-bottom:4px">เข้าสู่ระบบ</div>' +
       '<p class="muted" style="font-size:12px;margin-bottom:14px">สำหรับผู้ดูแลร้านเท่านั้น ลูกค้าสั่งซื้อผ่านการทักแชทหาแอดมิน ไม่ต้องสมัครสมาชิก</p>' +
       '<form id="loginForm" style="display:flex;flex-direction:column;gap:12px">' +
         '<div class="field"><label for="le">อีเมล / ชื่อผู้ใช้</label><input class="input" id="le" placeholder="อีเมลหรือชื่อผู้ใช้แอดมิน"></div>' +
@@ -4757,7 +4854,7 @@ function mountMailboxRowEvents(){
       var id=btn.getAttribute("data-delmb");
       var idx=MAILBOXES.findIndex(function(x){return x.id===id});
       if(idx>=0) MAILBOXES.splice(idx,1);
-      refreshMailboxView(); toast("ลบบัญชีอีเมลแล้ว","good");
+      refreshMailboxView(); schedulePersist(); toast("ลบบัญชีอีเมลแล้ว","good");
       fetch("/api/mailbox-creds?mailboxId="+encodeURIComponent(id), { method:"DELETE", headers:{"authorization":"Bearer "+adminToken()} }).catch(function(){});
     };
   });

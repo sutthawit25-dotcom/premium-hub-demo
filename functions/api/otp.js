@@ -3,12 +3,12 @@ import {
   connectImap,
   imapLogin,
   imapSelectInbox,
-  imapFindLatestNetflixUid,
   imapFetchRaw,
   imapLogout,
 } from "./_imap.js";
 import { parseNetflixOtpEmail } from "./_mime.js";
 import { resolveMailboxImap } from "./_mailbox-resolve.js";
+import { findNetflixUids } from "./_otp-find.js";
 
 const CREDS_KEY = "mailbox_creds";
 
@@ -47,8 +47,8 @@ export async function onRequestPost({ request, env }) {
   try {
     client = await withTimeout(connectImap(host.host, host.port), 10000, "connect_timeout");
     await withTimeout(imapLogin(client, email, appPassword), 10000, "login_failed");
-    await withTimeout(imapSelectInbox(client), 10000, "select_failed");
-    const uid = await withTimeout(imapFindLatestNetflixUid(client, toTag), 15000, "search_failed");
+    const exists = await withTimeout(imapSelectInbox(client), 10000, "select_failed");
+    const uid = (await withTimeout(findNetflixUids(client, exists, toTag, 1), 20000, "search_failed"))[0];
     if (!uid) {
       await imapLogout(client);
       return json({ ok: false, error: "no_netflix_email" });

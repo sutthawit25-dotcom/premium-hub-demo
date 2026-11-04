@@ -2035,7 +2035,7 @@ var OTP_ERROR_MESSAGES = {
   select_failed: "เปิดกล่องจดหมายไม่ได้",
   search_failed: "ค้นหาอีเมลไม่สำเร็จ",
   fetch_failed: "ดึงเนื้อหาอีเมลไม่สำเร็จ",
-  no_netflix_email: "ไม่พบอีเมลจาก Netflix ในกล่องจดหมาย",
+  no_netflix_email: "ยังไม่มีเมลจาก Netflix ของบัญชีนี้ — ถ้าเพิ่งขอรหัส รอ 1 นาทีแล้วกดใหม่ ถ้ายังไม่มา ให้เช็คว่าตั้งส่งต่อใน Hotmail บัญชีนี้แล้ว",
   no_code_found: "พบอีเมลจาก Netflix แต่หารหัสในเนื้ออีเมลไม่เจอ",
   imap_connection_closed: "การเชื่อมต่อถูกปิดกลางทาง ลองใหม่อีกครั้ง",
   source_mailbox_missing: "บัญชี Gmail ปลายทางที่ตั้งไว้ถูกลบไปแล้ว กรุณาแก้ไขบัญชีนี้ใหม่",
@@ -2044,8 +2044,10 @@ var OTP_ERROR_MESSAGES = {
 function otpErrorText(code){ return OTP_ERROR_MESSAGES[code] || ("เกิดข้อผิดพลาด ("+code+")"); }
 function mailboxResultHTML(m){
   if(m.lastCode){
-    return '<span style="display:inline-flex;align-items:center;gap:4px"><strong style="letter-spacing:1px;font-size:13.5px">'+esc(m.lastCode)+'</strong>' +
-      '<button style="border:none;background:transparent;color:var(--faint);cursor:pointer;padding:5px;border-radius:7px;flex:none;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center" data-copy-text="'+esc(m.lastCode)+'" title="คัดลอก">'+icon('copy')+'</button></span>';
+    var mt=m.lastMailAt?new Date(m.lastMailAt).getTime():NaN;
+    var age=isNaN(mt)?'':('<span class="'+(Date.now()-mt<15*60000?'':'faint')+'" style="font-size:11px;font-weight:400;margin-left:2px">เมลเมื่อ '+esc(otpAgoText(Date.now()-mt))+(Date.now()-mt<15*60000?'':' · อาจหมดอายุแล้ว')+'</span>');
+    return '<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap"><strong style="letter-spacing:1px;font-size:13.5px">'+esc(m.lastCode)+'</strong>' +
+      '<button style="border:none;background:transparent;color:var(--faint);cursor:pointer;padding:5px;border-radius:7px;flex:none;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center" data-copy-text="'+esc(m.lastCode)+'" title="คัดลอก">'+icon('copy')+'</button>'+age+'</span>';
   }
   return esc(m.lastResult||"ยังไม่ดึง OTP");
 }
@@ -2178,10 +2180,12 @@ function mountMailboxRowEvents(){
         var cur=mailbox(id); if(!cur) return;
         if(res && res.ok && res.code){
           cur.lastCode=res.code; cur.lastResult="พบรหัส OTP ล่าสุด"; cur.lastAt=new Date().toISOString(); cur.status="CONNECTED";
+          var mailMs=res.date?new Date(res.date).getTime():NaN; cur.lastMailAt=isNaN(mailMs)?null:new Date(mailMs).toISOString();
           logActivity("OTP_REQUESTED", "ดึงรหัส OTP จากกล่องเมล "+cur.email+" สำเร็จ", cur.email);
-          toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
+          if(!isNaN(mailMs) && Date.now()-mailMs>15*60000) toast("รหัสล่าสุดที่พบเป็นของเมื่อ "+otpAgoText(Date.now()-mailMs)+" ถ้าเพิ่งขอรหัสใหม่ รอ 1 นาทีแล้วกดอีกครั้ง (ถ้ายังไม่มา ให้เช็คว่าตั้งส่งต่อใน Hotmail บัญชีนี้แล้ว)","bad");
+          else toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
         }else{
-          cur.lastCode=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
+          cur.lastCode=null; cur.lastMailAt=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
           toast(res && res.error==="network_error" ? "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" : cur.lastResult,"bad");
         }
         refreshMailboxView(); schedulePersist();

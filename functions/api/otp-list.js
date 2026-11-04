@@ -1,5 +1,6 @@
 import { json, verifyToken, bearerToken } from "./_utils.js";
-import { connectImap, imapLogin, imapSelectInbox, imapSearchNetflixUids, imapFetchRaw, imapLogout } from "./_imap.js";
+import { connectImap, imapLogin, imapSelectInbox, imapFetchRaw, imapLogout } from "./_imap.js";
+import { findNetflixUids } from "./_otp-find.js";
 import { parseNetflixOtpEmail } from "./_mime.js";
 import { resolveMailboxImap } from "./_mailbox-resolve.js";
 
@@ -37,9 +38,8 @@ export async function onRequestPost({ request, env }) {
   try {
     client = await withTimeout(connectImap(host.host, host.port), 10000, "connect_timeout");
     await withTimeout(imapLogin(client, email, appPassword), 10000, "login_failed");
-    await withTimeout(imapSelectInbox(client), 10000, "select_failed");
-    const uids = await withTimeout(imapSearchNetflixUids(client, null), 15000, "search_failed");
-    const latest = uids.slice(-limit).reverse();
+    const exists = await withTimeout(imapSelectInbox(client), 10000, "select_failed");
+    const latest = await withTimeout(findNetflixUids(client, exists, null, limit), 20000, "search_failed");
     const items = [];
     for (const uid of latest) {
       try {

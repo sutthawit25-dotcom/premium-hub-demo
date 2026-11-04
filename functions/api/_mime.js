@@ -130,6 +130,15 @@ function allDeliveredTo(rawText) {
   return out;
 }
 
+// Just enough of the headers to decide whether a message is a Netflix mail
+// delivered to a given (tagged) address, without downloading its body.
+export function headerSummary(rawBytes) {
+  const rawText = bytesToLatin1String(rawBytes);
+  const unfolded = rawText.replace(/\r\n[ \t]+/g, " ");
+  const from = (/^From:\s*(.*)$/im.exec(unfolded) || [])[1] || "";
+  return { from: decodeRfc2047(from).toLowerCase(), deliveredTo: allDeliveredTo(rawText + "\r\n\r\n") };
+}
+
 export function parseNetflixOtpEmail(rawBytes) {
   const rawText = bytesToLatin1String(rawBytes);
   const subject = decodeRfc2047(headerValue(rawText, "subject"));

@@ -115,9 +115,38 @@ export async function imapLogin(client, email, password) {
   if (!res.ok) throw new Error("imap_login_failed");
 }
 
+// Returns the INBOX message count (from the "* N EXISTS" line).
 export async function imapSelectInbox(client) {
   const res = await client.command("SELECT INBOX");
   if (!res.ok) throw new Error("imap_select_failed");
+  let exists = 0;
+  for (const line of res.lines) {
+    const m = /^\*\s+(\d+)\s+EXISTS/i.exec(line.trim());
+    if (m) exists = parseInt(m[1], 10);
+  }
+  return exists;
+}
+
+// UIDs of the newest `n` messages by position, oldest first. Uses FETCH,
+// not SEARCH, so it sees mail Gmail's search index hasn't caught up with yet
+// (new messages can take a minute or more to become searchable).
+export async function imapNewestUids(client, exists, n) {
+  if (!exists) return [];
+  const from = Math.max(1, exists - n + 1);
+  const res = await client.command("FETCH " + from + ":* (UID)");
+  if (!res.ok) return [];
+  const uids = [];
+  for (const line of res.lines) {
+    const m = /^\*\s+\d+\s+FETCH\s+\(.*UID\s+(\d+)/i.exec(line.trim());
+    if (m) uids.push(parseInt(m[1], 10));
+  }
+  return uids.sort((a, b) => a - b);
+}
+
+export async function imapFetchHeaders(client, uid) {
+  const res = await client.command("UID FETCH " + uid + " (BODY.PEEK[HEADER.FIELDS (FROM DELIVERED-TO)])");
+  if (!res.ok || !res.literals.length) return null;
+  return res.literals[0];
 }
 
 function parseSearchUids(lines) {

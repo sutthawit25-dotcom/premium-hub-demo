@@ -4,16 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CATBYTE PREHUB</title>
-<link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Noto+Serif+Thai:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/LINESeedSansTH_Rg.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/LINESeedSansTH_Bd.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* LINE Seed Sans TH by LINE (Dalton Maag) — self-hosted from /fonts */
+  @font-face{font-family:"LINE Seed Sans TH"; src:url("/fonts/LINESeedSansTH_Rg.woff2") format("woff2"); font-weight:400 500; font-style:normal; font-display:swap}
+  @font-face{font-family:"LINE Seed Sans TH"; src:url("/fonts/LINESeedSansTH_Bd.woff2") format("woff2"); font-weight:600 700; font-style:normal; font-display:swap}
+  @font-face{font-family:"LINE Seed Sans TH"; src:url("/fonts/LINESeedSansTH_XBd.woff2") format("woff2"); font-weight:800 900; font-style:normal; font-display:swap}
   /* ============================================================
      CATBYTE PREHUB — design plan
      Color: porcelain / obsidian neutrals, one champagne-gold accent used
             sparingly (active nav, prices, brand mark, focus); ink-black
             primary buttons in light, gold primary buttons in dark
-     Type:  Noto Serif Thai for display (headline, brand, titles),
-            Noto Sans Thai + Inter for UI copy and tabular numerals
+     Type:  LINE Seed Sans TH throughout (Rg / Bd / XBd, self-hosted);
+            headings use the heavier weights, numerals stay tabular
      Layout: obsidian left rail in both themes, airy cards with hairline
              borders and soft layered shadows; one hero band on the shop
      ============================================================ */
@@ -30,9 +34,9 @@
     --warn:#9a6a0e; --warn-bg:#fbf2df; --warn-bd:#eed9a8;
     --shadow:0 1px 1px rgba(19,20,27,.03),0 2px 6px rgba(19,20,27,.04),0 12px 32px -12px rgba(19,20,27,.10);
     --radius:16px; --radius-sm:11px;
-    --font-th:"Noto Sans Thai",ui-sans-serif,system-ui,sans-serif;
-    --font-la:"Inter",ui-sans-serif,system-ui,sans-serif;
-    --font-display:"Noto Serif Thai","Noto Sans Thai",Georgia,serif;
+    --font-th:"LINE Seed Sans TH",ui-sans-serif,system-ui,sans-serif;
+    --font-la:"LINE Seed Sans TH",ui-sans-serif,system-ui,sans-serif;
+    --font-display:"LINE Seed Sans TH",ui-sans-serif,system-ui,sans-serif;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -237,7 +241,7 @@
   .card{border-color:var(--border)}
   .section-title{font-family:var(--font-display); font-weight:600; font-size:15px; letter-spacing:.01em}
 
-  .brand{font-family:var(--font-display); font-weight:600; letter-spacing:.06em; font-size:14px}
+  .brand{font-family:var(--font-display); font-weight:600; letter-spacing:.06em; font-size:14px; font-weight:800}
   .brand .mark{width:32px; height:32px; border-radius:10px; font-family:var(--font-display); font-weight:700; font-size:16px;
     background:linear-gradient(145deg,#e7cd97 0%,#c7a15e 45%,#8f6a2c 100%); color:#17130b; box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px -4px rgba(199,161,94,.55)}
 
@@ -291,7 +295,7 @@
   .lux-hero::after{content:""; position:absolute; left:0; right:0; bottom:0; height:1px; background:linear-gradient(90deg,transparent,rgba(214,179,118,.55),transparent)}
   .lux-hero .inner{position:relative; max-width:920px; margin:0 auto; padding-block:72px 64px; display:flex; flex-direction:column; gap:18px}
   .lux-hero .eyebrow{color:#d6b376; font-size:12.5px; letter-spacing:.18em}
-  .lux-hero h1{font-family:var(--font-display); font-weight:600; font-size:clamp(30px,5.2vw,50px); line-height:1.25; letter-spacing:.005em; max-width:20ch}
+  .lux-hero h1{font-family:var(--font-display); font-weight:800; font-size:clamp(30px,5.2vw,50px); line-height:1.25; letter-spacing:.005em; max-width:20ch}
   .lux-hero p{color:#a9aab6; max-width:52ch; font-size:15px}
   .lux-hero .btn-secondary{background:transparent; color:#efede7; border-color:#33354a}
   .lux-hero .btn-secondary:hover{border-color:#d6b376; color:#ecd6a6}

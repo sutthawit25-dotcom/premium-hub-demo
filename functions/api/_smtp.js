@@ -29,13 +29,13 @@ function cleanAddr(a) {
 }
 
 export function buildMessage({ from, fromName, to, subject, text, html, date, messageId }) {
-  const boundary = "=_flixie_" + Math.random().toString(36).slice(2, 12);
+  const boundary = "=_catbyte_" + Math.random().toString(36).slice(2, 12);
   const head = [
     "From: " + (fromName ? encodeHeader(fromName) + " " : "") + "<" + cleanAddr(from) + ">",
     "To: <" + cleanAddr(to) + ">",
     "Subject: " + encodeHeader(String(subject).replace(/[\r\n]+/g, " ")),
     "Date: " + (date || new Date().toUTCString()),
-    "Message-ID: <" + (messageId || Date.now() + "." + Math.random().toString(36).slice(2, 8)) + "@flixie-house>",
+    "Message-ID: <" + (messageId || Date.now() + "." + Math.random().toString(36).slice(2, 8)) + "@catbyte-prehub>",
     "MIME-Version: 1.0",
     'Content-Type: multipart/alternative; boundary="' + boundary + '"',
   ].join(CRLF);
@@ -87,7 +87,7 @@ export async function smtpSend(socket, { user, pass, to, subject, text, html, fr
   const io = new Io(socket);
   try {
     await io.expect([220], "greeting");
-    await io.cmd("EHLO flixie-house", [250], "ehlo");
+    await io.cmd("EHLO catbyte-prehub", [250], "ehlo");
     await io.cmd("AUTH PLAIN " + b64("\u0000" + user + "\u0000" + pass), [235], "auth");
     await io.cmd("MAIL FROM:<" + cleanAddr(user) + ">", [250], "mailfrom");
     await io.cmd("RCPT TO:<" + cleanAddr(to) + ">", [250, 251], "rcpt");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flixie House</title>
+<title>CATBYTE PREHUB</title>
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -2511,7 +2511,7 @@ var qrcode = function() {
 var NOW = Date.now();
 function hoursFromNow(h){ return new Date(NOW + h*3600*1000).toISOString(); }
 
-var SHOP = { name:"Flixie House", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~phxjj2550", contactFacebook:"https://www.facebook.com/share/18NsTRxELm/?mibextid=wwXIfr" };
+var SHOP = { name:"CATBYTE PREHUB", tagline:"ศูนย์รวมบริการสตรีมมิงพรีเมียม จัดการง่าย โปร่งใส ตรวจสอบได้", contactLine:"https://line.me/ti/p/~phxjj2550", contactFacebook:"https://www.facebook.com/share/18NsTRxELm/?mibextid=wwXIfr" };
 // สั่งซื้อผ่านการทักแชทหาแอดมินเท่านั้น (ไม่มีระบบสมัครสมาชิก/ล็อกอินของลูกค้า) ทุกคนที่เข้าหน้าร้านถือเป็น Guest
 function siteFooterHTML(){
   return '<footer class="site">'+esc(SHOP.name)+' — '+esc(SHOP.tagline)+'<div style="margin-top:4px;font-size:10px;opacity:.65">สงวนลิขสิทธิ์ CATBYTE</div></footer>';
@@ -2822,7 +2822,7 @@ function checkExpiryNotifications(){
     var p=profile(r.profileId), cust=customer(r.customerId);
     var msg=(p?p.name:"โปรไฟล์")+' ('+(cust?cust.name:"-")+') หมดเวลาแล้ว';
     toast(msg,"bad");
-    pushBrowserNotification("Flixie House — จอหมดเวลา", msg, "exp-"+id);
+    pushBrowserNotification("CATBYTE PREHUB — จอหมดเวลา", msg, "exp-"+id);
   });
 
   var soonIds = currentExpiringSoonRentalIds();
@@ -2833,7 +2833,7 @@ function checkExpiryNotifications(){
     var p=profile(r.profileId), cust=customer(r.customerId);
     var msg=(p?p.name:"โปรไฟล์")+' ('+(cust?cust.name:"-")+') ใกล้หมดเวลาภายใน 24 ชม.';
     toast(msg,"info");
-    pushBrowserNotification("Flixie House — ใกล้หมดเวลา", msg, "soon-"+id);
+    pushBrowserNotification("CATBYTE PREHUB — ใกล้หมดเวลา", msg, "soon-"+id);
   });
 }
 function requestNotifyPermission(){
@@ -2909,7 +2909,7 @@ function publicTopbar(opts){
   opts=opts||{};
   return '' +
   '<header class="topbar gutter">' +
-    '<a href="#'+(opts.homeHref||'home')+'" style="text-decoration:none"><div class="brand"><div class="mark">F</div>'+esc(SHOP.name)+'</div></a>' +
+    '<a href="#'+(opts.homeHref||'home')+'" style="text-decoration:none"><div class="brand"><div class="mark">C</div>'+esc(SHOP.name)+'</div></a>' +
     '<div style="display:flex;align-items:center;gap:8px">' +
       themeToggleHTML('tt-'+Math.random().toString(36).slice(2)) +
       (opts.showLogin!==false?'<a href="#login" class="btn btn-outline btn-sm">เข้าสู่ระบบ</a>':'') +
@@ -3215,7 +3215,7 @@ function railNavHTML(active){
 function adminShell(route, title, bodyHtml){
   var active=adminActiveKey(route);
   var rail = '<aside class="rail">' +
-      '<div class="brand"><div class="mark">F</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
+      '<div class="brand"><div class="mark">C</div><div><div style="font-size:13px">'+esc(SHOP.name)+'</div><div class="muted" style="font-size:10.5px;font-weight:500">แผงควบคุมแอดมิน</div></div></div>' +
       '<nav>'+railNavHTML(active)+'</nav>' +
       '<div class="foot">'+billNavHTML()+'<a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +
     '</aside>';
@@ -3223,7 +3223,7 @@ function adminShell(route, title, bodyHtml){
   if(STATE.drawerOpen){
     drawer = '<div class="drawer-scrim" id="drawerScrim"></div><div class="drawer">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;padding-right:8px">' +
-        '<div class="brand" style="padding:16px"><div class="mark">F</div>'+esc(SHOP.name)+'</div>' +
+        '<div class="brand" style="padding:16px"><div class="mark">C</div>'+esc(SHOP.name)+'</div>' +
         '<button class="btn btn-ghost btn-sm" id="drawerClose">'+icon('close')+'</button>' +
       '</div><nav style="padding:0 10px">'+railNavHTML(active)+'</nav>' +
       '<div class="foot">'+billNavHTML()+'<a href="#home" data-logout-link style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none">'+icon('logout')+'ออกจากระบบแอดมิน</a></div>' +

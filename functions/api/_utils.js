@@ -1,4 +1,4 @@
-// Shared helpers for the Flixie House Pages Functions API.
+// Shared helpers for the CATBYTE PREHUB Pages Functions API.
 // Auth model: a signed, stateless token (HMAC-SHA256 over a JSON payload),
 // issued by /api/login after checking ADMIN_EMAIL / ADMIN_PASSWORD (Pages secrets),
 // and required as a Bearer token on any write to /api/state.

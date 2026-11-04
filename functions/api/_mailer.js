@@ -21,7 +21,7 @@ export async function sendViaShopGmail(env, { to, subject, text, html }) {
     try {
       await withTimeout(socket.opened, 8000, "smtp_connect_timeout");
       await withTimeout(
-        smtpSend(socket, { user: r.email, pass: r.appPassword, to, subject, text, html, fromName: "Flixie House" }),
+        smtpSend(socket, { user: r.email, pass: r.appPassword, to, subject, text, html, fromName: "CATBYTE PREHUB" }),
         15000,
         "smtp_timeout"
       );

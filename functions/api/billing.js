@@ -56,15 +56,15 @@ export async function onRequestPost({ request, env }) {
       const link = origin + "/api/billing-confirm?id=" + n.id + "&sig=" + sig;
       const paid = n.paidAt ? thaiDate(n.paidAt) : "ไม่ระบุ";
       const text =
-        "ลูกค้าแจ้งโอนค่าแพ็กเกจ Flixie House แล้ว\n\nยอด: " + n.amount + " บาท\nเวลาที่โอน: " + paid + "\n" +
+        "ลูกค้าแจ้งโอนค่าแพ็กเกจ CATBYTE PREHUB แล้ว\n\nยอด: " + n.amount + " บาท\nเวลาที่โอน: " + paid + "\n" +
         (n.note ? "หมายเหตุ: " + n.note + "\n" : "") +
         "\nตรวจยอดในแอปธนาคารแล้วกดยืนยันเพื่อต่ออายุ:\n" + link + "\n";
       const html =
-        '<div style="font-family:sans-serif;font-size:15px;line-height:1.6;color:#222"><p><b>ลูกค้าแจ้งโอนค่าแพ็กเกจ Flixie House แล้ว</b></p>' +
+        '<div style="font-family:sans-serif;font-size:15px;line-height:1.6;color:#222"><p><b>ลูกค้าแจ้งโอนค่าแพ็กเกจ CATBYTE PREHUB แล้ว</b></p>' +
         "<p>ยอด: <b>" + esc(n.amount) + " บาท</b><br>เวลาที่โอน: " + esc(paid) + (n.note ? "<br>หมายเหตุ: " + esc(n.note) : "") + "</p>" +
         '<p>ตรวจยอดในแอปธนาคารแล้วกดปุ่มด้านล่างเพื่อต่ออายุ</p><p><a href="' + esc(link) +
         '" style="background:#e50914;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">เปิดหน้ายืนยันการชำระเงิน</a></p></div>';
-      mail = await sendViaShopGmail(env, { to, subject: "[Flixie House] ลูกค้าแจ้งโอน " + n.amount + " บาท รอยืนยัน", text, html });
+      mail = await sendViaShopGmail(env, { to, subject: "[CATBYTE PREHUB] ลูกค้าแจ้งโอน " + n.amount + " บาท รอยืนยัน", text, html });
     } else if (!created) {
       mail = { ok: true, skipped: "already_pending" };
     }
@@ -83,7 +83,7 @@ export async function onRequestPost({ request, env }) {
     if (action === "test-email") {
       const to = notifyTo(env, b);
       if (!to) return json({ ok: false, error: "no_notify_email" });
-      const r = await sendViaShopGmail(env, { to, subject: "[Flixie House] ทดสอบอีเมลแจ้งเตือน", text: "ทดสอบการส่งอีเมลแจ้งเตือนสำเร็จ", html: "<p>ทดสอบการส่งอีเมลแจ้งเตือนสำเร็จ</p>" });
+      const r = await sendViaShopGmail(env, { to, subject: "[CATBYTE PREHUB] ทดสอบอีเมลแจ้งเตือน", text: "ทดสอบการส่งอีเมลแจ้งเตือนสำเร็จ", html: "<p>ทดสอบการส่งอีเมลแจ้งเตือนสำเร็จ</p>" });
       return json({ ok: !!r.ok, error: r.ok ? undefined : r.error });
     }
     const num = (v) => (v === "" || v == null || isNaN(Number(v)) ? undefined : Number(v));

@@ -2643,7 +2643,7 @@ function persistStateNow(){
   var t=adminToken(); if(!t || !HYDRATED) return;
   var body=JSON.stringify(snapshotState());
   if(body===LAST_SAVED_JSON) return;
-  fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:body })
+  return fetch("/api/state", { method:"POST", headers:{"content-type":"application/json","authorization":"Bearer "+t}, body:body })
     .then(function(r){
       if(r.status===401){ clearAdminSession(); toast("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่","bad"); go("login"); return; }
       if(r.ok){
@@ -3728,10 +3728,10 @@ function modalHTML(){
     );
   }
   if(m.type==="addMailbox"){
-    var mbProviderLabel = {GMAIL:"Gmail", OUTLOOK:"Outlook / Hotmail", OUTLOOK_FORWARD:"Outlook / Hotmail - ส่งต่อผ่าน Gmail"}[m.provider] || "Gmail";
+    var mbProviderLabel = {GMAIL:"Gmail", OUTLOOK:"Outlook / Hotmail", OUTLOOK_FORWARD:"Outlook / Hotmail - ส่งต่อผ่าน Gmail", OUTLOOK_GRAPH:"Hotmail - เชื่อมตรง"}[m.provider] || "Gmail";
     return modalWrap((m.editId?'แก้ไขบัญชีอีเมล (':'เพิ่มบัญชีอีเมล (')+mbProviderLabel+')', 'เชื่อมต่อกล่องเมลจริงเพื่อดึงรหัส OTP ของ Netflix อัตโนมัติ',
       addMailboxModalBodyHTML(m),
-      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.editId?'บันทึกการแก้ไข':'บันทึก')+'</button>'
+      '<button class="btn btn-outline" data-close>ยกเลิก</button><button class="btn btn-primary" id="mbConfirm">'+(m.provider==="OUTLOOK_GRAPH"?'บันทึกและเชื่อมต่อ':(m.editId?'บันทึกการแก้ไข':'บันทึก'))+'</button>'
     );
   }
   if(m.type==="otpList"){
@@ -3916,6 +3916,14 @@ function mountModal(){
       var btn=confirmBtn; btn.disabled=true;
       var mailboxId = m.editId || ("mbx-new-"+Date.now());
 
+      if(provider==="OUTLOOK_GRAPH"){
+        var gex=m.editId?byId(MAILBOXES,m.editId):null;
+        if(gex){ gex.email=email; gex.provider=provider; }
+        else MAILBOXES.push({id:mailboxId, email:email, provider:provider, status:"NOT_CONNECTED", lastResult:"ยังไม่ดึง OTP", lastAt:null});
+        btn.textContent="กำลังไปหน้า Microsoft...";
+        startMsConnect(mailboxId, email, function(){ btn.disabled=false; btn.textContent="บันทึกและเชื่อมต่อ"; });
+        return;
+      }
       if(provider==="OUTLOOK_FORWARD"){
         var sourceMailboxId=(document.getElementById("mbSourceGmail")||{}).value||"";
         var forwardTag=((document.getElementById("mbForwardTag")||{}).value||"").trim().replace(/[^a-zA-Z0-9]/g,"");
@@ -4472,11 +4480,18 @@ function mountAdminRevenue(){
 function addMailboxModalBodyHTML(m){
   var provider = m.provider || "GMAIL";
   var providerSelect = '<div class="field"><label>ผู้ให้บริการ</label><select class="input" id="mbProvider">' +
+    '<option value="OUTLOOK_GRAPH" '+(provider==="OUTLOOK_GRAPH"?"selected":"")+'>Hotmail / Outlook (เชื่อมตรง Microsoft - แนะนำ)</option>' +
     '<option value="GMAIL" '+(provider==="GMAIL"?"selected":"")+'>Gmail</option>' +
     '<option value="OUTLOOK" '+(provider==="OUTLOOK"?"selected":"")+'>Outlook / Hotmail (รหัสผ่านแอป)</option>' +
     '<option value="OUTLOOK_FORWARD" '+(provider==="OUTLOOK_FORWARD"?"selected":"")+'>Outlook / Hotmail (ส่งต่อผ่าน Gmail - แนะนำ)</option>' +
     '</select></div>';
 
+  if(provider==="OUTLOOK_GRAPH"){
+    return providerSelect +
+      '<div class="field"><label>อีเมล Hotmail / Outlook</label><input class="input" id="mbEmail" placeholder="name@hotmail.com" value="'+esc(m.email||"")+'"></div>' +
+      '<div class="summary-box" style="font-size:12.5px">กด <strong>บันทึกและเชื่อมต่อ</strong> แล้วระบบจะพาไปหน้า Microsoft ให้ล็อกอินบัญชีนี้ (ใช้แบบส่งโค้ดได้) และกด <strong>ยอมรับ</strong> ครั้งเดียว จากนั้นดึง OTP จากกล่องเมลนี้ได้ตรงๆ ไม่ต้องตั้งส่งต่อ</div>' +
+      '<p class="muted" style="font-size:11.5px;margin-top:-4px">ถ้าในเบราว์เซอร์ล็อกอิน Hotmail บัญชีอื่นอยู่ ให้เลือก "ใช้บัญชีอื่น" ในหน้า Microsoft ระบบจะไม่ยอมบันทึกถ้าล็อกอินผิดบัญชี</p>';
+  }
   if(provider==="OUTLOOK_FORWARD"){
     var gmails = MAILBOXES.filter(function(x){ return x.provider==="GMAIL"; });
     if(!gmails.length){
@@ -4512,7 +4527,8 @@ function mailboxActionsHTML(m){
   var fetchBtn = m.provider==="GMAIL"
     ? '<button class="btn btn-primary btn-sm" data-otplist="'+m.id+'">รายการ OTP ทุกบัญชี</button>'
     : '<button class="btn btn-secondary btn-sm" data-fetch="'+m.id+'">ดึง OTP ล่าสุด</button>';
-  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button>'+fetchBtn+'<button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
+  var msBtn = m.provider==="OUTLOOK_GRAPH" ? '<button class="btn '+(m.status==="CONNECTED"?'btn-outline':'btn-primary')+' btn-sm" data-msconnect="'+m.id+'">'+(m.status==="CONNECTED"?'เชื่อมใหม่':'เชื่อม Microsoft')+'</button>' : '';
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">'+msBtn+'<button class="btn btn-secondary btn-sm" data-test="'+m.id+'">ทดสอบ</button>'+fetchBtn+'<button class="btn btn-outline btn-sm" data-editmb="'+m.id+'">'+icon('edit')+'แก้ไข</button><button class="btn btn-outline btn-sm" data-delmb="'+m.id+'" style="color:var(--bad);border-color:var(--bad-bd)">'+icon('trash')+'ลบ</button></div>';
 }
 var OTP_ERROR_MESSAGES = {
   no_credentials: "ยังไม่ได้ตั้งรหัสผ่านแอป กดแก้ไขเพื่อเพิ่ม",
@@ -4528,6 +4544,9 @@ var OTP_ERROR_MESSAGES = {
   imap_connection_closed: "การเชื่อมต่อถูกปิดกลางทาง ลองใหม่อีกครั้ง",
   source_mailbox_missing: "บัญชี Gmail ปลายทางที่ตั้งไว้ถูกลบไปแล้ว กรุณาแก้ไขบัญชีนี้ใหม่",
   invalid_source_mailbox: "บัญชี Gmail ปลายทางไม่ถูกต้อง",
+  reauth_needed: "สิทธิ์ Microsoft หมดอายุหรือถูกยกเลิก กด \"เชื่อมใหม่\" แล้วล็อกอินบัญชีนี้อีกครั้ง",
+  ms_not_configured: "ยังไม่ได้ตั้ง MS_CLIENT_ID / MS_CLIENT_SECRET ใน Cloudflare",
+  ms_token_error: "ขอสิทธิ์จาก Microsoft ไม่สำเร็จ ลองกด \"เชื่อมใหม่\"",
 };
 function otpErrorText(code){ return OTP_ERROR_MESSAGES[code] || ("เกิดข้อผิดพลาด ("+code+")"); }
 function mailboxResultHTML(m){
@@ -4540,7 +4559,7 @@ function mailboxResultHTML(m){
   return esc(m.lastResult||"ยังไม่ดึง OTP");
 }
 function mailboxProviderLabel(provider){
-  return provider==="GMAIL" ? "Gmail" : (provider==="OUTLOOK_FORWARD" ? "Outlook (ส่งต่อผ่าน Gmail)" : "Outlook");
+  return provider==="GMAIL" ? "Gmail" : provider==="OUTLOOK_GRAPH" ? "Hotmail (เชื่อมตรง)" : (provider==="OUTLOOK_FORWARD" ? "Outlook (ส่งต่อผ่าน Gmail)" : "Outlook");
 }
 function mailboxRowsHTML(){
   return MAILBOXES.map(function(m,i){
@@ -4563,12 +4582,12 @@ function viewAdminMailboxes(){
     '<div class="card" style="padding:18px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">' +
         '<div><h2 style="font-size:14.5px;font-weight:800">จัดการบัญชีอีเมล</h2><p class="muted" style="font-size:12px;max-width:440px;margin-top:4px">เชื่อมต่อบัญชี Gmail โดยตรง หรือ Outlook/Hotmail แบบส่งต่อผ่าน Gmail แล้วกด "ดึง OTP ล่าสุด" เพื่อรับรหัสจากอีเมล Netflix มาคัดลอกส่งลูกค้าได้ทันที</p></div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" id="addOutlookForwardBtn">+ Hotmail (ส่งต่อผ่าน Gmail)</button><button class="btn btn-outline btn-sm" id="addOutlookBtn">+ Outlook (รหัสผ่านแอป)</button><button class="btn btn-primary btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+(MAILBOXES.some(function(x){return x.provider!=="GMAIL";})?'<button class="btn btn-secondary btn-sm" id="fetchAllOtpBtn">ดึง OTP ทุกบัญชี</button>':'')+'<button class="btn btn-primary btn-sm" id="addOutlookGraphBtn">+ Hotmail (เชื่อมตรง)</button><button class="btn btn-secondary btn-sm" id="addOutlookForwardBtn">+ Hotmail (ส่งต่อผ่าน Gmail)</button><button class="btn btn-outline btn-sm" id="addOutlookBtn">+ Outlook (รหัสผ่านแอป)</button><button class="btn btn-outline btn-sm" id="addGmailBtn">+ Gmail</button></div>' +
       '</div>' +
       '<div class="grid grid-4">' +
         '<div class="card stat"><div class="v num">'+MAILBOXES.length+'</div><div class="l">บัญชีทั้งหมด</div></div>' +
         '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="GMAIL"}).length+'</div><div class="l">Gmail</div></div>' +
-        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="OUTLOOK_FORWARD"}).length+'</div><div class="l">Hotmail (ส่งต่อ)</div></div>' +
+        '<div class="card stat"><div class="v num">'+MAILBOXES.filter(function(m){return m.provider==="OUTLOOK_FORWARD"||m.provider==="OUTLOOK_GRAPH"}).length+'</div><div class="l">Hotmail</div></div>' +
         '<div class="card stat"><div class="v num">'+pinCount+'</div><div class="l">เปิด PIN ลูกค้า</div></div>' +
       '</div>' +
     '</div>' +
@@ -4644,6 +4663,66 @@ function autoCheckMailboxes(){
     })
     .catch(function(){ MAILBOX_AUTOCHECK_DONE=false; });
 }
+function fetchOtpFor(id, quiet){
+  return mailboxApiFetch("/api/otp", id).then(function(res){
+        var cur=mailbox(id); if(!cur) return;
+        if(res && res.ok && res.code){
+          cur.lastCode=res.code; cur.lastResult="พบรหัส OTP ล่าสุด"; cur.lastAt=new Date().toISOString(); cur.status="CONNECTED";
+          var mailMs=res.date?new Date(res.date).getTime():NaN; cur.lastMailAt=isNaN(mailMs)?null:new Date(mailMs).toISOString();
+          if(!quiet){
+            logActivity("OTP_REQUESTED", "ดึงรหัส OTP จากกล่องเมล "+cur.email+" สำเร็จ", cur.email);
+            if(!isNaN(mailMs) && Date.now()-mailMs>15*60000) toast("รหัสล่าสุดที่พบเป็นของเมื่อ "+otpAgoText(Date.now()-mailMs)+" ถ้าเพิ่งขอรหัสใหม่ รอ 1 นาทีแล้วกดอีกครั้ง","bad");
+            else toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
+          }
+        }else{
+          cur.lastCode=null; cur.lastMailAt=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
+          if(res && res.error==="reauth_needed") cur.status="ERROR";
+          if(!quiet) toast(res && res.error==="network_error" ? "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" : cur.lastResult,"bad");
+        }
+        refreshMailboxView(); schedulePersist();
+  });
+}
+// ดึงทุกบัญชีที่ไม่ใช่ Gmail กลาง: Hotmail เชื่อมตรงพร้อมกัน ส่วนแบบส่งต่อ (ใช้ Gmail เดียวกัน) ทีละ 1 เพื่อไม่ให้ Gmail ปฏิเสธการเชื่อมต่อซ้อน
+function fetchAllOtp(btn){
+  var list=MAILBOXES.filter(function(m){ return m.provider!=="GMAIL"; });
+  if(!list.length) return;
+  btn.disabled=true; btn.textContent="กำลังดึง 0/"+list.length;
+  var done=0; function tick(){ done++; btn.textContent="กำลังดึง "+done+"/"+list.length; }
+  var graph=list.filter(function(m){ return m.provider==="OUTLOOK_GRAPH"; }), rest=list.filter(function(m){ return m.provider!=="OUTLOOK_GRAPH"; });
+  var p1=Promise.all(graph.map(function(m){ return fetchOtpFor(m.id,true).then(tick); }));
+  var p2=rest.reduce(function(p,m){ return p.then(function(){ return fetchOtpFor(m.id,true).then(tick); }); }, Promise.resolve());
+  Promise.all([p1,p2]).then(function(){
+    var ok=list.filter(function(m){ var c=mailbox(m.id); return c&&c.lastCode; }).length;
+    logActivity("OTP_REQUESTED","ดึงรหัส OTP ทุกบัญชี ("+ok+"/"+list.length+" บัญชีพบรหัส)","ทุกบัญชี");
+    toast("ดึงเสร็จ: พบรหัส "+ok+" จาก "+list.length+" บัญชี", ok?"good":"bad");
+    var b=document.getElementById("fetchAllOtpBtn"); if(b){ b.disabled=false; b.textContent="ดึง OTP ทุกบัญชี"; }
+  });
+}
+function startMsConnect(mailboxId, email, onFail){
+  var saved=persistStateNow();
+  Promise.resolve(saved).then(function(){
+    return fetch("/api/ms-start",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+adminToken()},body:JSON.stringify({mailboxId:mailboxId,email:email})});
+  }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(j){
+    if(j && j.ok && j.url){ location.href=j.url; return; }
+    toast(otpErrorText((j&&j.error)||"ms_start_failed"),"bad"); if(onFail) onFail();
+  }).catch(function(){ toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้","bad"); if(onFail) onFail(); });
+}
+// กลับมาจากหน้า Microsoft: /?ms=ok&id=...#admin-mailboxes
+var MS_RETURN_MSG={ok:"เชื่อมต่อ Hotmail สำเร็จ ลองกด \"ดึง OTP ล่าสุด\" ได้เลย",mismatch:"ล็อกอินผิดบัญชี (ได้ ",denied:"ยกเลิกการอนุญาตในหน้า Microsoft",bad_state:"ลิงก์เชื่อมต่อหมดอายุ กด \"เชื่อม Microsoft\" ใหม่",not_configured:"ยังไม่ได้ตั้ง MS_CLIENT_ID / MS_CLIENT_SECRET ใน Cloudflare"};
+function handleMsReturn(){
+  var q; try{ q=new URLSearchParams(location.search); }catch(e){ return; }
+  var ms=q.get("ms"); if(!ms) return;
+  var id=q.get("id"), got=q.get("got");
+  try{ history.replaceState(null,"",location.pathname+location.hash); }catch(e){}
+  var msg = ms==="mismatch" ? "ล็อกอินผิดบัญชี (ได้ "+(got||"?")+") กดเชื่อมใหม่แล้วเลือก \"ใช้บัญชีอื่น\"" : (MS_RETURN_MSG[ms] || ("เชื่อมต่อไม่สำเร็จ ("+ms+")"));
+  var tries=0;
+  (function waitHydrate(){ if(!HYDRATED && tries++<40){ setTimeout(waitHydrate,250); return; }
+    var mb=id&&mailbox(id);
+    if(mb){ mb.status = ms==="ok" ? "CONNECTED" : "ERROR"; if(ms==="ok"){ mb.lastResult="เชื่อมต่อแล้ว ยังไม่ดึง OTP"; } refreshMailboxView(); schedulePersist(); }
+    toast(msg, ms==="ok"?"good":"bad");
+  })();
+}
+handleMsReturn();
 function mountMailboxRowEvents(){
   document.querySelectorAll('[data-test]').forEach(function(btn){
     btn.onclick=function(){
@@ -4660,24 +4739,14 @@ function mountMailboxRowEvents(){
   document.querySelectorAll('[data-otplist]').forEach(function(btn){
     btn.onclick=function(){ openOtpListModal(btn.getAttribute("data-otplist")); };
   });
+  document.querySelectorAll('[data-msconnect]').forEach(function(btn){
+    btn.onclick=function(){ var m=mailbox(btn.getAttribute("data-msconnect")); if(!m) return; btn.disabled=true; btn.textContent="กำลังไปหน้า Microsoft..."; startMsConnect(m.id, m.email, function(){ btn.disabled=false; refreshMailboxView(); }); };
+  });
   document.querySelectorAll('[data-fetch]').forEach(function(btn){
     btn.onclick=function(){
-      var id=btn.getAttribute("data-fetch"); var m=mailbox(id); if(!m) return;
+      var id=btn.getAttribute("data-fetch"); if(!mailbox(id)) return;
       btn.disabled=true; btn.textContent="กำลังดึง...";
-      mailboxApiFetch("/api/otp", id).then(function(res){
-        var cur=mailbox(id); if(!cur) return;
-        if(res && res.ok && res.code){
-          cur.lastCode=res.code; cur.lastResult="พบรหัส OTP ล่าสุด"; cur.lastAt=new Date().toISOString(); cur.status="CONNECTED";
-          var mailMs=res.date?new Date(res.date).getTime():NaN; cur.lastMailAt=isNaN(mailMs)?null:new Date(mailMs).toISOString();
-          logActivity("OTP_REQUESTED", "ดึงรหัส OTP จากกล่องเมล "+cur.email+" สำเร็จ", cur.email);
-          if(!isNaN(mailMs) && Date.now()-mailMs>15*60000) toast("รหัสล่าสุดที่พบเป็นของเมื่อ "+otpAgoText(Date.now()-mailMs)+" ถ้าเพิ่งขอรหัสใหม่ รอ 1 นาทีแล้วกดอีกครั้ง (ถ้ายังไม่มา ให้เช็คว่าตั้งส่งต่อใน Hotmail บัญชีนี้แล้ว)","bad");
-          else toast("ดึงรหัส OTP สำเร็จ: "+res.code,"good");
-        }else{
-          cur.lastCode=null; cur.lastMailAt=null; cur.lastResult=otpErrorText(res&&res.error); cur.lastAt=new Date().toISOString();
-          toast(res && res.error==="network_error" ? "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" : cur.lastResult,"bad");
-        }
-        refreshMailboxView(); schedulePersist();
-      });
+      fetchOtpFor(id, false);
     };
   });
   document.querySelectorAll('[data-editmb]').forEach(function(btn){
@@ -4698,6 +4767,8 @@ function mountAdminMailboxes(){
   document.getElementById("addGmailBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"GMAIL"}; render(); };
   document.getElementById("addOutlookBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK"}; render(); };
   document.getElementById("addOutlookForwardBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK_FORWARD"}; render(); };
+  document.getElementById("addOutlookGraphBtn").onclick=function(){ STATE.modal={type:"addMailbox",provider:"OUTLOOK_GRAPH"}; render(); };
+  var fa=document.getElementById("fetchAllOtpBtn"); if(fa) fa.onclick=function(){ fetchAllOtp(fa); };
   mountMailboxRowEvents();
 }
 

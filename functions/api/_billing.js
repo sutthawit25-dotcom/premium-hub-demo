@@ -48,7 +48,7 @@ export function renewedExpiry(expiresAt, periodDays, now) {
   return base + (periodDays || DEFAULTS.periodDays) * DAY;
 }
 
-async function hmacHex(secret, data) {
+export async function hmacHex(secret, data) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data)));
   return Array.from(sig).map((x) => x.toString(16).padStart(2, "0")).join("");

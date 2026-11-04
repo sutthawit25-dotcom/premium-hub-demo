@@ -108,7 +108,7 @@ function headerValue(rawText, name) {
 // Looks for a 4-8 digit numeric OTP, preferring one that follows a
 // recognisable "code" keyword (English or Thai), falling back to the first
 // standalone digit run of plausible length anywhere in the text.
-function extractCode(text) {
+export function extractCode(text) {
   const keywordPattern =
     /(?:sign-?in code|access code|verification code|security code|temporary code|household code|รหัสยืนยัน|รหัสผ่านชั่วคราว|โค้ด)\D{0,20}?(\d{4,8})/i;
   const kw = keywordPattern.exec(text);

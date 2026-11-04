@@ -1,6 +1,7 @@
 import { json, verifyToken, bearerToken } from "./_utils.js";
 import { connectImap, imapLogin, imapLogout } from "./_imap.js";
 import { resolveMailboxImap } from "./_mailbox-resolve.js";
+import { graphAccessToken, graphGet } from "./_graph.js";
 
 const CREDS_KEY = "mailbox_creds";
 
@@ -30,6 +31,16 @@ export async function onRequestPost({ request, env }) {
 
   const raw = await env.STATE_KV.get(CREDS_KEY);
   const store = raw ? JSON.parse(raw) : {};
+  const creds = store[mailboxId];
+  if (creds && creds.provider === "OUTLOOK_GRAPH") {
+    try {
+      const at = await graphAccessToken(env, creds, mailboxId);
+      await graphGet(at, "/me/mailFolders/inbox?$select=id");
+      return json({ ok: true });
+    } catch (e) {
+      return json({ ok: false, error: (e && e.message) || "graph_error", detail: e && e.detail });
+    }
+  }
   const resolved = await resolveMailboxImap(store, mailboxId, env.ADMIN_SECRET);
   if (resolved.error) return json({ ok: false, error: resolved.error });
   const { host, email, appPassword } = resolved;
